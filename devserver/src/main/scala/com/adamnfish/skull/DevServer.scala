@@ -23,8 +23,10 @@ object DevServer {
         messaging.disconnect(wctx)
       }
       ws.onMessage { wctx =>
+        // TODO: consider whether errors are sent as messages or responses?
+
         val rid = wctx.message
-        messaging.send(rid, Status("ok"))
+        messaging.sendMessage(rid, Status("ok"))
       }
     })
 

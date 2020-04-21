@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 object Database {
   // TODO: switch DB models to use PlayerId - provide
   //  implicit to allow Scanamo to use those wrapper types
-  
+
   private val games = Table[GameDB]("games")
   private val players = Table[PlayerDB]("players")
 
