@@ -15,16 +15,16 @@ case class GameDB(
   started: Boolean,
   startTime: ZonedDateTime,
   roundState: String,
-  currentTurn: Option[String],
+  currentPlayer: Option[String], // player id
   revealedDiscs: Map[String, Int]
 )
 
 // only updatable by the player themselves
 case class PlayerDB(
-  playerId: PlayerId,  // PK
-  gameId: GameId,      // SI
-  playerKey: PlayerKey,
-  playerAddress: PlayerAddress,
+  gameId: String,    // Partition
+  playerId: String,  // Sort
+  playerKey: String,
+  playerAddress: String,
   screenName: String,
   successes: Int,
   discs: List[String],

@@ -12,5 +12,5 @@ object Representations {
   def dbToGame(gameDB: GameDB, playerDBs: List[PlayerDB]): Game = ???
 
   // create transport representation
-  def playerStatus(game: Game, playerId: PlayerId): GameStatus = ???
+  def status(game: Game, playerId: PlayerId): GameStatus = ???
 }

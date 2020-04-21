@@ -7,5 +7,5 @@ import scala.concurrent.ExecutionContext
 
 
 trait Messaging {
-  def send(recipientId: String, message: Message)(implicit ec: ExecutionContext): Attempt[Unit]
+  def send(recipientId: String, message: Message)(ec: ExecutionContext): Attempt[Unit]
 }

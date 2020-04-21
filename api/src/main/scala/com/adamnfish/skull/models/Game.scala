@@ -25,28 +25,29 @@ case class Player(
 
 trait Round
 case class InitialDiscs(
+  firstPlayer: PlayerId,
   initialDiscs: Map[PlayerId, Disc]
 ) extends Round
 case class Placing(
+  activePlayer: PlayerId,
   discs: Map[PlayerId, List[Disc]],
-  turn: PlayerId,
 ) extends Round
 case class Bidding(
-  passed: List[PlayerId],
+  activePlayer: PlayerId,
   discs: Map[PlayerId, List[Disc]],
   bids: Map[PlayerId, Int],
-  turn: PlayerId,
+  passed: List[PlayerId],
 ) extends Round
 case class Flipping(
-  player: PlayerId,
+  activePlayer: PlayerId,
   discs: Map[PlayerId, List[Disc]],
   revealed: Map[PlayerId, List[Disc]],
 ) extends Round
 case class Finished(
-  player: PlayerId,
-  successful: Boolean,
+  activePlayer: PlayerId,
   discs: Map[PlayerId, List[Disc]],
   revealed: Map[PlayerId, List[Disc]],
+  successful: Boolean,
 ) extends Round
 
 

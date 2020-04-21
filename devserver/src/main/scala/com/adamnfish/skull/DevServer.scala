@@ -2,12 +2,14 @@ package com.adamnfish.skull
 
 import com.adamnfish.skull.models.Status
 import io.javalin.Javalin
+import org.scanamo.LocalDynamoDB
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object DevServer {
   val messaging = new DevMessaging
+  val client = LocalDynamoDB.client()
 
   def main(args: Array[String]): Unit = {
     val app = Javalin.create().start(7000)

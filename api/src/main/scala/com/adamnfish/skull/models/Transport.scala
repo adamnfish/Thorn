@@ -26,28 +26,29 @@ case class SelfSummary(
 
 trait RoundSummary
 case class InitialDiscsSummary(
+  activePlayer: PlayerId,
   initialDiscs: Map[PlayerId, Disc]
 ) extends RoundSummary
 case class PlacingSummary(
+  activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
-  turn: PlayerId,
 ) extends RoundSummary
 case class BiddingSummary(
-  passed: List[PlayerId],
+  activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
   bids: Map[PlayerId, Int],
-  turn: PlayerId,
+  passed: List[PlayerId],
 ) extends RoundSummary
 case class FlippingSummary(
-  player: PlayerId,
+  activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
   revealed: Map[PlayerId, List[Disc]],
 ) extends RoundSummary
 case class FinishedSummary(
-  player: PlayerId,
-  successful: Boolean,
+  activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
   revealed: Map[PlayerId, List[Disc]],
+  successful: Boolean,
 ) extends RoundSummary
 
 // requests

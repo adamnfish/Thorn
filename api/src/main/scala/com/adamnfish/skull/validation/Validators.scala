@@ -1,7 +1,10 @@
 package com.adamnfish.skull.validation
 
-import com.adamnfish.skull.attempt.Failure
+import com.adamnfish.skull.attempt.{Attempt, Failure}
+import com.adamnfish.skull.models.CreateGame
 import com.adamnfish.skull.validation.Validation.Validator
+
+import scala.concurrent.ExecutionContext
 
 
 object Validators {
@@ -53,5 +56,18 @@ object Validators {
         Failure("Failed min length", s"$context must be at least $min characters", 400, Some(context))
       )
     else Nil
+  }
+
+  def maxLength(max: Int): Validator[String] = { (str, context) =>
+    if (str.length > max)
+      List(
+        Failure("Failed max length", s"$context must be no more than $max characters", 400, Some(context))
+      )
+    else Nil
+  }
+
+  def validate(createGame: CreateGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    validate(createGame.gameName, "game name", nonEmpty) |@|
+      validate(createGame.screenName, "screen name", nonEmpty)
   }
 }
