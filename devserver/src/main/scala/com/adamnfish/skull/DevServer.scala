@@ -29,7 +29,7 @@ object DevServer {
         // TODO: consider whether errors are sent as messages or responses?
         // (start with messages for simplicity, change to response in the future to save $$)
         val context = Context(PlayerAddress(wctx.getSessionId))
-        val result = Skull.main(wctx.message, context, messaging).tapErr { failure =>
+        val result = Skull.main(wctx.message, context, messaging).tapFailure { failure =>
           println(s"[ERROR] ${failure.logString}")
         }
         Await.result(result.asFuture, 10.seconds)

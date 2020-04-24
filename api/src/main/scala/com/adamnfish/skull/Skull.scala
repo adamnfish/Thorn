@@ -44,7 +44,7 @@ object Skull {
       }
     } yield ()
     // if there has been a failure we tell the requesting player
-    result.tapErr { failure =>
+    result.tapFailure { failure =>
       messaging.sendError(context.playerAddress, failure)(ec)
     }
     result

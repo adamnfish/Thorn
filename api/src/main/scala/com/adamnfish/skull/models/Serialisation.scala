@@ -13,7 +13,7 @@ object Serialisation {
   def decodeRequest(jsonStr: String)(implicit ec: ExecutionContext): Attempt[Request] = {
     for {
       json <- parse(jsonStr, "Could not understand the request", None)
-      request <- asAttempt(json, "The request isn't something I understand", None)(requestDecoder)
+      request <- asAttempt(json, "The request isn't something I understand")(requestDecoder)
     } yield request
   }
 
@@ -40,12 +40,12 @@ object Serialisation {
     }
   }
 
-  private def asAttempt[A](json: Json, friendlyMessage: String, context: Option[String])(implicit decoder: Decoder[A]): Attempt[A] = {
+  private def asAttempt[A](json: Json, friendlyMessage: String)(implicit decoder: Decoder[A]): Attempt[A] = {
     Attempt.fromEither {
       json.as[A].left.map { decodingFailure =>
         Failure(
-          s"Failed to parse request body as expected type: ${decodingFailure.message}",
-          "I didn't understand the request",
+          s"Failed to parse JSON as expected type: ${decodingFailure.message}",
+          friendlyMessage,
           400,
           Some(decodingFailure.history.mkString("|")),
           Some(decodingFailure)

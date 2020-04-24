@@ -18,7 +18,7 @@ case class Attempt[+A] private (underlying: Future[Either[FailedAttempt, A]]) {
     }
   }
 
-  def tapErr(f: FailedAttempt => Unit)(implicit ec: ExecutionContext): Attempt[A] = {
+  def tapFailure(f: FailedAttempt => Unit)(implicit ec: ExecutionContext): Attempt[A] = {
     fold(
       { failure =>
         f(failure)
@@ -191,7 +191,7 @@ object Attempt {
      * if a piece of logic fails but you need to make a Database/API call to
      * get the failure information.
      */
-    def Left[A](ferr: Future[FailedAttempt])(implicit ec: ExecutionContext): Attempt[A] =
-      Attempt(ferr.map(scala.Left(_)))
+    def Left[A](ff: Future[FailedAttempt])(implicit ec: ExecutionContext): Attempt[A] =
+      Attempt(ff.map(scala.Left(_)))
   }
 }
