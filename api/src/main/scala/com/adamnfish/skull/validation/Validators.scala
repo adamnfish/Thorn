@@ -65,9 +65,4 @@ object Validators {
       )
     else Nil
   }
-
-  def validate(createGame: CreateGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    validate(createGame.gameName, "game name", nonEmpty) |@|
-      validate(createGame.screenName, "screen name", nonEmpty)
-  }
 }

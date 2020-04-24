@@ -27,7 +27,7 @@ case class SelfSummary(
 trait RoundSummary
 case class InitialDiscsSummary(
   activePlayer: PlayerId,
-  initialDiscs: Map[PlayerId, Disc]
+  initialDiscs: Map[String, Disc]
 ) extends RoundSummary
 case class PlacingSummary(
   activePlayer: PlayerId,
@@ -98,7 +98,7 @@ case class Wake(
 
 
 // messages (data sent to clients)
-sealed trait Message
+sealed trait Message extends Product
 case class Status(
   message: String
 ) extends Message
@@ -106,7 +106,7 @@ case class Welcome(
   playerKey: PlayerKey,
   playerId: PlayerId,
   gameId: GameId,
-)
+) extends Message
 case class GameStatus(
   self: SelfSummary,
   game: GameSummary,

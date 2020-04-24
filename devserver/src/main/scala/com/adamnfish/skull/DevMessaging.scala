@@ -3,7 +3,7 @@ package com.adamnfish.skull
 import java.util.UUID
 
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
-import com.adamnfish.skull.models.{Message, Serialisation}
+import com.adamnfish.skull.models.{Message, PlayerAddress, Serialisation}
 import io.javalin.websocket.WsContext
 
 import scala.collection.mutable
@@ -15,7 +15,7 @@ class DevMessaging extends Messaging {
   private val connections = new mutable.HashMap[String, WsContext]
 
   def connect(wctx: WsContext): String = {
-    val id = UUID.randomUUID.toString
+    val id = wctx.getSessionId
     connections.put(id, wctx)
     id
   }
@@ -26,12 +26,12 @@ class DevMessaging extends Messaging {
     }
   }
 
-  override def sendMessage(recipientId: String, message: Message)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    send(recipientId, Serialisation.Transport.encodeMessage(message))
+  override def sendMessage(playerAddress: PlayerAddress, message: Message)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    send(playerAddress.address, Serialisation.encodeMessage(message))
   }
 
-  override def sendError(recipientId: String, message: FailedAttempt)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    send(recipientId, Serialisation.Transport.encodeFailure(message))
+  override def sendError(playerAddress: PlayerAddress, message: FailedAttempt)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    send(playerAddress.address, Serialisation.encodeFailure(message))
   }
 
   private def send(recipientId: String, body: String)(implicit executionContext: ExecutionContext): Attempt[Unit] = {

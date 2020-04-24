@@ -14,6 +14,7 @@ lazy val root = (project in file("."))
     name := "skull",
     libraryDependencies ++= commonDeps
   )
+  .aggregate(api)
 
 lazy val api = (project in file("api"))
   .settings(
@@ -39,7 +40,10 @@ lazy val devServer = (project in file("devserver"))
           "org.slf4j" % "slf4j-simple" % "1.8.0-beta4",
           "org.slf4j" % "slf4j-api" % "1.8.0-beta4",
           "org.scanamo" %% "scanamo-testkit" % "1.0.0-M12-1",
-        ) ++ commonDeps
+        ) ++ commonDeps,
+    fork in run := true,
+    connectInput in run := true,
+    outputStrategy := Some(StdoutOutput)
   )
   .dependsOn(api)
 

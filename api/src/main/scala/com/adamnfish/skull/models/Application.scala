@@ -5,9 +5,7 @@ case class Context(
   playerAddress: PlayerAddress
 )
 
-case class Messages(
-  messages: Map[PlayerAddress, Message]
+case class Response[S <: Message](
+  self: Option[S],
+  messages: Map[PlayerAddress, GameStatus]
 )
-object Messages {
-  def empty = Messages(Map.empty)
-}

@@ -1,69 +1,112 @@
 package com.adamnfish.skull
 
 import com.adamnfish.skull.attempt.Attempt
+import com.adamnfish.skull.logic.Responses
 import com.adamnfish.skull.models._
+import com.adamnfish.skull.validation.Validation.validate
 
 import scala.concurrent.ExecutionContext
 
 
 object Skull {
-  def createGame(request: CreateGame, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
-    for {
-      _ <- Attempt.unit
-    } yield Messages.empty
+  def main(requestBody: String, context: Context, messaging: Messaging)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    val result = for {
+      request <- Serialisation.decodeRequest(requestBody)
+      response <- request match {
+        case request: CreateGame =>
+          createGame(request, context)
+        case request: JoinGame =>
+          joinGame(request, context)
+        case request: NewRound =>
+          newRound(request, context)
+        case request: StartRound =>
+          startRound(request, context)
+        case request: PlaceDisc =>
+          placeDisc(request, context)
+        case request: Bid =>
+          bid(request, context)
+        case request: Pass =>
+          pass(request, context)
+        case request: Flip =>
+          flip(request, context)
+        case request: Ping =>
+          ping(request, context)
+        case request: Wake =>
+          wake(request, context)
+      }
+      // send message back to the requesting player
+      _ <- response.self.fold(Attempt.unit) { msg =>
+        messaging.sendMessage(context.playerAddress, msg)(ec)
+      }
+      // send other messages
+      _ <- Attempt.traverse(response.messages.toList) { case (address, msg) =>
+        messaging.sendMessage(address, msg)(ec)
+      }
+    } yield ()
+    // if there has been a failure we tell the requesting player
+    result.tapErr { failure =>
+      messaging.sendError(context.playerAddress, failure)(ec)
+    }
+    result
   }
 
-  def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def createGame(request: CreateGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[Welcome]
   }
 
-  def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[Welcome]
   }
 
-  def startRound(request: StartRound, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def placeDisc(request: PlaceDisc, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def startRound(request: StartRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def bid(request: Bid, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def placeDisc(request: PlaceDisc, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def pass(request: Pass, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def bid(request: Bid, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def pass(request: Pass, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
   }
 
-  def wake(request: Wake, context: Context)(implicit ec: ExecutionContext): Attempt[Messages] = {
+  def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
-    } yield Messages.empty
+    } yield Responses.tbd[GameStatus]
+  }
+
+  def wake(request: Wake, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Status]] = {
+    Attempt.Right {
+      Responses.ok()
+    }
   }
 }

@@ -18,6 +18,15 @@ case class Attempt[+A] private (underlying: Future[Either[FailedAttempt, A]]) {
     }
   }
 
+  def tapErr(f: FailedAttempt => Unit)(implicit ec: ExecutionContext): Attempt[A] = {
+    fold(
+      { failure =>
+        f(failure)
+      }, identity
+    )
+    this
+  }
+
   def fold[B](failure: FailedAttempt => B, success: A => B)(implicit ec: ExecutionContext): Future[B] = {
     asFuture.map(_.fold(failure, success))
   }
@@ -34,7 +43,7 @@ case class Attempt[+A] private (underlying: Future[Either[FailedAttempt, A]]) {
    *
    * Note: This will discard the successful value, it should only be used for failures.
    */
-  def |@|[B](a2: Attempt[B])(implicit ec: ExecutionContext): Attempt[Unit] = {
+  def |!|[B](a2: Attempt[B])(implicit ec: ExecutionContext): Attempt[Unit] = {
     val collected = underlying map {
       case Left(fa1) =>
         a2.fold(
