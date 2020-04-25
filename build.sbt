@@ -5,6 +5,8 @@ ThisBuild / organizationName := "example"
 
 
 val circeVersion = "0.12.3"
+val scanamoVersion = "1.0.0-M12-1"
+val awsJavaSdkVersion = "1.11.762"
 val commonDeps = Seq(
   "org.scalatest" %% "scalatest" % "3.1.1" % Test
 )
@@ -14,29 +16,39 @@ lazy val root = (project in file("."))
     name := "skull",
     libraryDependencies ++= commonDeps,
   )
-  .aggregate(api)
+  .aggregate(core, lambda, devServer, integration, cli)
 
-lazy val api = (project in file("api"))
+lazy val core = (project in file("core"))
   .settings(
-    name := "api",
+    name := "core",
     libraryDependencies ++=
       Seq(
         "io.circe" %% "circe-core" % circeVersion,
         "io.circe" %% "circe-generic" % circeVersion,
         "io.circe" %% "circe-parser" % circeVersion,
-        "com.amazonaws" % "aws-lambda-java-core" % "1.2.0",
-        "com.amazonaws" % "aws-lambda-java-events" % "2.2.7",
-        "org.scanamo" %% "scanamo" % "1.0.0-M12-1",
+        "org.scanamo" %% "scanamo" % scanamoVersion,
       ) ++ commonDeps,
   )
+
+lazy val lambda = (project in file("lambda"))
+  .settings(
+    name := "core",
+    libraryDependencies ++=
+      Seq(
+        "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
+        "com.amazonaws" % "aws-lambda-java-core" % "1.2.0",
+        "com.amazonaws" % "aws-lambda-java-events" % "2.2.7",
+      ) ++ commonDeps,
+  )
+  .dependsOn(core)
 
 lazy val integration = (project in file("integration"))
   .settings(
     name := "integration",
     libraryDependencies ++=
       Seq(
-        "org.scanamo" %% "scanamo-testkit" % "1.0.0-M12-1" % Test,
-        "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.762" % Test,
+        "org.scanamo" %% "scanamo-testkit" % scanamoVersion % Test,
+        "com.amazonaws" % "aws-java-sdk-dynamodb" % awsJavaSdkVersion % Test,
       ) ++ commonDeps,
     // start DynamoDB for tests
     dynamoDBLocalDownloadDir := file(".dynamodb-local"),
@@ -46,8 +58,8 @@ lazy val integration = (project in file("integration"))
     testOnly in Test := (testOnly in Test).dependsOn(startDynamoDBLocal).evaluated,
     testOptions in Test += dynamoDBLocalTestCleanup.value,
   )
-  .dependsOn(api % "compile->compile;test->test")
-  .aggregate(api)
+  .dependsOn(core % "compile->compile;test->test")
+  .aggregate(core)
 
 lazy val devServer = (project in file("devserver"))
   .settings(
@@ -57,8 +69,8 @@ lazy val devServer = (project in file("devserver"))
           "io.javalin" % "javalin" % "3.6.0",
           "org.slf4j" % "slf4j-simple" % "1.8.0-beta4",
           "org.slf4j" % "slf4j-api" % "1.8.0-beta4",
-          "org.scanamo" %% "scanamo-testkit" % "1.0.0-M12-1",
-          "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.762",
+          "org.scanamo" %% "scanamo-testkit" % scanamoVersion,
+          "com.amazonaws" % "aws-java-sdk-dynamodb" % awsJavaSdkVersion,
         ) ++ commonDeps,
     fork in run := true,
     connectInput in run := true,
@@ -69,6 +81,10 @@ lazy val devServer = (project in file("devserver"))
     startDynamoDBLocal := startDynamoDBLocal.dependsOn(compile in Compile).value,
     (run in Compile) := (run in Compile).dependsOn(startDynamoDBLocal).evaluated,
   )
-  .dependsOn(api)
+  .dependsOn(core)
+
+lazy val cli = (project in file("cli"))
+  .settings()
+  .dependsOn(core)
 
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.

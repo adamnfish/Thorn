@@ -8,7 +8,7 @@ import java.time.ZonedDateTime
  */
 
 case class Game(
-  gameId: String,
+  gameId: GameId,
   players: List[Player],
   round: Option[Round],
   started: Boolean,
