@@ -1,17 +1,20 @@
 package com.adamnfish.skull
 
 import com.adamnfish.skull.models.{Context, PlayerAddress}
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 import io.javalin.Javalin
 import org.scanamo.LocalDynamoDB
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 
 object DevServer {
   val messaging = new DevMessaging
   val client = LocalDynamoDB.client()
+  LocalDynamoDB.createTable(client)("games")("gameId" -> S)
+  LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
 
   def main(args: Array[String]): Unit = {
     val app = Javalin.create()

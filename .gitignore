@@ -1,4 +1,5 @@
 .idea
+.dynamodb-local/
 
 # Created by https://www.gitignore.io/api/elm,sbt,scala,emacs,intellij
 # Edit at https://www.gitignore.io/?templates=elm,sbt,scala,emacs,intellij
