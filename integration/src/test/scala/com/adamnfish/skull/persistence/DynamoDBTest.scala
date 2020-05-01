@@ -9,25 +9,24 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scanamo.LocalDynamoDB
 
-import scala.concurrent.ExecutionContext.Implicits.global
 
-
-class DatabaseTest extends AnyFreeSpec with AttemptValues with OptionValues {
+class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
 
   val client = LocalDynamoDB.client()
   LocalDynamoDB.createTable(client)("games")("gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
+  val db = new DynamoDB(client)
 
   "games table" - {
     "round trips correctly" in {
       val gameDb = GameDB(
-        "game-id", List("player-1", "player-2"), true,
+        "game-id", "game-name", List("player-1", "player-2"), true,
         ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC")),
         "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2)
       )
 
-      Database.writeGame(gameDb, client).isSuccessfulAttempt()
-      val result = Database.getGame(GameId(gameDb.gameId), client).value()
+      db.writeGame(gameDb).isSuccessfulAttempt()
+      val result = db.getGame(GameId(gameDb.gameId)).value()
       result.value shouldEqual gameDb
     }
   }
@@ -43,9 +42,9 @@ class DatabaseTest extends AnyFreeSpec with AttemptValues with OptionValues {
         0, List("rose"), None, Some(false)
       )
 
-      Database.writePlayer(playerDb1, client).isSuccessfulAttempt()
-      Database.writePlayer(playerDb2, client).isSuccessfulAttempt()
-      val result = Database.getPlayers(GameId("game-id"), client).value()
+      db.writePlayer(playerDb1).isSuccessfulAttempt()
+      db.writePlayer(playerDb2).isSuccessfulAttempt()
+      val result = db.getPlayers(GameId("game-id")).value()
       result shouldEqual List(playerDb1, playerDb2)
     }
   }

@@ -10,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 
 class GamesTest extends AnyFreeSpec with Matchers {
   "newGame" - {
+    val gameName = "game-name"
     val creator = Player(
       screenName = "screen-name",
       playerId = PlayerId("id"),
@@ -19,26 +20,30 @@ class GamesTest extends AnyFreeSpec with Matchers {
     )
 
     "sets a random game id" in {
-      val firstId = newGame(creator)
-      val secondId = newGame(creator)
+      val firstId = newGame(gameName, creator)
+      val secondId = newGame(gameName, creator)
       firstId should not equal secondId
     }
 
     "sets started to false" in {
-      newGame(creator).started shouldEqual false
+      newGame(gameName, creator).started shouldEqual false
     }
 
     "sets round to None" in {
-      newGame(creator).round shouldEqual None
+      newGame(gameName, creator).round shouldEqual None
+    }
+
+    "uses provided game name" in {
+      newGame(gameName, creator).gameName shouldEqual gameName
     }
 
     "adds creator to game players" in {
-      newGame(creator).players shouldEqual List(creator)
+      newGame(gameName, creator).players shouldEqual Map(creator.playerId -> creator)
     }
 
     "start time is close enough to 'now' for testing purposes" in {
       val now = ZonedDateTime.now()
-      val startTime = newGame(creator).startTime
+      val startTime = newGame(gameName, creator).startTime
       val notTooEarly = startTime.isAfter(now.minusSeconds(10))
       val notTooLate = startTime.isBefore(now.plusSeconds(10))
       notTooEarly shouldEqual true

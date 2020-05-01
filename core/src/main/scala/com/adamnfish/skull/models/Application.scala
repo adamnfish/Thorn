@@ -1,8 +1,11 @@
 package com.adamnfish.skull.models
 
+import com.adamnfish.skull.persistence.Database
+
 
 case class Context(
-  playerAddress: PlayerAddress
+  playerAddress: PlayerAddress,
+  db: Database,
 )
 
 case class Response[S <: Message](

@@ -6,9 +6,12 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.global
 
 
 trait AttemptValues extends EitherValues with Matchers {
+  implicit val ec: ExecutionContext = global
+
   implicit class RichAttempt[A](attempt: Attempt[A]) {
     def value()(implicit ec: ExecutionContext): A = {
       val result = Await.result(attempt.asFuture, 5.seconds)

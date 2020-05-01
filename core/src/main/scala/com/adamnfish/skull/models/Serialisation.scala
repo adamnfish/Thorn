@@ -1,6 +1,7 @@
 package com.adamnfish.skull.models
 
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
+import com.adamnfish.skull.logic.Representations
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe._
 import io.circe.syntax._
@@ -70,19 +71,11 @@ object Serialisation {
   }
 
   // GAME TYPES
-  private implicit val discEncoder: Encoder[Disc] = Encoder.encodeString.contramap[Disc] {
-    case Skull =>
-      "skull"
-    case Rose =>
-      "rose"
+  private implicit val discEncoder: Encoder[Disc] = Encoder.encodeString.contramap[Disc] { disc =>
+    Representations.discString(disc)
   }
-  private implicit val discDecoder: Decoder[Disc] = Decoder.decodeString.emap[Disc] {
-    case "skull" =>
-      Right(Skull)
-    case "rose" =>
-      Right(Rose)
-    case disc =>
-      Left(s"Invalid disc $disc, expected `skull` or `rose`")
+  private implicit val discDecoder: Decoder[Disc] = Decoder.decodeString.emap[Disc] { discStr =>
+    Representations.discFromString(discStr).left.map(_.friendlyMessage)
   }
 
 

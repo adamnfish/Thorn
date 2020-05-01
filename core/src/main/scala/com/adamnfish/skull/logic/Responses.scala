@@ -18,4 +18,11 @@ object Responses {
       Map.empty
     )
   }
+
+  def justRespond[A <: Message](msg: A): Response[A] = {
+    Response(
+      Some(msg),
+      Map.empty
+    )
+  }
 }

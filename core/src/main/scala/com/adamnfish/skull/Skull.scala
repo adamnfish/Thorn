@@ -1,7 +1,7 @@
 package com.adamnfish.skull
 
 import com.adamnfish.skull.attempt.Attempt
-import com.adamnfish.skull.logic.Responses
+import com.adamnfish.skull.logic.{Games, Players, Representations, Responses}
 import com.adamnfish.skull.models._
 import com.adamnfish.skull.validation.Validation.validate
 
@@ -52,8 +52,15 @@ object Skull {
 
   def createGame(request: CreateGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
     for {
-      _ <- Attempt.unit
-    } yield Responses.tbd[Welcome]
+      _ <- validate(request)
+      creator = Players.newPlayer(request.screenName, context.playerAddress)
+      game = Games.newGame(request.gameName, creator)
+      gameDb = Representations.gameForDb(game)
+      creatorDb = Representations.playerForDb(game, creator)
+      _ <- context.db.writeGame(gameDb)
+      _ <- context.db.writePlayer(creatorDb)
+      msg = Welcome(creator.playerKey, creator.playerId, game.gameId)
+    } yield Responses.justRespond(msg)
   }
 
   def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {

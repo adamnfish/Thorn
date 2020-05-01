@@ -8,7 +8,9 @@ val circeVersion = "0.12.3"
 val scanamoVersion = "1.0.0-M12-1"
 val awsJavaSdkVersion = "1.11.762"
 val commonDeps = Seq(
-  "org.scalatest" %% "scalatest" % "3.1.1" % Test
+  "org.scalatest" %% "scalatest" % "3.1.1" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
+  "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test,
 )
 
 lazy val root = (project in file("."))

@@ -11,6 +11,7 @@ import java.time.ZonedDateTime
 // Only updatable by a single player (creator or player on turn)
 case class GameDB(
   gameId: String,  // PK
+  gameName: String,
   playerIds: List[String],
   started: Boolean,
   startTime: ZonedDateTime,
@@ -26,7 +27,7 @@ case class PlayerDB(
   playerKey: String,
   playerAddress: String,
   screenName: String,
-  successes: Int,
+  score: Int,
   discs: List[String],
   bid: Option[Int],
   passed: Option[Boolean],

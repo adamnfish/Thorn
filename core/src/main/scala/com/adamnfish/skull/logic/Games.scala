@@ -7,11 +7,12 @@ import java.util.UUID.randomUUID
 
 
 object Games {
-  def newGame(creator: Player): Game = {
+  def newGame(gameName: String, creator: Player): Game = {
     val id = randomUUID().toString
     Game(
       gameId = GameId(id),
-      players = List(creator),
+      gameName = gameName,
+      players = Map(creator.playerId -> creator),
       round = None,
       started = false,
       startTime = ZonedDateTime.now()

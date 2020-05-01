@@ -6,8 +6,8 @@ import java.util.UUID.randomUUID
 
 object Players {
   def newPlayer(screenName: String, address: PlayerAddress): Player = {
-    val key = randomUUID().toString
     val id = randomUUID().toString
+    val key = randomUUID().toString
     Player(
       screenName = screenName,
       playerId = PlayerId(id),

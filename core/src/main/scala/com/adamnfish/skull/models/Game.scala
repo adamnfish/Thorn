@@ -9,7 +9,8 @@ import java.time.ZonedDateTime
 
 case class Game(
   gameId: GameId,
-  players: List[Player],
+  gameName: String,
+  players: Map[PlayerId, Player],
   round: Option[Round],
   started: Boolean,
   startTime: ZonedDateTime
@@ -21,12 +22,13 @@ case class Player(
   playerKey: PlayerKey,
   playerAddress: PlayerAddress,
   score: Int,
+  // TODO: consider adding victories to track wins across restarts?
 )
 
 trait Round
 case class InitialDiscs(
   firstPlayer: PlayerId,
-  initialDiscs: Map[PlayerId, Disc]
+  initialDiscs: Map[PlayerId, List[Disc]]
 ) extends Round
 case class Placing(
   activePlayer: PlayerId,
@@ -41,7 +43,7 @@ case class Bidding(
 case class Flipping(
   activePlayer: PlayerId,
   discs: Map[PlayerId, List[Disc]],
-  revealed: Map[PlayerId, List[Disc]],
+  revealed: Map[PlayerId, List[Disc]],  // TODO: or just Int here? Think about use cases.
 ) extends Round
 case class Finished(
   activePlayer: PlayerId,

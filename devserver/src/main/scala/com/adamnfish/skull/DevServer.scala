@@ -1,6 +1,7 @@
 package com.adamnfish.skull
 
 import com.adamnfish.skull.models.{Context, PlayerAddress}
+import com.adamnfish.skull.persistence.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 import io.javalin.Javalin
 import org.scanamo.LocalDynamoDB
@@ -13,6 +14,7 @@ import scala.concurrent.duration._
 object DevServer {
   val messaging = new DevMessaging
   val client = LocalDynamoDB.client()
+  val db = new DynamoDB(client)
   LocalDynamoDB.createTable(client)("games")("gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
 
@@ -31,7 +33,7 @@ object DevServer {
       ws.onMessage { wctx =>
         // TODO: consider whether errors are sent as messages or responses?
         // (start with messages for simplicity, change to response in the future to save $$)
-        val context = Context(PlayerAddress(wctx.getSessionId))
+        val context = Context(PlayerAddress(wctx.getSessionId), db)
         val result = Skull.main(wctx.message, context, messaging).tapFailure { failure =>
           println(s"[ERROR] ${failure.logString}")
         }

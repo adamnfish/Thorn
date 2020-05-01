@@ -7,6 +7,7 @@ package com.adamnfish.skull.models
 
 case class GameSummary(
   gameId: GameId,
+  gameName: String,
   players: List[PlayerSummary],
   round: Option[RoundSummary],
 )
@@ -24,10 +25,10 @@ case class SelfSummary(
   discs: Option[List[Disc]]
 )
 
-trait RoundSummary
+trait RoundSummary extends Product
 case class InitialDiscsSummary(
   activePlayer: PlayerId,
-  initialDiscs: Map[String, Disc]
+  initialDiscs: Map[PlayerId, Int]
 ) extends RoundSummary
 case class PlacingSummary(
   activePlayer: PlayerId,
@@ -59,39 +60,46 @@ case class CreateGame(
   gameName: String,
 ) extends Request
 case class JoinGame(
-  gameId: GameId,
+  gameCode: String,
   screenName: String,
 ) extends Request
 case class NewRound(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
 ) extends Request
 case class StartRound(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
 ) extends Request
 case class PlaceDisc(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
   disc: Disc,
 ) extends Request
 case class Bid(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
   count: Int,
 ) extends Request
 case class Pass(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
 ) extends Request
 case class Flip(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
   stack: PlayerId,
 ) extends Request
 case class Ping(
   gameId: GameId,
   playerId: PlayerId,
+  playerKey: PlayerKey,
 ) extends Request
 case class Wake(
 ) extends Request
