@@ -1,7 +1,7 @@
 package com.adamnfish.skull.validation
 
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
-import com.adamnfish.skull.models.{Bid, CreateGame, Flip, JoinGame, NewRound, Pass, Ping, PlaceDisc, StartRound}
+import com.adamnfish.skull.models.{Bid, CreateGame, Flip, JoinGame, NewRound, Pass, Ping, PlaceDisc, StartGame}
 import com.adamnfish.skull.validation.Validators._
 
 import scala.concurrent.ExecutionContext
@@ -26,11 +26,11 @@ object Validation {
       validate(joinGame.screenName, "screen name", sensibleLength)
   }
 
-  def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
+  def validate(startGame: StartGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
     ???
   }
 
-  def validate(startRound: StartRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
+  def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
     ???
   }
 

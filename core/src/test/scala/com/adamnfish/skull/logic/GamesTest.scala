@@ -4,11 +4,12 @@ import java.time.ZonedDateTime
 
 import org.scalatest.freespec.AnyFreeSpec
 import Games._
+import com.adamnfish.skull.AttemptValues
 import com.adamnfish.skull.models.{Player, PlayerAddress, PlayerId, PlayerKey}
 import org.scalatest.matchers.should.Matchers
 
 
-class GamesTest extends AnyFreeSpec with Matchers {
+class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
   "newGame" - {
     val gameName = "game-name"
     val creator = Player(
@@ -48,6 +49,26 @@ class GamesTest extends AnyFreeSpec with Matchers {
       val notTooLate = startTime.isBefore(now.plusSeconds(10))
       notTooEarly shouldEqual true
       notTooLate shouldEqual true
+    }
+  }
+
+  "ensureNotStarted" - {
+    val game = newGame(
+      "test",
+      Players.newPlayer("player", PlayerAddress("address"))
+    )
+
+    "success if the game has not started" in {
+      game.copy(started = false)
+      ensureNotStarted(
+        game.copy(started = false)
+      ).isSuccessfulAttempt() shouldEqual true
+    }
+
+    "failure if the game has already started" in {
+      ensureNotStarted(
+        game.copy(started = true)
+      ).isFailedAttempt() shouldEqual true
     }
   }
 }

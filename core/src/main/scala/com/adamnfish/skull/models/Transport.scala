@@ -73,11 +73,6 @@ case class NewRound(
   playerId: PlayerId,
   playerKey: PlayerKey,
 ) extends Request
-case class StartRound(
-  gameId: GameId,
-  playerId: PlayerId,
-  playerKey: PlayerKey,
-) extends Request
 case class PlaceDisc(
   gameId: GameId,
   playerId: PlayerId,

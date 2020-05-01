@@ -15,7 +15,7 @@ object DevServer {
   val messaging = new DevMessaging
   val client = LocalDynamoDB.client()
   val db = new DynamoDB(client)
-  LocalDynamoDB.createTable(client)("games")("gameId" -> S)
+  LocalDynamoDB.createTable(client)("games")("gameCode" -> S, "gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
 
   def main(args: Array[String]): Unit = {
@@ -33,8 +33,8 @@ object DevServer {
       ws.onMessage { wctx =>
         // TODO: consider whether errors are sent as messages or responses?
         // (start with messages for simplicity, change to response in the future to save $$)
-        val context = Context(PlayerAddress(wctx.getSessionId), db)
-        val result = Skull.main(wctx.message, context, messaging).tapFailure { failure =>
+        val context = Context(PlayerAddress(wctx.getSessionId), db, messaging)
+        val result = Skull.main(wctx.message, context).tapFailure { failure =>
           println(s"[ERROR] ${failure.logString}")
         }
         Await.result(result.asFuture, 10.seconds)
