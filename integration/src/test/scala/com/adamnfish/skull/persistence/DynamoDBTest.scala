@@ -3,6 +3,7 @@ package com.adamnfish.skull.persistence
 import java.time.{ZoneId, ZonedDateTime}
 
 import com.adamnfish.skull.AttemptValues
+import com.adamnfish.skull.logic.Games
 import com.adamnfish.skull.models.{GameDB, GameId, PlayerDB}
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 import org.scalatest.OptionValues
@@ -13,20 +14,28 @@ import org.scanamo.LocalDynamoDB
 class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
 
   val client = LocalDynamoDB.client()
-  LocalDynamoDB.createTable(client)("games")("gameId" -> S)
+  LocalDynamoDB.createTable(client)("games")("gameCode" -> S, "gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
   val db = new DynamoDB(client)
 
   "games table" - {
-    "round trips correctly" in {
-      val gameDb = GameDB(
-        "game-id", "game-name", List("player-1", "player-2"), true,
-        ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC")),
-        "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2)
-      )
+    val gameId = "game-id"
+    val gameCode = Games.gameCode(GameId(gameId))
+    val gameDb = GameDB(
+      gameCode, gameId, "game-name", List("player-1", "player-2"), true,
+      ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC")),
+      "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2)
+    )
 
+    "round trips correctly by game ID" in {
       db.writeGame(gameDb).isSuccessfulAttempt()
       val result = db.getGame(GameId(gameDb.gameId)).value()
+      result.value shouldEqual gameDb
+    }
+
+    "round trips correctly by game code" in {
+      db.writeGame(gameDb).isSuccessfulAttempt()
+      val result = db.lookupGame(gameCode).value()
       result.value shouldEqual gameDb
     }
   }

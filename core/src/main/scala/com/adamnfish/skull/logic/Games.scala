@@ -18,4 +18,8 @@ object Games {
       startTime = ZonedDateTime.now()
     )
   }
+
+  def gameCode(gameId: GameId): String = {
+    gameId.gid.take(4)
+  }
 }

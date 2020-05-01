@@ -106,6 +106,7 @@ object Serialisation {
   // REQUESTS
   private implicit val createGameDecoder: Decoder[CreateGame] = deriveDecoder[CreateGame]
   private implicit val joinGameDecoder: Decoder[JoinGame] = deriveDecoder[JoinGame]
+  private implicit val startGameDecoder: Decoder[StartGame] = deriveDecoder[StartGame]
   private implicit val newRoundDecoder: Decoder[NewRound] = deriveDecoder[NewRound]
   private implicit val startRoundDecoder: Decoder[StartRound] = deriveDecoder[StartRound]
   private implicit val placeDiscDecoder: Decoder[PlaceDisc] = deriveDecoder[PlaceDisc]
@@ -119,6 +120,7 @@ object Serialisation {
     c.downField("operation").as[String].flatMap {
       case "create-game" => c.as[CreateGame]
       case "join-game" => c.as[JoinGame]
+      case "start-game" => c.as[StartGame]
       case "new-round" => c.as[NewRound]
       case "start-round" => c.as[StartRound]
       case "place-disc" => c.as[PlaceDisc]

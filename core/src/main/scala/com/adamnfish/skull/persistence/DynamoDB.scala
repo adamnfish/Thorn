@@ -1,11 +1,13 @@
 package com.adamnfish.skull.persistence
 
 import com.adamnfish.skull.attempt.{Attempt, Failure}
+import com.adamnfish.skull.logic.Games
 import com.adamnfish.skull.models.{GameDB, GameId, PlayerDB}
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync
 import org.scanamo._
 import org.scanamo.syntax._
 import org.scanamo.generic.auto._
+import org.scanamo.query.BeginsWith
 
 import scala.concurrent.ExecutionContext
 
@@ -17,9 +19,49 @@ class DynamoDB(client: AmazonDynamoDBAsync) extends Database {
   private val games = Table[GameDB]("games")
   private val players = Table[PlayerDB]("players")
 
+  // TODO: consider whether this should just derive a gameCode and call lookup
   override def getGame(gameId: GameId)(implicit ec:ExecutionContext): Attempt[Option[GameDB]] = {
+    val gameCode = Games.gameCode(gameId)
     for {
-      maybeResult <- execAsAttempt(games.get("gameId" -> gameId.gid))
+      maybeResult <- execAsAttempt(games.get("gameCode" -> gameCode and "gameId" -> gameId.gid))
+//      maybeResult <- results match {
+//        case Nil =>
+//          Attempt.Right(None)
+//        case result :: Nil =>
+//          Attempt.Right(Some(result))
+//        case _ =>
+//          Attempt.Left(
+//            Failure(
+//              s"Multiple games found for id `${gameId.gid}`",
+//              "Couldn't find a game for that code",
+//              409
+//            )
+//          )
+//      }
+      maybeGameDb <- maybeResult.fold[Attempt[Option[GameDB]]](Attempt.Right(None)) { result =>
+        resultToAttempt(result).map(Some(_))
+      }
+    } yield maybeGameDb
+  }
+
+
+  override def lookupGame(gameCode: String)(implicit ec: ExecutionContext): Attempt[Option[GameDB]] = {
+    for {
+      results <- execAsAttempt(games.query("gameCode" -> gameCode and ("gameId" beginsWith gameCode)))
+      maybeResult <- results match {
+        case Nil =>
+          Attempt.Right(None)
+        case result :: Nil =>
+          Attempt.Right(Some(result))
+        case _ =>
+          Attempt.Left(
+            Failure(
+              s"Multiple games found for code `$gameCode`",
+              "Couldn't find a game for that code",
+              409
+            )
+          )
+      }
       maybeGameDb <- maybeResult.fold[Attempt[Option[GameDB]]](Attempt.Right(None)) { result =>
         resultToAttempt(result).map(Some(_))
       }
@@ -61,6 +103,4 @@ class DynamoDB(client: AmazonDynamoDBAsync) extends Database {
       }
     }
   }
-//  private implicit val gameDBFormat: DynamoFormat[GameDB] = deriveDynamoFormat[GameDB]
-//  private implicit val playerDBFormat: DynamoFormat[PlayerDB] = deriveDynamoFormat[PlayerDB]
 }

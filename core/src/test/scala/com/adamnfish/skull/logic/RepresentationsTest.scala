@@ -5,16 +5,16 @@ import java.time.ZonedDateTime
 import com.adamnfish.skull.models.{Bidding, BiddingSummary, Disc, Finished, FinishedSummary, Flipping, FlippingSummary, Game, GameDB, GameId, InitialDiscs, InitialDiscsSummary, Placing, PlacingSummary, Player, PlayerAddress, PlayerDB, PlayerId, PlayerKey, Rose, Skull}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.HavePropertyMatcher
 import Representations._
 import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalacheck.Arbitrary._
 import org.scalatest.OptionValues
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import org.scalacheck.Gen
 
 
-class RepresentationsTest extends AnyFreeSpec with Matchers with OptionValues with AttemptValues with TestHelpers with ScalaCheckDrivenPropertyChecks {
+class RepresentationsTest
+  extends AnyFreeSpec with Matchers with OptionValues with AttemptValues
+    with TestHelpers with ScalaCheckDrivenPropertyChecks {
   val now = ZonedDateTime.now()
   val game = Game(
     GameId("id"),
@@ -37,6 +37,17 @@ class RepresentationsTest extends AnyFreeSpec with Matchers with OptionValues wi
         gameForDb(
           game.copy(gameId = GameId(id))
         ).gameId shouldEqual id
+      }
+    }
+
+    "uses game's game id to generate the game code" in {
+      forAll { (id: String) =>
+        whenever(id.length >=4) {
+          val gameCode = gameForDb(
+            game.copy(gameId = GameId(id))
+          ).gameCode
+          id should startWith(gameCode)
+        }
       }
     }
 
@@ -544,6 +555,7 @@ class RepresentationsTest extends AnyFreeSpec with Matchers with OptionValues wi
     )
     val playerDBs = List(player1, player2)
     val gameDb = GameDB(
+      gameCode = "code",
       gameId = "game-id",
       gameName = "game name",
       playerIds = List(player1.playerId, player2.playerId),
@@ -555,11 +567,21 @@ class RepresentationsTest extends AnyFreeSpec with Matchers with OptionValues wi
     )
 
     "uses gameDB's game ID" in {
-      dbToGame(gameDb, playerDBs).value().gameId.gid shouldEqual gameDb.gameId
+      forAll { (gameId: String) =>
+        dbToGame(
+          gameDb.copy(gameId = gameId),
+          playerDBs
+        ).value().gameId.gid shouldEqual gameId
+      }
     }
 
     "uses gameDB's game name" in {
-      dbToGame(gameDb, playerDBs).value().gameName shouldEqual gameDb.gameName
+      forAll { (gameName: String) =>
+        dbToGame(
+          gameDb.copy(gameName = gameName),
+          playerDBs
+        ).value().gameName shouldEqual gameName
+      }
     }
 
     "uses gameDB's started value" in {

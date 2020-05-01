@@ -63,6 +63,11 @@ case class JoinGame(
   gameCode: String,
   screenName: String,
 ) extends Request
+case class StartGame(
+  gameId: GameId,
+  playerId: PlayerId,
+  playerKey: PlayerKey,
+) extends Request
 case class NewRound(
   gameId: GameId,
   playerId: PlayerId,

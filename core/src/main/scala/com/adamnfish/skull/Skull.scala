@@ -19,6 +19,8 @@ object Skull {
           joinGame(request, context)
         case request: NewRound =>
           newRound(request, context)
+        case request: StartGame =>
+          startGame(request, context)
         case request: StartRound =>
           startRound(request, context)
         case request: PlaceDisc =>
@@ -59,14 +61,26 @@ object Skull {
       creatorDb = Representations.playerForDb(game, creator)
       _ <- context.db.writeGame(gameDb)
       _ <- context.db.writePlayer(creatorDb)
-      msg = Welcome(creator.playerKey, creator.playerId, game.gameId)
-    } yield Responses.justRespond(msg)
+      welcome = Welcome(creator.playerKey, creator.playerId, game.gameId)
+    } yield Responses.justRespond(welcome)
   }
 
   def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
+      // lookup game from code
+      // check game hasn't started?
+      // get players
+      // check player is not already in the game
+      // create new player
+      // save player
     } yield Responses.tbd[Welcome]
+  }
+
+  def startGame(request: StartGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    for {
+      _ <- Attempt.unit
+    } yield Responses.tbd[GameStatus]
   }
 
   def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {

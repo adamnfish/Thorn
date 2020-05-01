@@ -11,6 +11,7 @@ object Representations {
 
   def gameForDb(game: Game): GameDB = {
     GameDB(
+      gameCode = Games.gameCode(game.gameId),
       gameId = game.gameId.gid,
       gameName = game.gameName,
       playerIds = game.players.values.map(_.playerId.pid).toList,

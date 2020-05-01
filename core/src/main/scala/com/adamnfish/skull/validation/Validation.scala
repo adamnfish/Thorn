@@ -17,14 +17,13 @@ object Validation {
   }
 
   def validate(createGame: CreateGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    validate(createGame.gameName, "game name", nonEmpty) |!|
-      validate(createGame.gameName, "game name", maxLength(25)) |!|
-      validate(createGame.screenName, "screen name", nonEmpty) |!|
-      validate(createGame.screenName, "screen name", maxLength(25))
+    validate(createGame.gameName, "game name", sensibleLength) |!|
+      validate(createGame.screenName, "screen name", sensibleLength)
   }
 
   def validate(joinGame: JoinGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(joinGame.gameCode, "game code", gameCode) |!|
+      validate(joinGame.screenName, "screen name", sensibleLength)
   }
 
   def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {

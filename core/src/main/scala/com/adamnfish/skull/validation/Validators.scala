@@ -1,6 +1,6 @@
 package com.adamnfish.skull.validation
 
-import com.adamnfish.skull.attempt.{Attempt, Failure}
+import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
 import com.adamnfish.skull.models.CreateGame
 import com.adamnfish.skull.validation.Validation.Validator
 
@@ -34,7 +34,7 @@ object Validators {
    * Game codes are a case-insensitive UUID prefix
    */
   val gameCode: Validator[String] = { (str, context) =>
-    val wasEmpty = nonEmpty(str, context).headOption
+    val wasTooShort = minLength(4)(str, context).headOption
     val ValidChar = "([0-9a-fA-F\\-])".r
     val valid = str.zipWithIndex.forall {
       case (ValidChar(c), i) =>
@@ -47,7 +47,7 @@ object Validators {
     val wasUUIDPrefix =
       if (valid) None
       else Some(Failure(s"$str is not a UUID prefix", "Invalid game code", 400, Some(context)))
-    wasEmpty.orElse(wasUUIDPrefix).toList
+    wasTooShort.orElse(wasUUIDPrefix).toList
   }
 
   def minLength(min: Int): Validator[String] = { (str, context) =>
@@ -64,5 +64,9 @@ object Validators {
         Failure("Failed max length", s"$context must be no more than $max characters", 400, Some(context))
       )
     else Nil
+  }
+
+  def sensibleLength: Validator[String] = { (str, context) =>
+    nonEmpty(str, context) ++ maxLength(50)(str, context)
   }
 }
