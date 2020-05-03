@@ -4,7 +4,6 @@ Notes
 ## Goals
 
 + implement API calls
-    + startGame
     + newRound
     + placeDisc
     + bid
@@ -25,4 +24,3 @@ Notes
 
 + JoinGame improvements
     + check for duplicate screen name
-    + check for existing connections on that address
