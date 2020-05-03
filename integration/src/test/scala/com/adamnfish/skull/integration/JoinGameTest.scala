@@ -15,7 +15,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     val creatorAddress = PlayerAddress("creator-address")
 
     "is successful" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -31,7 +31,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "allows a second player to join" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -53,7 +53,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "doesn't send any other messages out" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -69,7 +69,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "returns a correct welcome message" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -85,7 +85,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "persists the new player to the database" in {
-      withTestContext { context =>
+      withTestContext { (context, db) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -98,7 +98,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
           context(player2Address)
         ).value().response.value
 
-        val playerDb = context(creatorAddress).db.getPlayers(welcomeMessage.gameId).value()
+        val playerDb = db.getPlayers(welcomeMessage.gameId).value()
           .find(_.playerId == welcomeMessage.playerId.pid).value
         playerDb should have(
           "playerKey" as welcomeMessage.playerKey.key,

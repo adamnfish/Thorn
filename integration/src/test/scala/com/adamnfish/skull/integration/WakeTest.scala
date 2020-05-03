@@ -13,7 +13,7 @@ class WakeTest extends AnyFreeSpec with AttemptValues with OptionValues
     val wakeRequest = Wake()
 
     "is successful" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val response = wake(
           wakeRequest,
           context("player-address".address)

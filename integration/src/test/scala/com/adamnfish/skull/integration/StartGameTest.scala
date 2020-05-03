@@ -15,7 +15,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     val creatorAddress = PlayerAddress("creator-address")
 
     "is successful" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -37,7 +37,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "sends a game summary to every player" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -64,7 +64,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "doesn't return a response message" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -87,7 +87,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "persists the game updates to the database" in {
-      withTestContext { context =>
+      withTestContext { (context, db) =>
         val creatorWelcome = createGame(
           createGameRequest,
           context(creatorAddress)
@@ -107,7 +107,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         ).value()
         response.response shouldEqual None
 
-        val gameDb = context(creatorAddress).db.getGame(creatorWelcome.gameId).value().value
+        val gameDb = db.getGame(creatorWelcome.gameId).value().value
         gameDb.started shouldEqual true
         gameDb.playerIds.toSet shouldEqual Set(creatorWelcome.playerId.pid, joinWelcome.playerId.pid)
       }

@@ -15,7 +15,7 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
   "for a valid request" - {
     "is successful" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         createGame(
           validRequest,
           context(creatorAddress)
@@ -24,7 +24,7 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "doesn't send any other messages out" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val response = createGame(
           validRequest,
           context(creatorAddress)
@@ -34,7 +34,7 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "returns a correct welcome message" in {
-      withTestContext { context =>
+      withTestContext { (context, _) =>
         val response = createGame(
           validRequest,
           context(creatorAddress)
@@ -44,25 +44,25 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "persists the saved game to the database" in {
-      withTestContext { context =>
+      withTestContext { (context, db) =>
         val response = createGame(
           validRequest,
           context(creatorAddress)
         ).value()
         val welcomeMessage = response.response.value
-        val gameDb = context(creatorAddress).db.getGame(welcomeMessage.gameId).value().value
+        val gameDb = db.getGame(welcomeMessage.gameId).value().value
         gameDb.gameId shouldEqual welcomeMessage.gameId.gid
       }
     }
 
     "persists the saved creator to the database" in {
-      withTestContext { context =>
+      withTestContext { (context, db) =>
         val response = createGame(
           validRequest,
           context(creatorAddress)
         ).value()
         val welcomeMessage = response.response.value
-        val creatorDb = context(creatorAddress).db.getPlayers(welcomeMessage.gameId).value().head
+        val creatorDb = db.getPlayers(welcomeMessage.gameId).value().head
         creatorDb should have(
           "playerKey" as welcomeMessage.playerKey.key,
           "playerId" as welcomeMessage.playerId.pid,
