@@ -1,8 +1,8 @@
 package com.adamnfish.skull.integration
 
-import com.adamnfish.skull.Skull.{createGame, joinGame}
+import com.adamnfish.skull.Skull.{createGame, joinGame, startGame}
 import com.adamnfish.skull.logic.Games
-import com.adamnfish.skull.models.{CreateGame, JoinGame, PlayerAddress}
+import com.adamnfish.skull.models.{CreateGame, JoinGame, PlayerAddress, StartGame}
 import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.{OneInstancePerTest, OptionValues}
@@ -137,6 +137,34 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         joinGame(
           JoinGame(code, createGameRequest.screenName),// re-use existing screen name
           context(player2Address)
+        ).isFailedAttempt()
+      }
+    }
+
+    "fails if the game has already started" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+
+        val player2Address = PlayerAddress("player-2-address")
+        joinGame(
+          JoinGame(code, "player screen name 2"),
+          context(player2Address)
+        ).value()
+
+        val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
+        startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).value()
+
+        val player3Address = PlayerAddress("player-3-address")
+        joinGame(
+          JoinGame(code, "player screen name 3"),
+          context(player3Address)
         ).isFailedAttempt()
       }
     }
