@@ -67,11 +67,6 @@ case class StartGame(
   playerId: PlayerId,
   playerKey: PlayerKey,
 ) extends Request
-case class NewRound(
-  gameId: GameId,
-  playerId: PlayerId,
-  playerKey: PlayerKey,
-) extends Request
 case class PlaceDisc(
   gameId: GameId,
   playerId: PlayerId,
@@ -94,6 +89,11 @@ case class Flip(
   playerId: PlayerId,
   playerKey: PlayerKey,
   stack: PlayerId,
+) extends Request
+case class NewRound(
+  gameId: GameId,
+  playerId: PlayerId,
+  playerKey: PlayerKey,
 ) extends Request
 case class Reconnect(
   gameId: GameId,

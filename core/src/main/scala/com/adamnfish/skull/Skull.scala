@@ -17,8 +17,6 @@ object Skull {
           createGame(request, context)
         case request: JoinGame =>
           joinGame(request, context)
-        case request: NewRound =>
-          newRound(request, context)
         case request: StartGame =>
           startGame(request, context)
         case request: PlaceDisc =>
@@ -29,6 +27,8 @@ object Skull {
           pass(request, context)
         case request: Flip =>
           flip(request, context)
+        case request: NewRound =>
+          newRound(request, context)
         case request: Reconnect =>
           reconnect(request, context)
         case request: Ping =>
@@ -113,18 +113,6 @@ object Skull {
     } yield response
   }
 
-  def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
-    for {
-      _ <- Attempt.unit
-      // validate request
-      // fetch the game and players
-      // check game state is finished
-      // reset the game round
-      // updates the players as well
-      // make messages for everyone
-    } yield Responses.tbd[GameStatus]
-  }
-
   def placeDisc(request: PlaceDisc, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
@@ -146,6 +134,18 @@ object Skull {
   def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
+    } yield Responses.tbd[GameStatus]
+  }
+
+  def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    for {
+      _ <- Attempt.unit
+      // validate request
+      // fetch the game and players
+      // check game state is finished
+      // reset the game round
+      // updates the players as well
+      // make messages for everyone
     } yield Responses.tbd[GameStatus]
   }
 
