@@ -29,6 +29,8 @@ object Skull {
           pass(request, context)
         case request: Flip =>
           flip(request, context)
+        case request: Reconnect =>
+          reconnect(request, context)
         case request: Ping =>
           ping(request, context)
         case request: Wake =>
@@ -101,6 +103,7 @@ object Skull {
       // TODO: Add creator to models so we can enforce it here
       // TODO: enforce minimum player count
       game <- Representations.dbToGame(gameDb, playerDbs)
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       startPlayer <- Players.startPlayer(game.players)
       newGame = Games.startGame(game, startPlayer)
       response <- Responses.gameStatuses(newGame)
@@ -141,6 +144,12 @@ object Skull {
   }
 
   def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    for {
+      _ <- Attempt.unit
+    } yield Responses.tbd[GameStatus]
+  }
+
+  def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- Attempt.unit
     } yield Responses.tbd[GameStatus]

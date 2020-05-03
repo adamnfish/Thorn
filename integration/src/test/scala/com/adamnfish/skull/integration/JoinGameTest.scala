@@ -10,10 +10,11 @@ import org.scalatest.{OneInstancePerTest, OptionValues}
 
 class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
-  "for a valid request" - {
-    val createGameRequest = CreateGame("screen name", "game name")
-    val creatorAddress = PlayerAddress("creator-address")
 
+  val createGameRequest = CreateGame("screen name", "game name")
+  val creatorAddress = PlayerAddress("creator-address")
+
+  "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>
         val creatorWelcome = createGame(
@@ -108,7 +109,23 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
   }
 
-  "for invalid cases" ignore {
+  "for invalid cases" - {
+    "fails if the player address is already in use" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+
+        joinGame(
+          JoinGame(code, "screen name"),
+          context(creatorAddress)  // re-use existing address
+        ).isFailedAttempt()
+      }
+    }
+
+    "more cases" ignore {}
     // TODO:
   }
 }

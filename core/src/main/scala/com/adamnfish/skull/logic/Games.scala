@@ -69,4 +69,27 @@ object Games {
     else
       Attempt.unit
   }
+
+  def ensurePlayerKey(game: Game, playerId: PlayerId, playerKey: PlayerKey): Attempt[Unit] = {
+    game.players.get(playerId).fold[Attempt[Unit]] {
+      Attempt.Left(
+        Failure(
+          "Couldn't validate key for player that doesn not exist",
+          "Couldn't find you in the game",
+          404
+        ).asAttempt
+      )
+    } { player =>
+      if (player.playerKey == playerKey)
+        Attempt.unit
+      else
+        Attempt.Left {
+          Failure(
+            "Invalid player key",
+            "Couldn't authenticate you for this game",
+            403
+          )
+        }
+    }
+  }
 }

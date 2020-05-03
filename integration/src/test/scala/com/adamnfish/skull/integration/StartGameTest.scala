@@ -2,7 +2,7 @@ package com.adamnfish.skull.integration
 
 import com.adamnfish.skull.Skull._
 import com.adamnfish.skull.logic.Games
-import com.adamnfish.skull.models.{CreateGame, JoinGame, PlayerAddress, StartGame}
+import com.adamnfish.skull.models.{CreateGame, JoinGame, PlayerAddress, PlayerKey, StartGame}
 import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.{OneInstancePerTest, OptionValues}
@@ -10,10 +10,11 @@ import org.scalatest.{OneInstancePerTest, OptionValues}
 
 class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
-  "for a valid request" - {
-    val createGameRequest = CreateGame("creator name", "game name")
-    val creatorAddress = PlayerAddress("creator-address")
 
+  val createGameRequest = CreateGame("creator name", "game name")
+  val creatorAddress = PlayerAddress("creator-address")
+
+  "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>
         val creatorWelcome = createGame(
@@ -114,7 +115,33 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
   }
 
-  "for invalid cases" ignore {
+  "for invalid cases" - {
+    "fails if the player key does not match" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+
+        val player2Address = PlayerAddress("player-2-address")
+        joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value()
+
+        val startGameRequest = StartGame(
+          creatorWelcome.gameId, creatorWelcome.playerId,
+          PlayerKey("INCORRECT KEY")
+        )
+        startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).isFailedAttempt()
+      }
+    }
+
+    "more cases" ignore {}
     // TODO:
   }
 }

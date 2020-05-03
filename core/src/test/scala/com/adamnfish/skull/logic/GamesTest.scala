@@ -108,4 +108,21 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
       ensureNotAlreadyPlaying(game, player2Address).isFailedAttempt()
     }
   }
+
+  "ensurePlayerKey" - {
+    val player = Players.newPlayer("player", PlayerAddress("address"))
+    val game = newGame("test game", player)
+
+    "succeeds if the player exists and key matches" in {
+      ensurePlayerKey(game, player.playerId, player.playerKey)
+    }
+
+    "fails if the player is not found" in {
+      ensurePlayerKey(game, PlayerId("different id"), player.playerKey)
+    }
+
+    "fails if the player key does not match" in {
+      ensurePlayerKey(game, player.playerId, PlayerKey("different key"))
+    }
+  }
 }

@@ -95,6 +95,11 @@ case class Flip(
   playerKey: PlayerKey,
   stack: PlayerId,
 ) extends Request
+case class Reconnect(
+  gameId: GameId,
+  playerId: PlayerId,
+  playerKey: PlayerKey,
+) extends Request
 case class Ping(
   gameId: GameId,
   playerId: PlayerId,
