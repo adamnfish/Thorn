@@ -83,7 +83,7 @@ object Skull {
       game <- Representations.dbToGame(gameDb, playerDbs)
       _ <- Games.ensureNotStarted(game)
       _ <- Games.ensureNotAlreadyPlaying(game, context.playerAddress)
-      // TODO: check if this screen name is already in use?
+      _ <- Games.ensureNoDuplicateScreenName(game, request.screenName)
       player = Players.newPlayer(request.screenName, context.playerAddress)
       welcome = Welcome(player.playerKey, player.playerId, game.gameId)
       // create and save new DB representations

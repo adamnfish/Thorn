@@ -109,6 +109,32 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
     }
   }
 
+  "ensureNoDuplicateScreenName" - {
+    "succeeds if the screen name is not already present in this game" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("test", creator)
+      ensureNoDuplicateScreenName(game, "different screen name").isSuccessfulAttempt()
+    }
+
+    "fails if the screen name is already in the game" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("test", creator)
+      ensureNoDuplicateScreenName(game, creator.screenName).isFailedAttempt()
+    }
+
+    "fails if the screen name is used by another (non-creator) player" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val player2 = Players.newPlayer("player 2", PlayerAddress("player-2-address"))
+      val game = newGame("test", creator).copy(
+        players = Map(
+          creator.playerId -> creator,
+          player2.playerId -> player2,
+        )
+      )
+      ensureNoDuplicateScreenName(game, player2.screenName).isFailedAttempt()
+    }
+  }
+
   "ensurePlayerKey" - {
     val player = Players.newPlayer("player", PlayerAddress("address"))
     val game = newGame("test game", player)

@@ -11,7 +11,7 @@ import org.scalatest.{OneInstancePerTest, OptionValues}
 class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
 
-  val createGameRequest = CreateGame("screen name", "game name")
+  val createGameRequest = CreateGame("creator name", "game name")
   val creatorAddress = PlayerAddress("creator-address")
 
   "for a valid request" - {
@@ -25,7 +25,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val player2Address = PlayerAddress("player-address-2")
         joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(player2Address)
         ).isSuccessfulAttempt()
       }
@@ -41,13 +41,13 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val player2Address = PlayerAddress("player-address-2")
         joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(player2Address)
         ).isSuccessfulAttempt()
 
         val player3Address = PlayerAddress("player-address-3")
         joinGame(
-          JoinGame(code, "screen name 2"),
+          JoinGame(code, "player screen name 2"),
           context(player3Address)
         ).isSuccessfulAttempt()
       }
@@ -63,7 +63,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val player2Address = PlayerAddress("player-address-2")
         joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(player2Address)
         ).value().messages shouldBe empty
       }
@@ -79,7 +79,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val player2Address = PlayerAddress("player-address-2")
         joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(player2Address)
         ).value().response.nonEmpty shouldEqual true
       }
@@ -95,7 +95,7 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val player2Address = PlayerAddress("player-address-2")
         val welcomeMessage = joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(player2Address)
         ).value().response.value
 
@@ -119,8 +119,24 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         val code = Games.gameCode(creatorWelcome.gameId)
 
         joinGame(
-          JoinGame(code, "screen name"),
+          JoinGame(code, "player screen name"),
           context(creatorAddress)  // re-use existing address
+        ).isFailedAttempt()
+      }
+    }
+
+    "fails if the player's screen name is already in use" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+
+        val player2Address = PlayerAddress("player-address-2")
+        joinGame(
+          JoinGame(code, createGameRequest.screenName),// re-use existing screen name
+          context(player2Address)
         ).isFailedAttempt()
       }
     }

@@ -70,6 +70,19 @@ object Games {
       Attempt.unit
   }
 
+  def ensureNoDuplicateScreenName(game: Game, screenName: String): Attempt[Unit] = {
+    if (game.players.values.exists(_.screenName == screenName))
+      Attempt.Left {
+        Failure(
+          "Duplicate screen name, joining game failed",
+          "Someone else already has the same name!",
+          400
+        )
+      }
+    else
+      Attempt.unit
+  }
+
   def ensurePlayerKey(game: Game, playerId: PlayerId, playerKey: PlayerKey): Attempt[Unit] = {
     game.players.get(playerId).fold[Attempt[Unit]] {
       Attempt.Left(
