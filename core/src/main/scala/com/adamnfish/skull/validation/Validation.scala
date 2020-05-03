@@ -32,23 +32,30 @@ object Validation {
       validate(startGame.playerKey.key, "player key", isUUID)
   }
 
-  def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
-  }
-
   def validate(placeDisc: PlaceDisc)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(placeDisc.gameId.gid, "game id", isUUID) |!|
+      validate(placeDisc.playerId.pid, "player id", isUUID) |!|
+      validate(placeDisc.playerKey.key, "player key", isUUID)
   }
 
   def validate(bid: Bid)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(bid.gameId.gid, "game id", isUUID) |!|
+      validate(bid.playerId.pid, "player id", isUUID) |!|
+      validate(bid.playerKey.key, "player key", isUUID) |!|
+      validate(bid.count, "count", positiveInteger)
   }
 
   def validate(pass: Pass)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(pass.gameId.gid, "game id", isUUID) |!|
+      validate(pass.playerId.pid, "player id", isUUID) |!|
+      validate(pass.playerKey.key, "player key", isUUID)
   }
 
   def validate(flip: Flip)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    ???
+  }
+
+  def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
     ???
   }
 
