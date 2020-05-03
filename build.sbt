@@ -1,7 +1,15 @@
-ThisBuild / scalaVersion     := "2.13.1"
+ThisBuild / scalaVersion     := "2.13.2"
 ThisBuild / version          := "0.1.0-SNAPSHOT"
-ThisBuild / organization     := "com.example"
-ThisBuild / organizationName := "example"
+ThisBuild / organization     := "com.adamnfish"
+ThisBuild / organizationName := "adamnfish"
+
+ThisBuild / scalacOptions ++= Seq(
+  "-deprecation",
+  "-Xfatal-warnings",
+  "-encoding", "UTF-8",
+  "-target:jvm-1.8",
+  "-Ywarn-dead-code"
+)
 
 
 val circeVersion = "0.12.3"
@@ -61,7 +69,6 @@ lazy val integration = (project in file("integration"))
     testOptions in Test += dynamoDBLocalTestCleanup.value,
   )
   .dependsOn(core % "compile->compile;test->test")
-  .aggregate(core)
 
 lazy val devServer = (project in file("devserver"))
   .settings(
