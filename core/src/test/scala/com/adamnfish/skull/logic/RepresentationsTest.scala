@@ -831,7 +831,7 @@ class RepresentationsTest
           )
         ),
         PlayerId("INVALID PLAYER ID")
-      ).isFailedAttempt() shouldEqual true
+      ).isFailedAttempt()
     }
 
     "sets GameStatus correctly" - {

@@ -1,7 +1,5 @@
 package com.adamnfish.skull
 
-import java.util.UUID
-
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
 import com.adamnfish.skull.models.{Message, PlayerAddress, Serialisation}
 import io.javalin.websocket.WsContext

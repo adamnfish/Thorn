@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 trait SkullIntegration {
   private val client = LocalDynamoDB.client()
 
-  def withTestContext(playerAddress: PlayerAddress)(f: (Context) => Any /* Assertion */): Any /* Assertion */ = {
+  def withTestContext(playerAddress: PlayerAddress)(f: Context => Any /* Assertion */): Any /* Assertion */ = {
     val randomSuffix = randomUUID().toString
     val testDb = new DynamoDB(client, Some(randomSuffix))
 
@@ -36,6 +36,10 @@ trait SkullIntegration {
         f(context)
       }
     }
+  }
+
+  def asAnotherPlayer[A](context: Context, playerAddress: PlayerAddress)(f: Context => A): A = {
+    f(context.copy(playerAddress = playerAddress))
   }
 
   implicit class RichAddressString(address: String) {

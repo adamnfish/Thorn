@@ -1,7 +1,7 @@
 package com.adamnfish.skull.logic
 
 import com.adamnfish.skull.attempt.{Attempt, Failure}
-import com.adamnfish.skull.models.{Bidding, BiddingSummary, Disc, Finished, FinishedSummary, Flipping, FlippingSummary, Game, GameDB, GameId, GameStatus, GameSummary, InitialDiscs, InitialDiscsSummary, Placing, PlacingSummary, Player, PlayerAddress, PlayerDB, PlayerId, PlayerKey, PlayerSummary, Rose, Round, SelfSummary, Skull}
+import com.adamnfish.skull.models._
 
 import scala.concurrent.ExecutionContext
 
@@ -35,6 +35,10 @@ object Representations {
       bid = game.round.flatMap(playerRoundBid(player.playerId)),
       passed = game.round.flatMap(playerRoundPassed(player.playerId)),
     )
+  }
+
+  def playersForDb(game: Game): List[PlayerDB] = {
+    game.players.values.map(playerForDb(game, _)).toList
   }
 
   // unpack DB data

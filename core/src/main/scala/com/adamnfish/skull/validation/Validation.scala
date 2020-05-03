@@ -27,7 +27,9 @@ object Validation {
   }
 
   def validate(startGame: StartGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(startGame.gameId.gid, "game id", isUUID) |!|
+      validate(startGame.playerId.pid, "player id", isUUID) |!|
+      validate(startGame.playerKey.key, "player key", isUUID)
   }
 
   def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {

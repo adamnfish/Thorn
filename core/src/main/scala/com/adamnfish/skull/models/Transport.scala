@@ -1,6 +1,5 @@
 package com.adamnfish.skull.models
 
-
 /*
  * Secrets-free versions of the game models for transmission
  */

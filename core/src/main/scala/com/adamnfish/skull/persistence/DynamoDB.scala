@@ -11,9 +11,11 @@ import org.scanamo.generic.auto._
 import scala.concurrent.ExecutionContext
 
 
+// suffix allows integration testing in parallel with random table names
+// can also be use to support multiple deployed environments
 class DynamoDB(client: AmazonDynamoDBAsync, suffix: Option[String] = None) extends Database {
-  // TODO: switch DB models to use PlayerId - provide
-  //  implicit to allow Scanamo to use those wrapper types
+  // TODO: switch DB models to use PlayerId?
+  //  provide implicit to allow Scanamo to use those wrapper types
 
   private val tableNameSuffix = suffix.fold("")(s => s"-$s")
 

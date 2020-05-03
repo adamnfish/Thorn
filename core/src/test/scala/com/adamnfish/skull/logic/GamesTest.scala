@@ -2,10 +2,10 @@ package com.adamnfish.skull.logic
 
 import java.time.ZonedDateTime
 
-import org.scalatest.freespec.AnyFreeSpec
-import Games._
 import com.adamnfish.skull.AttemptValues
+import com.adamnfish.skull.logic.Games._
 import com.adamnfish.skull.models.{Player, PlayerAddress, PlayerId, PlayerKey}
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 
@@ -59,16 +59,53 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
     )
 
     "success if the game has not started" in {
-      game.copy(started = false)
       ensureNotStarted(
         game.copy(started = false)
-      ).isSuccessfulAttempt() shouldEqual true
+      ).isSuccessfulAttempt()
     }
 
     "failure if the game has already started" in {
       ensureNotStarted(
         game.copy(started = true)
-      ).isFailedAttempt() shouldEqual true
+      ).isFailedAttempt()
+    }
+  }
+
+  "requireGame" - {
+    "fails if option is empty" in {
+      requireGame(None, "test").isFailedAttempt()
+    }
+
+    "succeeds if value is present" in {
+      requireGame(Some(1), "test").isSuccessfulAttempt()
+    }
+  }
+
+  "ensureNotAlreadyPlaying" - {
+    "succeeds if the player address is not already present in this game" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("test", creator)
+      ensureNotAlreadyPlaying(game, PlayerAddress("different address")).isSuccessfulAttempt()
+    }
+
+    "fails if the player address is already in the game" in {
+      val creatorAddress = PlayerAddress("creator-address")
+      val creator = Players.newPlayer("creator", creatorAddress)
+      val game = newGame("test", creator)
+      ensureNotAlreadyPlaying(game, creatorAddress).isFailedAttempt()
+    }
+
+    "fails if the player address is already in the game as another player" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val player2Address = PlayerAddress("player-2-address")
+      val player2 = Players.newPlayer("player 2", player2Address)
+      val game = newGame("test", creator).copy(
+        players = Map(
+          creator.playerId -> creator,
+          player2.playerId -> player2,
+        )
+      )
+      ensureNotAlreadyPlaying(game, player2Address).isFailedAttempt()
     }
   }
 }

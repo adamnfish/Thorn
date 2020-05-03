@@ -1,20 +1,21 @@
 package com.adamnfish.skull.integration
 
-import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import com.adamnfish.skull.Skull.createGame
 import com.adamnfish.skull.models.CreateGame
+import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
-  "for a valid request" - {
-    val validRequest = CreateGame("screen name", "game name")
 
+  val validRequest = CreateGame("screen name", "game name")
+
+  "for a valid request" - {
     "is successful" in {
       withTestContext("player-address".address) { context =>
-        createGame(validRequest, context).isSuccessfulAttempt() shouldEqual true
+        createGame(validRequest, context).isSuccessfulAttempt()
       }
     }
 
@@ -54,7 +55,8 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
   }
 
-  "for invalid cases" ignore {
-    // TODO:
+  "for invalid cases" - {
+    // TODO: more of these
+    "more cases" ignore {}
   }
 }

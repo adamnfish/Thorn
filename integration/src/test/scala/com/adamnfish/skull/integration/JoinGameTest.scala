@@ -17,10 +17,31 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext("player-address".address) { context =>
         val creatorWelcome = createGame(createGameRequest, context).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
-        joinGame(
-          JoinGame(code, "screen name"),
-          context
-        ).isSuccessfulAttempt() shouldEqual true
+        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
+          joinGame(
+            JoinGame(code, "screen name"),
+            player2Context
+          ).isSuccessfulAttempt()
+        }
+      }
+    }
+
+    "allows a second player to join" in {
+      withTestContext("player-address".address) { context =>
+        val creatorWelcome = createGame(createGameRequest, context).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
+          joinGame(
+            JoinGame(code, "screen name"),
+            player2Context
+          ).value()
+        }
+        asAnotherPlayer(context, PlayerAddress("player-address-3")) { player3Context =>
+          joinGame(
+            JoinGame(code, "screen name 2"),
+            player3Context
+          ).isSuccessfulAttempt()
+        }
       }
     }
 
@@ -28,10 +49,12 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext("player-address".address) { context =>
         val creatorWelcome = createGame(createGameRequest, context).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
-        joinGame(
-          JoinGame(code, "screen name"),
-          context
-        ).value().messages shouldBe empty
+        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
+          joinGame(
+            JoinGame(code, "screen name"),
+            player2Context
+          ).value().messages shouldBe empty
+        }
       }
     }
 
@@ -39,10 +62,12 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext("player-address".address) { context =>
         val creatorWelcome = createGame(createGameRequest, context).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
-        joinGame(
-          JoinGame(code, "screen name"),
-          context
-        ).value().response.nonEmpty shouldEqual true
+        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
+          joinGame(
+            JoinGame(code, "screen name"),
+            player2Context
+          ).value().response.nonEmpty shouldEqual true
+        }
       }
     }
 
@@ -50,16 +75,18 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext("player-address".address) { context =>
         val creatorWelcome = createGame(createGameRequest, context).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
-        val welcomeMessage = joinGame(
-          JoinGame(code, "screen name"),
-          context
-        ).value().response.value
-        val playerDb = context.db.getPlayers(welcomeMessage.gameId).value()
-          .find(_.playerId == welcomeMessage.playerId.pid).value
-        playerDb should have(
-          "playerKey" as welcomeMessage.playerKey.key,
-          "playerId" as welcomeMessage.playerId.pid,
-        )
+        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
+          val welcomeMessage = joinGame(
+            JoinGame(code, "screen name"),
+            player2Context
+          ).value().response.value
+          val playerDb = context.db.getPlayers(welcomeMessage.gameId).value()
+            .find(_.playerId == welcomeMessage.playerId.pid).value
+          playerDb should have(
+            "playerKey" as welcomeMessage.playerKey.key,
+            "playerId" as welcomeMessage.playerId.pid,
+          )
+        }
       }
     }
   }

@@ -67,6 +67,7 @@ object Skull {
   def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
     for {
       _ <- validate(request)
+      // fetch game data
       gameDbOpt <- context.db.lookupGame(request.gameCode)
       gameDb <- Attempt.fromOption(gameDbOpt,
         Failure(
@@ -76,30 +77,37 @@ object Skull {
         ).asAttempt
       )
       playerDbs <- context.db.getPlayers(GameId(gameDb.gameId))
+      // game logic
       game <- Representations.dbToGame(gameDb, playerDbs)
       _ <- Games.ensureNotStarted(game)
-      // TODO: check if this address (i.e. connection) is already in the game?
+      _ <- Games.ensureNotAlreadyPlaying(game, context.playerAddress)
+      // TODO: check if this screen name is already in use?
       player = Players.newPlayer(request.screenName, context.playerAddress)
+      welcome = Welcome(player.playerKey, player.playerId, game.gameId)
+      // create and save new DB representations
       playerDb = Representations.playerForDb(game, player)
       _ <- context.db.writePlayer(playerDb)
-      welcome = Welcome(player.playerKey, player.playerId, game.gameId)
     } yield Responses.justRespond(welcome)
   }
 
   def startGame(request: StartGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
-      // validate request
-      // ensure creator
-      // get game
-      // get players
-      // copy players into game
-      // set game to started
-      // set round to <TBD>
-      // save all players
-      // save game
-      // build status message for each player
-    } yield Responses.tbd[GameStatus]
+      _ <- validate(request)
+      // fetch game / player data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      // game logic
+      // TODO: Add creator to models so we can enforce it here
+      // TODO: enforce minimum player count
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      startPlayer <- Players.startPlayer(game.players)
+      newGame = Games.startGame(game, startPlayer)
+      response <- Responses.gameStatuses(newGame)
+      // create and save new DB representations (do this last to make sure it is reported if it succeeds)
+      newGameDb = Representations.gameForDb(newGame)
+      _ <- context.db.writeGame(newGameDb)
+    } yield response
   }
 
   def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
