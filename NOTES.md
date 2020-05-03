@@ -22,5 +22,5 @@ Notes
 
 ## TODOS
 
-+ JoinGame improvements
-    + check for duplicate screen name
++ Attempt traverse should collect failures
++ Consider how to disconnect players?
