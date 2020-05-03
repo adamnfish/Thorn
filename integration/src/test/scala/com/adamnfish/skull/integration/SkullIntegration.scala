@@ -4,11 +4,10 @@ import java.util.UUID.randomUUID
 
 import com.adamnfish.skull.Messaging
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt}
-import com.adamnfish.skull.models.{Context, GameDB, Message, PlayerAddress, PlayerDB}
-import com.adamnfish.skull.persistence.{Database, DynamoDB}
+import com.adamnfish.skull.models.{Context, Message, PlayerAddress}
+import com.adamnfish.skull.persistence.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
-import org.scanamo.generic.auto._
-import org.scanamo.{LocalDynamoDB, Table}
+import org.scanamo.LocalDynamoDB
 
 import scala.concurrent.ExecutionContext
 
@@ -16,14 +15,15 @@ import scala.concurrent.ExecutionContext
 trait SkullIntegration {
   private val client = LocalDynamoDB.client()
 
-  def withTestContext(playerAddress: PlayerAddress)(f: Context => Any /* Assertion */): Any /* Assertion */ = {
+  def withTestContext(f: (PlayerAddress => Context) => Any /* Assertion */): Any /* Assertion */ = {
     val randomSuffix = randomUUID().toString
     val testDb = new DynamoDB(client, Some(randomSuffix))
 
     LocalDynamoDB.withTable(client)(s"games-$randomSuffix")("gameCode" -> S, "gameId" -> S) {
       LocalDynamoDB.withTable(client)(s"players-$randomSuffix")("gameId" -> S, "playerId" -> S) {
         val context = Context(
-          playerAddress, testDb,
+          _,
+          testDb,
           new Messaging {
             override def sendMessage(playerAddress: PlayerAddress, message: Message)(implicit ec: ExecutionContext): Attempt[Unit] = {
               Attempt.unit
@@ -36,10 +36,6 @@ trait SkullIntegration {
         f(context)
       }
     }
-  }
-
-  def asAnotherPlayer[A](context: Context, playerAddress: PlayerAddress)(f: Context => A): A = {
-    f(context.copy(playerAddress = playerAddress))
   }
 
   implicit class RichAddressString(address: String) {

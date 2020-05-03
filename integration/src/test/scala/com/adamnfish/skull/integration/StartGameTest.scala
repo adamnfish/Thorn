@@ -12,37 +12,50 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
   "for a valid request" - {
     val createGameRequest = CreateGame("creator name", "game name")
+    val creatorAddress = PlayerAddress("creator-address")
 
     "is successful" in {
-      withTestContext("player-address".address) { context =>
-        val creatorWelcome = createGame(createGameRequest, context).value().response.value
+      withTestContext { context =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
-        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
-          joinGame(
-            JoinGame(code, "screen name 2"),
-            player2Context
-          ).value()
-        }
+
+        val player2Address = PlayerAddress("player-2-address")
+        joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value()
+
         val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
-        startGame(startGameRequest, context).isSuccessfulAttempt()
+        startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).isSuccessfulAttempt()
       }
     }
 
     "sends a game summary to every player" in {
-      withTestContext("player-address".address) { context =>
-        val creatorWelcome = createGame(createGameRequest, context).value().response.value
+      withTestContext { context =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
 
-        val joinGameWelcome =
-          asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
-            joinGame(
-              JoinGame(code, "screen name 2"),
-              player2Context
-            ).value().response.value
-          }
+        val player2Address = PlayerAddress("player-address-2")
+        val joinGameWelcome = joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value().response.value
 
         val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
-        val response = startGame(startGameRequest, context).value()
+        val response = startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).value()
+
         response.messages.values.map(_.self.playerId).toSet shouldEqual Set(
           creatorWelcome.playerId,
           joinGameWelcome.playerId,
@@ -51,41 +64,50 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     }
 
     "doesn't return a response message" in {
-      withTestContext("player-address".address) { context =>
-        val creatorWelcome = createGame(createGameRequest, context).value().response.value
+      withTestContext { context =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
 
-        asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
-          joinGame(
-            JoinGame(code, "screen name 2"),
-            player2Context
-          ).value()
-        }
-        val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
+        val player2Address = PlayerAddress("player-address-2")
+        joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value()
 
-        val response = startGame(startGameRequest, context).value()
+        val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
+        val response = startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).value()
         response.response shouldEqual None
       }
     }
 
     "persists the game updates to the database" in {
-      withTestContext("player-address".address) { context =>
-        val creatorWelcome = createGame(createGameRequest, context).value().response.value
+      withTestContext { context =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
         val code = Games.gameCode(creatorWelcome.gameId)
 
-        val joinWelcome =
-          asAnotherPlayer(context, PlayerAddress("player-address-2")) { player2Context =>
-            joinGame(
-              JoinGame(code, "screen name 2"),
-              player2Context
-            ).value().response.value
-          }
+        val player2Address = PlayerAddress("player-address-2")
+        val joinWelcome = joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value().response.value
 
         val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
-        val response = startGame(startGameRequest, context).value()
+        val response = startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).value()
         response.response shouldEqual None
 
-        val gameDb = context.db.getGame(creatorWelcome.gameId).value().value
+        val gameDb = context(creatorAddress).db.getGame(creatorWelcome.gameId).value().value
         gameDb.started shouldEqual true
         gameDb.playerIds.toSet shouldEqual Set(creatorWelcome.playerId.pid, joinWelcome.playerId.pid)
       }
