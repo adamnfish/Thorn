@@ -1,7 +1,7 @@
 package com.adamnfish.skull.validation
 
 import com.adamnfish.skull.attempt.{Attempt, FailedAttempt, Failure}
-import com.adamnfish.skull.models.{Bid, CreateGame, Flip, JoinGame, NewRound, Pass, Ping, PlaceDisc, StartGame}
+import com.adamnfish.skull.models._
 import com.adamnfish.skull.validation.Validators._
 
 import scala.concurrent.ExecutionContext
@@ -52,14 +52,27 @@ object Validation {
   }
 
   def validate(flip: Flip)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(flip.gameId.gid, "game id", isUUID) |!|
+      validate(flip.playerId.pid, "player id", isUUID) |!|
+      validate(flip.playerKey.key, "player key", isUUID) |!|
+      validate(flip.stack.pid, "stack", isUUID)
   }
 
   def validate(newRound: NewRound)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(newRound.gameId.gid, "game id", isUUID) |!|
+      validate(newRound.playerId.pid, "player id", isUUID) |!|
+      validate(newRound.playerKey.key, "player key", isUUID)
+  }
+
+  def validate(reconnect: Reconnect)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    validate(reconnect.gameId.gid, "game id", isUUID) |!|
+      validate(reconnect.playerId.pid, "player id", isUUID) |!|
+      validate(reconnect.playerKey.key, "player key", isUUID)
   }
 
   def validate(ping: Ping)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    ???
+    validate(ping.gameId.gid, "game id", isUUID) |!|
+      validate(ping.playerId.pid, "player id", isUUID) |!|
+      validate(ping.playerKey.key, "player key", isUUID)
   }
 }

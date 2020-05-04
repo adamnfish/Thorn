@@ -2,9 +2,9 @@ package com.adamnfish.skull.validation
 
 import java.util.UUID.randomUUID
 
-import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import com.adamnfish.skull.models._
 import com.adamnfish.skull.validation.Validation.validate
+import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -280,6 +280,174 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
           gameId = GameId("not a UUID"),
           playerId = PlayerId("not a UUID"),
           playerKey = PlayerKey("not a UUID"),
+        )
+      ).leftValue().failures.length shouldEqual 3
+    }
+  }
+
+  "validate Flip" - {
+    val flip = Flip(
+      GameId(randomUUID().toString),
+      PlayerId(randomUUID().toString),
+      PlayerKey(randomUUID().toString),
+      PlayerId(randomUUID().toString),
+    )
+
+    "accepts a valid start game request" in {
+      validate(flip).isSuccessfulAttempt()
+    }
+
+    "rejects a non-UUID game ID" in {
+      validate(
+        flip.copy(gameId = GameId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player ID" in {
+      validate(
+        flip.copy(playerId = PlayerId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player key" in {
+      validate(
+        flip.copy(playerKey = PlayerKey("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID stack" in {
+      validate(
+        flip.copy(stack = PlayerId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "returns all failures if multiple conditions fail" in {
+      validate(
+        Flip(
+          gameId = GameId("not a UUID"),
+          playerId = PlayerId("not a UUID"),
+          playerKey = PlayerKey("not a UUID"),
+          stack = PlayerId("not a UUID"),
+        )
+      ).leftValue().failures.length shouldEqual 4
+    }
+  }
+
+  "validate NewRound" - {
+    val newRound = NewRound(
+      GameId(randomUUID().toString),
+      PlayerId(randomUUID().toString),
+      PlayerKey(randomUUID().toString),
+    )
+
+    "accepts a valid start game request" in {
+      validate(newRound).isSuccessfulAttempt()
+    }
+
+    "rejects a non-UUID game ID" in {
+      validate(
+        newRound.copy(gameId = GameId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player ID" in {
+      validate(
+        newRound.copy(playerId = PlayerId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player key" in {
+      validate(
+        newRound.copy(playerKey = PlayerKey("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "returns all failures if multiple conditions fail" in {
+      validate(
+        NewRound(
+          GameId("not a UUID"),
+          PlayerId("not a UUID"),
+          PlayerKey("not a UUID"),
+        )
+      ).leftValue().failures.length shouldEqual 3
+    }
+  }
+
+  "validate Reconnect" - {
+    val reconnect = Reconnect(
+      GameId(randomUUID().toString),
+      PlayerId(randomUUID().toString),
+      PlayerKey(randomUUID().toString),
+    )
+
+    "accepts a valid start game request" in {
+      validate(reconnect).isSuccessfulAttempt()
+    }
+
+    "rejects a non-UUID game ID" in {
+      validate(
+        reconnect.copy(gameId = GameId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player ID" in {
+      validate(
+        reconnect.copy(playerId = PlayerId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player key" in {
+      validate(
+        reconnect.copy(playerKey = PlayerKey("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "returns all failures if multiple conditions fail" in {
+      validate(
+        Reconnect(
+          GameId("not a UUID"),
+          PlayerId("not a UUID"),
+          PlayerKey("not a UUID"),
+        )
+      ).leftValue().failures.length shouldEqual 3
+    }
+  }
+
+  "validate Ping" - {
+    val ping = Ping(
+      GameId(randomUUID().toString),
+      PlayerId(randomUUID().toString),
+      PlayerKey(randomUUID().toString),
+    )
+
+    "accepts a valid start game request" in {
+      validate(ping).isSuccessfulAttempt()
+    }
+
+    "rejects a non-UUID game ID" in {
+      validate(
+        ping.copy(gameId = GameId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player ID" in {
+      validate(
+        ping.copy(playerId = PlayerId("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "rejects a non-UUID player key" in {
+      validate(
+        ping.copy(playerKey = PlayerKey("not a UUID"))
+      ).isFailedAttempt()
+    }
+
+    "returns all failures if multiple conditions fail" in {
+      validate(
+        Ping(
+          GameId("not a UUID"),
+          PlayerId("not a UUID"),
+          PlayerKey("not a UUID"),
         )
       ).leftValue().failures.length shouldEqual 3
     }
