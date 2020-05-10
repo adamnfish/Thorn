@@ -25,7 +25,7 @@ case class Player(
   // TODO: consider adding victories to track wins across restarts?
 )
 
-trait Round
+sealed trait Round
 case class InitialDiscs(
   firstPlayer: PlayerId,
   initialDiscs: Map[PlayerId, List[Disc]]
@@ -61,6 +61,6 @@ case class GameId(gid: String) extends AnyVal
 
 // game elements
 
-trait Disc
+sealed trait Disc
 object Rose extends Disc
 object Skull extends Disc

@@ -294,10 +294,10 @@ class RepresentationsTest
     }
   }
 
-  "playerForDb" - {
+  "newPlayerForDb" - {
     "takes game id from the provided game" in {
       forAll { (gameId: String) =>
-        playerForDb(
+        newPlayerForDb(
           game.copy(gameId = GameId(gameId)),
           player1
         ).gameId shouldEqual gameId
@@ -306,7 +306,7 @@ class RepresentationsTest
 
     "takes player id from the provided player" in {
       forAll { (playerId: String) =>
-        playerForDb(
+        newPlayerForDb(
           game,
           player1.copy(playerId = PlayerId(playerId))
         ).playerId shouldEqual playerId
@@ -315,7 +315,7 @@ class RepresentationsTest
 
     "takes player key from the provided player" in {
       forAll { (playerKey: String) =>
-        playerForDb(
+        newPlayerForDb(
           game,
           player1.copy(playerKey = PlayerKey(playerKey))
         ).playerKey shouldEqual playerKey
@@ -324,7 +324,7 @@ class RepresentationsTest
 
     "takes player address from the provided player" in {
       forAll { (playerAddress: String) =>
-        playerForDb(
+        newPlayerForDb(
           game,
           player1.copy(playerAddress = PlayerAddress(playerAddress))
         ).playerAddress shouldEqual playerAddress
@@ -333,7 +333,7 @@ class RepresentationsTest
 
     "takes screen name from the provided player" in {
       forAll { (screenName: String) =>
-        playerForDb(
+        newPlayerForDb(
           game,
           player1.copy(screenName = screenName)
         ).screenName shouldEqual screenName
@@ -342,7 +342,7 @@ class RepresentationsTest
 
     "takes score from the provided player" in {
       forAll { (score: Int) =>
-        playerForDb(
+        newPlayerForDb(
           game,
           player1.copy(score = score)
         ).score shouldEqual score
@@ -352,15 +352,15 @@ class RepresentationsTest
     "correctly unpacks round information" - {
       "when round is empty" - {
         "player's bid is empty" in {
-          playerForDb(game, player1).bid shouldEqual None
+          newPlayerForDb(game, player1).bid shouldEqual None
         }
 
         "passed is empty" in {
-          playerForDb(game, player1).passed shouldEqual None
+          newPlayerForDb(game, player1).passed shouldEqual None
         }
 
         "discs is empty" in {
-          playerForDb(game, player1).discs shouldEqual Nil
+          newPlayerForDb(game, player1).discs shouldEqual Nil
         }
       }
 
@@ -369,19 +369,19 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          playerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual None
         }
 
         "passed is empty" in {
-          playerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual None
         }
 
         "discs is empty for an empty round" in {
-          playerForDb(gameRound, player1).discs shouldEqual Nil
+          newPlayerForDb(gameRound, player1).discs shouldEqual Nil
         }
 
         "discs is empty when only other players have placed" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(initialDiscs = Map(player2.playerId -> List(Rose))))
             ),
@@ -390,7 +390,7 @@ class RepresentationsTest
         }
 
         "discs is populated from this player's initial discs" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 initialDiscs = Map(
@@ -409,15 +409,15 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          playerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual None
         }
 
         "passed is empty" in {
-          playerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual None
         }
 
         "discs is populated from this player's discs" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 discs = Map(
@@ -435,7 +435,7 @@ class RepresentationsTest
         val round = Bidding(player1.playerId, Map.empty, Map.empty, Nil)
 
         "player's bid is empty if no bid information exists for them" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 bids = Map(player2.playerId -> 1)
@@ -447,7 +447,7 @@ class RepresentationsTest
 
         "player's bid comes from round information, if present" in {
           forAll { (bid: Int) =>
-            playerForDb(
+            newPlayerForDb(
               game.copy(
                 round = Some(round.copy(
                   bids = Map(player1.playerId -> bid)
@@ -460,7 +460,7 @@ class RepresentationsTest
 
         "passed is set to player's pass status in the round" in {
           forAll { (passed: Boolean) =>
-            playerForDb(
+            newPlayerForDb(
               game.copy(
                 round = Some(round.copy(
                   passed =
@@ -474,7 +474,7 @@ class RepresentationsTest
         }
 
         "discs is populated from this player's discs" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 discs = Map(
@@ -493,15 +493,15 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          playerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual None
         }
 
         "passed is empty" in {
-          playerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual None
         }
 
         "discs is populated from this player's discs" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 discs = Map(
@@ -520,15 +520,15 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          playerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual None
         }
 
         "passed is empty" in {
-          playerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual None
         }
 
         "discs is populated from this player's discs" in {
-          playerForDb(
+          newPlayerForDb(
             game.copy(
               round = Some(round.copy(
                 discs = Map(
@@ -541,6 +541,32 @@ class RepresentationsTest
           ).discs shouldEqual List("rose", "skull")
         }
       }
+    }
+  }
+
+  "newPlayer" - {
+    "returns playerDb if player exists in the game" in {
+      playerForDb(
+        game.copy(
+          players = Map(
+            player1.playerId -> player1,
+            player2.playerId -> player2,
+          )
+        ),
+        player1.playerId
+      ).value() shouldEqual newPlayerForDb(game, player1)
+    }
+
+    "if player does not exist in the game, fails" in {
+      playerForDb(
+        game.copy(
+          players = Map(
+            player1.playerId -> player1,
+            player2.playerId -> player2,
+          )
+        ),
+        PlayerId("another player id")
+      ).isFailedAttempt()
     }
   }
 

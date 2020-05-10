@@ -1,6 +1,5 @@
 package com.adamnfish.skull.integration
 
-import com.adamnfish.skull.Skull.createGame
 import com.adamnfish.skull.models.{CreateGame, PlayerAddress}
 import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalatest.freespec.AnyFreeSpec
@@ -16,39 +15,27 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>
-        createGame(
-          validRequest,
-          context(creatorAddress)
-        ).isSuccessfulAttempt()
+        Fixtures.createGame(context).isSuccessfulAttempt()
       }
     }
 
     "doesn't send any other messages out" in {
       withTestContext { (context, _) =>
-        val response = createGame(
-          validRequest,
-          context(creatorAddress)
-        ).value()
+        val response = Fixtures.createGame(context).value()
         response.messages shouldBe empty
       }
     }
 
     "returns a correct welcome message" in {
       withTestContext { (context, _) =>
-        val response = createGame(
-          validRequest,
-          context(creatorAddress)
-        ).value()
+        val response = Fixtures.createGame(context).value()
         response.response.nonEmpty shouldEqual true
       }
     }
 
     "persists the saved game to the database" in {
       withTestContext { (context, db) =>
-        val response = createGame(
-          validRequest,
-          context(creatorAddress)
-        ).value()
+        val response = Fixtures.createGame(context).value()
         val welcomeMessage = response.response.value
         val gameDb = db.getGame(welcomeMessage.gameId).value().value
         gameDb.gameId shouldEqual welcomeMessage.gameId.gid
@@ -57,10 +44,7 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
     "persists the saved creator to the database" in {
       withTestContext { (context, db) =>
-        val response = createGame(
-          validRequest,
-          context(creatorAddress)
-        ).value()
+        val response = Fixtures.createGame(context).value()
         val welcomeMessage = response.response.value
         val creatorDb = db.getPlayers(welcomeMessage.gameId).value().head
         creatorDb should have(

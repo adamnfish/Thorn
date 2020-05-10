@@ -105,4 +105,15 @@ object Games {
         }
     }
   }
+
+  def getPlayer(playerId: PlayerId, game: Game): Attempt[Player] = {
+    Attempt.fromOption(
+      game.players.get(playerId),
+      Failure(
+        s"Couldn't get player from game `${playerId}`:`${game.gameId.gid}`",
+        "Couldn't find your player entry in the game",
+        404
+      ).asAttempt
+    )
+  }
 }

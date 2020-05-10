@@ -11,7 +11,7 @@ object Responses {
     ???
   }
 
-  def empty: Response[Nothing] = {
+  def empty[A <: Message]: Response[A] = {
     Response(None, Map.empty)
   }
 

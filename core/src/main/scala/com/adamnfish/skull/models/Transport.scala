@@ -24,7 +24,7 @@ case class SelfSummary(
   discs: Option[List[Disc]]
 )
 
-trait RoundSummary extends Product
+sealed trait RoundSummary extends Product
 case class InitialDiscsSummary(
   activePlayer: PlayerId,
   initialDiscs: Map[PlayerId, Int]

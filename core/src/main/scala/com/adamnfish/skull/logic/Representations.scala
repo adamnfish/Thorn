@@ -23,7 +23,7 @@ object Representations {
     )
   }
 
-  def playerForDb(game: Game, player: Player): PlayerDB = {
+  def newPlayerForDb(game: Game, player: Player): PlayerDB = {
     PlayerDB(
       gameId = game.gameId.gid,
       playerId = player.playerId.pid,
@@ -37,8 +37,14 @@ object Representations {
     )
   }
 
+  def playerForDb(game: Game, playerId: PlayerId)(implicit ec: ExecutionContext): Attempt[PlayerDB] = {
+    Games.getPlayer(playerId, game)
+      .map(newPlayerForDb(game, _))
+  }
+
   def playersForDb(game: Game): List[PlayerDB] = {
-    game.players.values.map(playerForDb(game, _)).toList
+    game.players.values
+      .map(newPlayerForDb(game, _)).toList
   }
 
   // unpack DB data

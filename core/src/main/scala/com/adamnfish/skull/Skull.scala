@@ -1,7 +1,7 @@
 package com.adamnfish.skull
 
 import com.adamnfish.skull.attempt.{Attempt, Failure}
-import com.adamnfish.skull.logic.{Games, Players, Representations, Responses}
+import com.adamnfish.skull.logic.{Games, Play, Players, Representations, Responses}
 import com.adamnfish.skull.models._
 import com.adamnfish.skull.validation.Validation.validate
 
@@ -59,7 +59,7 @@ object Skull {
       game = Games.newGame(request.gameName, creator)
       gameDb = Representations.gameForDb(game)
       // TODO: check clashing gameCode doesn't already exist
-      creatorDb = Representations.playerForDb(game, creator)
+      creatorDb = Representations.newPlayerForDb(game, creator)
       _ <- context.db.writeGame(gameDb)
       _ <- context.db.writePlayer(creatorDb)
       welcome = Welcome(creator.playerKey, creator.playerId, game.gameId)
@@ -87,7 +87,7 @@ object Skull {
       player = Players.newPlayer(request.screenName, context.playerAddress)
       welcome = Welcome(player.playerKey, player.playerId, game.gameId)
       // create and save new DB representations
-      playerDb = Representations.playerForDb(game, player)
+      playerDb = Representations.newPlayerForDb(game, player)
       _ <- context.db.writePlayer(playerDb)
     } yield Responses.justRespond(welcome)
   }
@@ -107,7 +107,7 @@ object Skull {
       startPlayer <- Players.startPlayer(game.players)
       newGame = Games.startGame(game, startPlayer)
       response <- Responses.gameStatuses(newGame)
-      // create and save new DB representations (do this last to make sure it is reported if it succeeds)
+      // create and save new DB representations
       newGameDb = Representations.gameForDb(newGame)
       _ <- context.db.writeGame(newGameDb)
     } yield response
@@ -115,31 +115,42 @@ object Skull {
 
   def placeDisc(request: PlaceDisc, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
-    } yield Responses.tbd[GameStatus]
+      _ <- validate(request)
+      // fetch game / player data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // game logic
+      newGame <- Play.placeDisc(request.disc, request.playerId, game)
+      response <- Responses.gameStatuses(newGame)
+      // create and save updated player for DB
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      _ <- context.db.writePlayer(newPlayerDb)
+    } yield response
   }
 
   def bid(request: Bid, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
     } yield Responses.tbd[GameStatus]
   }
 
   def pass(request: Pass, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
     } yield Responses.tbd[GameStatus]
   }
 
   def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
     } yield Responses.tbd[GameStatus]
   }
 
   def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
       // validate request
       // fetch the game and players
       // check game state is finished
@@ -151,13 +162,13 @@ object Skull {
 
   def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
     } yield Responses.tbd[GameStatus]
   }
 
   def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      _ <- Attempt.unit
+      _ <- validate(request)
     } yield Responses.tbd[GameStatus]
   }
 

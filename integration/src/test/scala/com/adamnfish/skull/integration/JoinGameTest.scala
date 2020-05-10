@@ -11,93 +11,46 @@ import org.scalatest.{OneInstancePerTest, OptionValues}
 class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
 
-  val createGameRequest = CreateGame("creator name", "game name")
-  val creatorAddress = PlayerAddress("creator-address")
-
   "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>
-        val creatorWelcome = createGame(
-          createGameRequest,
-          context(creatorAddress)
-        ).value().response.value
-        val code = Games.gameCode(creatorWelcome.gameId)
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
 
-        val player2Address = PlayerAddress("player-address-2")
-        joinGame(
-          JoinGame(code, "player screen name"),
-          context(player2Address)
-        ).isSuccessfulAttempt()
+        Fixtures.joinGame(creatorWelcome, context).isSuccessfulAttempt()
       }
     }
 
     "allows a second player to join" in {
       withTestContext { (context, _) =>
-        val creatorWelcome = createGame(
-          createGameRequest,
-          context(creatorAddress)
-        ).value().response.value
-        val code = Games.gameCode(creatorWelcome.gameId)
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
 
-        val player2Address = PlayerAddress("player-address-2")
-        joinGame(
-          JoinGame(code, "player screen name"),
-          context(player2Address)
-        ).isSuccessfulAttempt()
-
-        val player3Address = PlayerAddress("player-address-3")
-        joinGame(
-          JoinGame(code, "player screen name 2"),
-          context(player3Address)
-        ).isSuccessfulAttempt()
+        Fixtures.joinGame(creatorWelcome, context).isSuccessfulAttempt()
+        Fixtures.joinGame2(creatorWelcome, context).isSuccessfulAttempt()
       }
     }
 
     "doesn't send any other messages out" in {
       withTestContext { (context, _) =>
-        val creatorWelcome = createGame(
-          createGameRequest,
-          context(creatorAddress)
-        ).value().response.value
-        val code = Games.gameCode(creatorWelcome.gameId)
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val response = Fixtures.joinGame(creatorWelcome, context).value()
 
-        val player2Address = PlayerAddress("player-address-2")
-        joinGame(
-          JoinGame(code, "player screen name"),
-          context(player2Address)
-        ).value().messages shouldBe empty
+        response.messages shouldBe empty
       }
     }
 
     "returns a correct welcome message" in {
       withTestContext { (context, _) =>
-        val creatorWelcome = createGame(
-          createGameRequest,
-          context(creatorAddress)
-        ).value().response.value
-        val code = Games.gameCode(creatorWelcome.gameId)
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val response = Fixtures.joinGame(creatorWelcome, context).value()
 
-        val player2Address = PlayerAddress("player-address-2")
-        joinGame(
-          JoinGame(code, "player screen name"),
-          context(player2Address)
-        ).value().response.nonEmpty shouldEqual true
+        response.response.nonEmpty shouldEqual true
       }
     }
 
     "persists the new player to the database" in {
       withTestContext { (context, db) =>
-        val creatorWelcome = createGame(
-          createGameRequest,
-          context(creatorAddress)
-        ).value().response.value
-        val code = Games.gameCode(creatorWelcome.gameId)
-
-        val player2Address = PlayerAddress("player-address-2")
-        val welcomeMessage = joinGame(
-          JoinGame(code, "player screen name"),
-          context(player2Address)
-        ).value().response.value
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val welcomeMessage = Fixtures.joinGame(creatorWelcome, context).value().response.value
 
         val playerDb = db.getPlayers(welcomeMessage.gameId).value()
           .find(_.playerId == welcomeMessage.playerId.pid).value
@@ -110,6 +63,9 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
   }
 
   "for invalid cases" - {
+    val createGameRequest = CreateGame("creator name", "game name")
+    val creatorAddress = PlayerAddress("creator-address")
+
     "fails if the player address is already in use" in {
       withTestContext { (context, _) =>
         val creatorWelcome = createGame(
