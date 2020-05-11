@@ -10,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 
 class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues {
   val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+  val player1 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
   val game = Games.newGame("test game", creator)
 
   "placeDisc" - {
@@ -26,9 +27,13 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "adds disc to the matching player's discs" in {
           val newGame = placeDisc(Skull, creator.playerId,
             game.copy(
+              players = Map(
+                creator.playerId -> creator,
+                player1.playerId -> player1,
+              ),
               round = Some(InitialDiscs(
                 creator.playerId, Map.empty
-              ))
+              )),
             )
           ).value()
           newGame.round.value shouldBe a[InitialDiscs]
@@ -36,8 +41,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           discs shouldEqual List(Skull)
         }
 
-        "adds disc to the start of matching player's discs" in {
-          val newGame = placeDisc(Skull, creator.playerId,
+        "does not allow a second disc to be placed during the initial discs round" in {
+          placeDisc(Skull, creator.playerId,
             game.copy(
               round = Some(InitialDiscs(
                 creator.playerId,
@@ -46,10 +51,39 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 ),
               ))
             )
-          ).value()
-          newGame.round.value shouldBe a[InitialDiscs]
-          val discs = newGame.round.value.asInstanceOf[InitialDiscs].initialDiscs.get(creator.playerId).value
-          discs shouldEqual List(Skull, Rose)
+          ).isFailedAttempt()
+        }
+
+        "if all players haveplaced their initial disc" - {
+          "advances round to 'placing'" in {
+            placeDisc(Skull, creator.playerId,
+              game.copy(
+                round = Some(InitialDiscs(
+                  creator.playerId,
+                  Map(
+                    creator.playerId -> Nil,
+                    player1.playerId -> List(Rose),
+                  ),
+                ))
+              )
+            ).value().round.value shouldBe a[Placing]
+          }
+
+          "uses initial disc's player as" in {
+            val activePlayer = creator.playerId
+            val placingRound = placeDisc(Skull, creator.playerId,
+              game.copy(
+                round = Some(InitialDiscs(
+                  activePlayer,
+                  Map(
+                    creator.playerId -> Nil,
+                    player1.playerId -> List(Rose),
+                  ),
+                ))
+              )
+            ).value().round.value.asInstanceOf[Placing]
+            placingRound.activePlayer shouldEqual activePlayer
+          }
         }
       }
 
@@ -57,9 +91,13 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "adds disc to the matching player's discs" in {
           val newGame = placeDisc(Skull, creator.playerId,
             game.copy(
+              players = Map(
+                creator.playerId -> creator,
+                player1.playerId -> player1,
+              ),
               round = Some(Placing(
                 creator.playerId, Map.empty
-              ))
+              )),
             )
           ).value()
           newGame.round.value shouldBe a[Placing]
@@ -81,6 +119,21 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           newGame.round.value shouldBe a[Placing]
           val discs = newGame.round.value.asInstanceOf[Placing].discs.get(creator.playerId).value
           discs shouldEqual List(Skull, Rose)
+        }
+
+        "fails if this is not the active player" in {
+          placeDisc(Skull, player1.playerId,
+            game.copy(
+              players = Map(
+                creator.playerId -> creator,
+                player1.playerId -> player1,
+              ),
+              round = Some(Placing(
+                creator.playerId,
+                Map.empty,
+              ))
+            )
+          ).isFailedAttempt()
         }
       }
 

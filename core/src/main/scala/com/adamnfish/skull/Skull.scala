@@ -124,9 +124,11 @@ object Skull {
       // game logic
       newGame <- Play.placeDisc(request.disc, request.playerId, game)
       response <- Responses.gameStatuses(newGame)
-      // create and save updated player for DB
+      // create and save updated player and game for DB
       newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      newGameDb = Representations.gameForDb(newGame)
       _ <- context.db.writePlayer(newPlayerDb)
+      _ <- context.db.writeGame(newGameDb)
     } yield response
   }
 
