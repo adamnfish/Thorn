@@ -194,7 +194,7 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
       gameId = GameId(randomUUID().toString),
       playerId = PlayerId(randomUUID().toString),
       playerKey = PlayerKey(randomUUID().toString),
-      count = 0
+      count = 1
     )
 
     "accepts a valid bid request" in {
@@ -229,6 +229,14 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
       validate(
         bid.copy(
           count = -1
+        )
+      ).isFailedAttempt()
+    }
+
+    "rejects a request with a 0 bid count" in {
+      validate(
+        bid.copy(
+          count = 0
         )
       ).isFailedAttempt()
     }

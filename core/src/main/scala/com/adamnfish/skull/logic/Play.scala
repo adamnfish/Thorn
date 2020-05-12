@@ -91,4 +91,65 @@ object Play {
       discs.getOrElse(playerId, Nil).nonEmpty
     }
   }
+
+  def bidOnRound(count: Int, playerId: PlayerId, game: Game): Attempt[Game] = {
+    val failure = (roundStr: String) => Attempt.Left(Failure(
+      s"cannot bid in $roundStr round",
+      "You can't place discs now",
+      400
+    ).asAttempt)
+    game.round match {
+      case None =>
+        failure("none")
+      case Some(_: InitialDiscs) =>
+        failure("initial discs")
+      case Some(_: Placing) =>
+        failure("placing")
+      case Some(bidding: Bidding) =>
+        if (bidding.activePlayer != playerId) {
+          Attempt.Left(
+            Failure(
+              "Cannot bid on another player's turn",
+              "It's not your turn to bid",
+              400
+            )
+          )
+        } else {
+          val max =
+            if (bidding.bids.isEmpty) 0
+            else bidding.bids.values.max
+          if (count <= max) {
+            Attempt.Left {
+              Failure(
+                "Bid not larger than previous bids",
+                "Your bid must be larger than previous bids",
+                400
+              )
+            }
+          } else if (bidding.passed.contains(playerId)) {
+            Attempt.Left {
+              Failure(
+                "Cannot bid after passing",
+                "You can't bid after you have passed",
+                400
+              )
+            }
+          } else {
+            Attempt.Right {
+              game.copy(
+                round = Some(
+                  bidding.copy(
+                    bids = bidding.bids.updated(playerId, count)
+                  )
+                )
+              )
+            }
+          }
+        }
+      case Some(_: Flipping) =>
+        failure("flipping")
+      case Some(_: Finished) =>
+        failure("finished")
+    }
+  }
 }

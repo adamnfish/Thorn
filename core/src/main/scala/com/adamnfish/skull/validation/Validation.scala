@@ -42,7 +42,7 @@ object Validation {
     validate(bid.gameId.gid, "game id", isUUID) |!|
       validate(bid.playerId.pid, "player id", isUUID) |!|
       validate(bid.playerKey.key, "player key", isUUID) |!|
-      validate(bid.count, "count", positiveInteger)
+      validate(bid.count, "count", greaterThanZero)
   }
 
   def validate(pass: Pass)(implicit ec: ExecutionContext): Attempt[Unit] = {

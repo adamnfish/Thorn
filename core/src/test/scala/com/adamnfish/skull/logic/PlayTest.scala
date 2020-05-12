@@ -162,4 +162,144 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
       }
     }
   }
+
+  "bidOnRound" - {
+    "handles each round" - {
+      "fails for no round" in {
+        bidOnRound(1, creator.playerId,
+          game.copy(
+            round = None
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for initial discs" in {
+        bidOnRound(1, creator.playerId,
+          game.copy(
+            round = Some(InitialDiscs(
+              creator.playerId, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for placing" in {
+        bidOnRound(1, creator.playerId,
+          game.copy(
+            round = Some(Placing(
+              creator.playerId, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "for bidding" - {
+        "sets player bid to the specified amount if they had no previous bid" in {
+          val result = bidOnRound(1, creator.playerId,
+            game.copy(
+              round = Some(Bidding(
+                creator.playerId, Map.empty, Map.empty, Nil
+              ))
+            )
+          ).value()
+          val bid = result.round.value.asInstanceOf[Bidding].bids.get(creator.playerId).value
+          bid shouldEqual 1
+        }
+
+        "updates player bid to the specified amount" in {
+          val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              round = Some(Bidding(
+                creator.playerId, Map.empty,
+                Map(
+                  creator.playerId -> 1
+                ),
+                Nil
+              ))
+            )
+          ).value()
+          val bid = result.round.value.asInstanceOf[Bidding].bids.get(creator.playerId).value
+          bid shouldEqual 3
+        }
+
+        "fails if the bid is lower than the player's previous bid" in {
+          val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              round = Some(Bidding(
+                creator.playerId, Map.empty,
+                Map(
+                  creator.playerId -> 5
+                ),
+                Nil
+              ))
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails if the bid is lower than another player's previous bid" in {
+          val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              players = Map(
+                creator.playerId -> creator,
+                player1.playerId -> player1,
+              ),
+              round = Some(Bidding(
+                creator.playerId, Map.empty,
+                Map(
+                  creator.playerId -> 1,
+                  player1.playerId -> 5,
+                ),
+                Nil
+              ))
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails if it is not the player's turn" in {
+          val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              players = Map(
+                creator.playerId -> creator,
+                player1.playerId -> player1,
+              ),
+              round = Some(Bidding(
+                player1.playerId, Map.empty, Map.empty, Nil
+              ))
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails if the player has passed" in {
+          val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              round = Some(Bidding(
+                creator.playerId, Map.empty, Map.empty,
+                List(creator.playerId)
+              ))
+            )
+          ).isFailedAttempt()
+        }
+      }
+
+      "fails for flipping" in {
+        bidOnRound(1, creator.playerId,
+          game.copy(
+            round = Some(Flipping(
+              creator.playerId, Map.empty, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for finished" in {
+        bidOnRound(1, creator.playerId,
+          game.copy(
+            round = Some(Finished(
+              creator.playerId, Map.empty, Map.empty, false
+            ))
+          )
+        ).isFailedAttempt()
+      }
+    }
+  }
 }

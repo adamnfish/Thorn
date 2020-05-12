@@ -38,6 +38,14 @@ object Validators {
     } else Nil
   }
 
+  val greaterThanZero: Validator[Int] = { (i, context) =>
+    if (i <= 0) {
+      List(
+        Failure("Validation failure: empty", s"$context must be a positive number", 400, Some(context))
+      )
+    } else Nil
+  }
+
   /**
    * Game codes are a case-insensitive UUID prefix
    */

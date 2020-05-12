@@ -135,7 +135,18 @@ object Skull {
   def bid(request: Bid, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
+      // fetch game / player data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // game logic
+      newGame <- Play.bidOnRound(request.count, request.playerId, game)
+      response <- Responses.gameStatuses(newGame)
+      // create and save updated player and game for DB
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      _ <- context.db.writePlayer(newPlayerDb)
+    } yield response
   }
 
   def pass(request: Pass, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
