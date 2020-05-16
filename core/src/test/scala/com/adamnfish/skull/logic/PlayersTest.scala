@@ -48,6 +48,7 @@ class PlayersTest extends AnyFreeSpec with Matchers with AttemptValues {
     )
     val gameDB = GameDB(
       "gcode", "gid", "name",
+      player1.playerId,
       playerIds = List(),
       false, ZonedDateTime.now(), "none", None, Map.empty
     )

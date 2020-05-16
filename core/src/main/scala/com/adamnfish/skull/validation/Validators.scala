@@ -16,6 +16,14 @@ object Validators {
     } else Nil
   }
 
+  def nonEmptyList[A]: Validator[List[A]] = { (tmp, context) =>
+    if (tmp.isEmpty) {
+      List(
+        Failure("Validation failure: empty", s"$context is required", 400, Some(context))
+      )
+    } else Nil
+  }
+
   private val uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
   val isUUID: Validator[String] = { (str, context) =>
     val wasEmpty = nonEmpty(str, context).headOption

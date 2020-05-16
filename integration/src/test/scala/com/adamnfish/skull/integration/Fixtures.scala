@@ -4,6 +4,7 @@ import com.adamnfish.skull.Skull
 import com.adamnfish.skull.attempt.Attempt
 import com.adamnfish.skull.logic.Games
 import com.adamnfish.skull.models._
+import javax.print.attribute.standard.MediaSize
 
 import scala.concurrent.ExecutionContext
 
@@ -39,10 +40,11 @@ object Fixtures {
     )
   }
 
-  def startGame(creatorWelcome: Welcome, context: PlayerAddress => Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+  def startGame(creatorWelcome: Welcome, playerOrder: List[Welcome], context: PlayerAddress => Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     Skull.startGame(
       StartGame(
-        creatorWelcome.gameId,creatorWelcome.playerId, creatorWelcome.playerKey
+        creatorWelcome.gameId,creatorWelcome.playerId, creatorWelcome.playerKey,
+        playerOrder = playerOrder.map(_.playerId)
       ), context(creatorAddress)
     )
   }

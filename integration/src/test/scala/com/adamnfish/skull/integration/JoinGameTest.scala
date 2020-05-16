@@ -106,12 +106,15 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         val code = Games.gameCode(creatorWelcome.gameId)
 
         val player2Address = PlayerAddress("player-2-address")
-        joinGame(
+        val joinWelcome = joinGame(
           JoinGame(code, "player screen name 2"),
           context(player2Address)
-        ).value()
+        ).value().response.value
 
-        val startGameRequest = StartGame(creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey)
+        val startGameRequest = StartGame(
+          creatorWelcome.gameId, creatorWelcome.playerId, creatorWelcome.playerKey,
+          playerOrder = List(creatorWelcome.playerId, joinWelcome.playerId),
+        )
         startGame(
           startGameRequest,
           context(creatorAddress)

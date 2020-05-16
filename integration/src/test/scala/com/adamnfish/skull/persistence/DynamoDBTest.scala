@@ -22,7 +22,7 @@ class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
     val gameId = "game-id"
     val gameCode = Games.gameCode(GameId(gameId))
     val gameDb = GameDB(
-      gameCode, gameId, "game-name", List("player-1", "player-2"), true,
+      gameCode, gameId, "game-name", "player-1", List("player-1", "player-2"), true,
       ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC")),
       "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2)
     )

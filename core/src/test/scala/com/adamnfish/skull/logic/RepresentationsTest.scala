@@ -16,9 +16,11 @@ class RepresentationsTest
   extends AnyFreeSpec with Matchers with OptionValues with AttemptValues
     with TestHelpers with ScalaCheckDrivenPropertyChecks {
   val now = ZonedDateTime.now()
+  val p1id = PlayerId("id-1")
   val game = Game(
     GameId("id"),
     "game name",
+    p1id,
     Nil,
     None,
     started = false,
@@ -56,6 +58,15 @@ class RepresentationsTest
         gameForDb(
           game.copy(gameName = gn)
         ).gameName shouldEqual gn
+      }
+    }
+
+
+    "uses game's creator id" in {
+      forAll { (creatorId: String) =>
+        gameForDb(
+          game.copy(creatorId = PlayerId(creatorId))
+        ).creatorId shouldEqual creatorId
       }
     }
 
@@ -581,12 +592,13 @@ class RepresentationsTest
       gameCode = "code",
       gameId = "game-id",
       gameName = "game name",
+      creatorId = p1id.pid,
       playerIds = List(player1.playerId, player2.playerId),
       started = false,
       startTime = now,
-      "none",
-      None,
-      Map.empty
+      roundState = "none",
+      currentPlayer = None,
+      revealedDiscs = Map.empty
     )
 
     "uses gameDB's game ID" in {
@@ -613,6 +625,15 @@ class RepresentationsTest
           gameDb.copy(started = started),
           playerDBs
         ).value().started shouldEqual started
+      }
+    }
+
+    "uses gameDB's creator id" in {
+      forAll { (creatorId: String) =>
+        dbToGame(
+          gameDb.copy(creatorId = creatorId),
+          playerDBs
+        ).value().creatorId.pid shouldEqual creatorId
       }
     }
 
@@ -878,6 +899,18 @@ class RepresentationsTest
             ),
             player1.playerId
           ).value().game.gameName shouldEqual gameName
+        }
+      }
+
+      "sets creator id from game" in {
+        forAll { (creatorId: String) =>
+          gameStatus(
+            game.copy(
+              creatorId = PlayerId(creatorId),
+              players = List(player1)
+            ),
+            player1.playerId
+          ).value().game.creatorId.pid shouldEqual creatorId
         }
       }
 

@@ -38,7 +38,10 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         val response = Fixtures.createGame(context).value()
         val welcomeMessage = response.response.value
         val gameDb = db.getGame(welcomeMessage.gameId).value().value
-        gameDb.gameId shouldEqual welcomeMessage.gameId.gid
+        gameDb should have(
+          "gameId" as welcomeMessage.gameId.gid,
+          "creatorId" as welcomeMessage.playerId.pid,
+        )
       }
     }
 

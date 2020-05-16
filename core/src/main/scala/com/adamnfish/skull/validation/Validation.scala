@@ -29,7 +29,11 @@ object Validation {
   def validate(startGame: StartGame)(implicit ec: ExecutionContext): Attempt[Unit] = {
     validate(startGame.gameId.gid, "game id", isUUID) |!|
       validate(startGame.playerId.pid, "player id", isUUID) |!|
-      validate(startGame.playerKey.key, "player key", isUUID)
+      validate(startGame.playerKey.key, "player key", isUUID) |!|
+      validate(startGame.playerOrder, "player order", nonEmptyList[PlayerId]) |!|
+      startGame.playerOrder
+        .map(playerId => validate(playerId.pid, "player order", isUUID))
+        .fold(Attempt.unit)(_ |!| _)
   }
 
   def validate(placeDisc: PlaceDisc)(implicit ec: ExecutionContext): Attempt[Unit] = {

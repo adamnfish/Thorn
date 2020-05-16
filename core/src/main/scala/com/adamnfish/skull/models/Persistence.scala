@@ -13,6 +13,7 @@ case class GameDB(
   gameCode: String,  // Partition
   gameId: String,    // Sort
   gameName: String,
+  creatorId: String,
   playerIds: List[String],
   started: Boolean,
   startTime: ZonedDateTime,

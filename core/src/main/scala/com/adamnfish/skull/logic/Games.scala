@@ -13,6 +13,7 @@ object Games {
     Game(
       gameId = GameId(id),
       gameName = gameName,
+      creatorId = creator.playerId,
       players = List(creator),
       round = None,
       started = false,

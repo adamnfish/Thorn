@@ -15,6 +15,7 @@ object Representations {
       gameId = game.gameId.gid,
       gameName = game.gameName,
       playerIds = game.players.map(_.playerId.pid),
+      creatorId = game.creatorId.pid,
       started = game.started,
       startTime = game.startTime,
       roundState = roundKey(game.round),
@@ -134,6 +135,7 @@ object Representations {
       Game(
         gameId = GameId(gameDB.gameId),
         gameName = gameDB.gameName,
+        creatorId = PlayerId(gameDB.creatorId),
         players = playerDBs.map(dbToPlayer),
         round = round,
         started = gameDB.started,
@@ -208,6 +210,7 @@ object Representations {
         GameSummary(
           gameId = game.gameId,
           gameName = game.gameName,
+          creatorId = game.creatorId,
           players = playerSummaries,
           round = round,
         )

@@ -14,9 +14,9 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     "is successful" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
-        Fixtures.joinGame(creatorWelcome, context).value()
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
 
-        Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
       }
     }
 
@@ -24,7 +24,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val response = Fixtures.startGame(creatorWelcome, context).value()
+        val response = Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
 
         response.messages.values.map(_.self.playerId).toSet shouldEqual Set(
           creatorWelcome.playerId,
@@ -36,8 +36,8 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     "doesn't return a response message" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
-        Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val response = Fixtures.startGame(creatorWelcome, context).value()
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        val response = Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
 
         response.response shouldEqual None
       }
@@ -47,7 +47,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext { (context, db) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, context).value()
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
         val gameDb = db.getGame(creatorWelcome.gameId).value().value
 
         gameDb.started shouldEqual true
@@ -72,14 +72,15 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         val code = Games.gameCode(creatorWelcome.gameId)
 
         val player2Address = PlayerAddress("player-2-address")
-        joinGame(
+        val joinGameWelcome = joinGame(
           JoinGame(code, "screen name 2"),
           context(player2Address)
-        ).value()
+        ).value().response.value
 
         val startGameRequest = StartGame(
           creatorWelcome.gameId, creatorWelcome.playerId,
-          PlayerKey("INCORRECT KEY")
+          PlayerKey("INCORRECT KEY"),
+          List(creatorWelcome.playerId, joinGameWelcome.playerId)
         )
         startGame(
           startGameRequest,

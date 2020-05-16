@@ -96,10 +96,19 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
   }
 
   "validate StartGame" - {
+    val creatorId = randomUUID().toString
+    val player1Id = randomUUID().toString
+    val player2Id = randomUUID().toString
+
     val startGame = StartGame(
       GameId(randomUUID().toString),
-      PlayerId(randomUUID().toString),
+      PlayerId(creatorId),
       PlayerKey(randomUUID().toString),
+      playerOrder = List(
+        PlayerId(creatorId),
+        PlayerId(player1Id),
+        PlayerId(player2Id),
+      )
     )
 
     "accepts a valid start game request" in {
@@ -124,14 +133,39 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
       ).isFailedAttempt()
     }
 
+    "rejects an empty player order" in {
+      validate(
+        startGame.copy(playerOrder = Nil)
+      ).isFailedAttempt()
+    }
+
+    "rejects player order containing an invalid ID" in {
+      validate(
+        startGame.copy(playerOrder = List(PlayerId("abc")))
+      ).isFailedAttempt()
+    }
+
+    "rejects player order containing multiple invalid IDs" in {
+      validate(
+        startGame.copy(
+          playerOrder = List(
+            PlayerId("bad ID"),
+            PlayerId(player1Id),
+            PlayerId("another bad ID"),
+          )
+        )
+      ).isFailedAttempt()
+    }
+
     "returns all failures if multiple conditions fail" in {
       validate(
         StartGame(
           gameId = GameId("not a UUID"),
           playerId = PlayerId("not a UUID"),
           playerKey = PlayerKey("not a UUID"),
+          playerOrder = Nil
         )
-      ).leftValue().failures.length shouldEqual 3
+      ).leftValue().failures.length shouldEqual 4
     }
   }
 

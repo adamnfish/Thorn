@@ -14,8 +14,8 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       "is successful" in {
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
-          Fixtures.joinGame(creatorWelcome, context).value()
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
@@ -26,15 +26,15 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       "multiple places from different players are successful" in {
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
-          val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.joinGame2(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          val join1Welcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          val join2Welcome = Fixtures.joinGame2(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, join1Welcome, join2Welcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           Fixtures.placeDisc(
-            Skull, joinWelcome, context(Fixtures.player1Address)
+            Skull, join1Welcome, context(Fixtures.player1Address)
           ).isSuccessfulAttempt()
         }
       }
@@ -43,7 +43,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
           val response = Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
@@ -58,8 +58,8 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       "doesn't return a response message" in {
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
-          Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).value()
+          val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
           val response = Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
@@ -71,8 +71,8 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       "persists the game updates to the database" in {
         withTestContext { (context, db) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
-          Fixtures.joinGame(creatorWelcome, context).value()
-          Fixtures.startGame(creatorWelcome, context).value()
+          val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
@@ -89,7 +89,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
@@ -105,7 +105,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, db) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
@@ -125,7 +125,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
@@ -152,7 +152,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, db) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          val (_, startedStatus) = Fixtures.startGame(creatorWelcome, context).value().messages.head
+          val (_, startedStatus) = Fixtures.startGame(
+            creatorWelcome, List(creatorWelcome, joinWelcome),
+            context
+          ).value().messages.head
 
           Fixtures.placeDisc(
             Rose, creatorWelcome, context(Fixtures.creatorAddress)
@@ -187,7 +190,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, context).isSuccessfulAttempt()
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
         Fixtures.placeDisc(
           Skull, creatorWelcome, context(Fixtures.creatorAddress)
@@ -202,7 +205,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val (_, startedStatus) = Fixtures.startGame(creatorWelcome, context).value().messages.head
+        val (_, startedStatus) = Fixtures.startGame(
+          creatorWelcome, List(creatorWelcome, joinWelcome),
+          context
+        ).value().messages.head
 
         Fixtures.placeDisc(
           Skull, creatorWelcome, context(Fixtures.creatorAddress)

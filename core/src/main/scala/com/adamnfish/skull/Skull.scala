@@ -104,6 +104,7 @@ object Skull {
       // TODO: enforce minimum player count
       game <- Representations.dbToGame(gameDb, playerDbs)
       _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
+      _ <- Games.ensureNotStarted(game)
       startPlayer <- Players.startPlayer(game.players)
       newGame = Games.startGame(game, startPlayer)
       response <- Responses.gameStatuses(newGame)

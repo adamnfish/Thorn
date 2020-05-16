@@ -7,6 +7,7 @@ package com.adamnfish.skull.models
 case class GameSummary(
   gameId: GameId,
   gameName: String,
+  creatorId: PlayerId,
   players: List[PlayerSummary],
   round: Option[RoundSummary],
 )
@@ -66,6 +67,7 @@ case class StartGame(
   gameId: GameId,
   playerId: PlayerId,
   playerKey: PlayerKey,
+  playerOrder: List[PlayerId],
 ) extends Request
 case class PlaceDisc(
   gameId: GameId,
