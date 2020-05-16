@@ -10,7 +10,7 @@ import java.time.ZonedDateTime
 case class Game(
   gameId: GameId,
   gameName: String,
-  players: Map[PlayerId, Player],
+  players: List[Player],
   round: Option[Round],
   started: Boolean,
   startTime: ZonedDateTime

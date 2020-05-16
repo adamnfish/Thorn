@@ -14,7 +14,7 @@ object Representations {
       gameCode = Games.gameCode(game.gameId),
       gameId = game.gameId.gid,
       gameName = game.gameName,
-      playerIds = game.players.values.map(_.playerId.pid).toList,
+      playerIds = game.players.map(_.playerId.pid),
       started = game.started,
       startTime = game.startTime,
       roundState = roundKey(game.round),
@@ -43,8 +43,8 @@ object Representations {
   }
 
   def playersForDb(game: Game): List[PlayerDB] = {
-    game.players.values
-      .map(newPlayerForDb(game, _)).toList
+    game.players
+      .map(newPlayerForDb(game, _))
   }
 
   // unpack DB data
@@ -134,7 +134,7 @@ object Representations {
       Game(
         gameId = GameId(gameDB.gameId),
         gameName = gameDB.gameName,
-        players = playerDBs.map(dbToPlayer).toMap,
+        players = playerDBs.map(dbToPlayer),
         round = round,
         started = gameDB.started,
         startTime = gameDB.startTime,
@@ -142,11 +142,10 @@ object Representations {
     }
   }
 
-  private def dbToPlayer(playerDB: PlayerDB): (PlayerId, Player) = {
-    val playerId = PlayerId(playerDB.playerId)
-    playerId -> Player(
+  private def dbToPlayer(playerDB: PlayerDB): Player = {
+    Player(
       screenName = playerDB.screenName,
-      playerId = playerId,
+      playerId = PlayerId(playerDB.playerId),
       playerKey = PlayerKey(playerDB.playerKey),
       playerAddress = PlayerAddress(playerDB.playerAddress),
       playerDB.score
@@ -157,7 +156,7 @@ object Representations {
 
   def gameStatus(game: Game, playerId: PlayerId)(implicit ec: ExecutionContext): Attempt[GameStatus] = {
     for {
-      player <- Attempt.fromOption(game.players.get(playerId),
+      player <- Attempt.fromOption(game.players.find(_.playerId == playerId),
         Failure(
           "Couldn't summarise game for invalid playerId",
           "Couldn't create game summary",
@@ -165,13 +164,13 @@ object Representations {
         ).asAttempt
       )
     } yield {
-      val playerSummaries = game.players.map { case (_, player) =>
+      val playerSummaries = game.players.map { player =>
         PlayerSummary(
           screenName = player.screenName,
           playerId = player.playerId,
           score = player.score
         )
-      }.toList
+      }
       val round = game.round.map {
         case InitialDiscs(firstPlayer, initialDiscs) =>
           InitialDiscsSummary(firstPlayer, toDiscCount(initialDiscs))

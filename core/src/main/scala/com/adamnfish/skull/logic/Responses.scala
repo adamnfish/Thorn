@@ -31,8 +31,8 @@ object Responses {
 
   def gameStatuses(game: Game)(implicit ec:ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
-      statuses <- Attempt.traverse(game.players.toList) { case (playerId, player) =>
-        Representations.gameStatus(game, playerId).map(player.playerAddress -> _)
+      statuses <- Attempt.traverse(game.players) { player =>
+        Representations.gameStatus(game, player.playerId).map(player.playerAddress -> _)
       }
     } yield {
       Response(

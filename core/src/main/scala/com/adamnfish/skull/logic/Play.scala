@@ -1,7 +1,7 @@
 package com.adamnfish.skull.logic
 
 import com.adamnfish.skull.attempt.{Attempt, Failure}
-import com.adamnfish.skull.models.{Bidding, Disc, Finished, Flipping, Game, InitialDiscs, Placing, PlayerId, Round}
+import com.adamnfish.skull.models.{Bidding, Disc, Finished, Flipping, Game, InitialDiscs, Placing, Player, PlayerId, Round}
 
 import scala.concurrent.ExecutionContext
 
@@ -86,9 +86,9 @@ object Play {
     } yield game.copy(round = Some(newRound))
   }
 
-  private def allPlayersPlaced[A](discs: Map[PlayerId, List[Disc]], players: Map[PlayerId, A]): Boolean = {
-    players.keys.forall { playerId =>
-      discs.getOrElse(playerId, Nil).nonEmpty
+  private def allPlayersPlaced[A](discs: Map[PlayerId, List[Disc]], players: List[Player]): Boolean = {
+    players.forall { player =>
+      discs.getOrElse(player.playerId, Nil).nonEmpty
     }
   }
 

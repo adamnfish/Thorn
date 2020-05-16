@@ -34,7 +34,7 @@ object Players {
     }
   }
 
-  def startPlayer(players: Map[PlayerId, Player]): Attempt[PlayerId] = {
+  def startPlayer(players: List[Player]): Attempt[PlayerId] = {
     if (players.isEmpty) {
       Attempt.Left {
         Failure(
@@ -45,7 +45,7 @@ object Players {
       }
     } else {
       Attempt.Right {
-        scala.util.Random.shuffle(players.keys.toList).head
+        scala.util.Random.shuffle(players.map(_.playerId)).head
       }
     }
   }

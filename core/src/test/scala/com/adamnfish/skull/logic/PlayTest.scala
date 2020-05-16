@@ -27,9 +27,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "adds disc to the matching player's discs" in {
           val newGame = placeDisc(Skull, creator.playerId,
             game.copy(
-              players = Map(
-                creator.playerId -> creator,
-                player1.playerId -> player1,
+              players = List(
+                creator, player1,
               ),
               round = Some(InitialDiscs(
                 creator.playerId, Map.empty
@@ -91,9 +90,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "adds disc to the matching player's discs" in {
           val newGame = placeDisc(Skull, creator.playerId,
             game.copy(
-              players = Map(
-                creator.playerId -> creator,
-                player1.playerId -> player1,
+              players = List(
+                creator, player1,
               ),
               round = Some(Placing(
                 creator.playerId, Map.empty
@@ -124,9 +122,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "fails if this is not the active player" in {
           placeDisc(Skull, player1.playerId,
             game.copy(
-              players = Map(
-                creator.playerId -> creator,
-                player1.playerId -> player1,
+              players = List(
+                creator, player1,
               ),
               round = Some(Placing(
                 creator.playerId,
@@ -239,9 +236,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "fails if the bid is lower than another player's previous bid" in {
           val result = bidOnRound(3, creator.playerId,
             game.copy(
-              players = Map(
-                creator.playerId -> creator,
-                player1.playerId -> player1,
+              players = List(
+                creator, player1,
               ),
               round = Some(Bidding(
                 creator.playerId, Map.empty,
@@ -258,9 +254,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         "fails if it is not the player's turn" in {
           val result = bidOnRound(3, creator.playerId,
             game.copy(
-              players = Map(
-                creator.playerId -> creator,
-                player1.playerId -> player1,
+              players = List(
+                creator, player1,
               ),
               round = Some(Bidding(
                 player1.playerId, Map.empty, Map.empty, Nil

@@ -13,7 +13,7 @@ object Games {
     Game(
       gameId = GameId(id),
       gameName = gameName,
-      players = Map(creator.playerId -> creator),
+      players = List(creator),
       round = None,
       started = false,
       startTime = ZonedDateTime.now()
@@ -58,7 +58,7 @@ object Games {
   }
 
   def ensureNotAlreadyPlaying(game: Game, playerAddress: PlayerAddress): Attempt[Unit] = {
-    if (game.players.values.exists(_.playerAddress == playerAddress))
+    if (game.players.exists(_.playerAddress == playerAddress))
       Attempt.Left {
         Failure(
           "Duplicate player address, joining game failed",
@@ -71,7 +71,7 @@ object Games {
   }
 
   def ensureNoDuplicateScreenName(game: Game, screenName: String): Attempt[Unit] = {
-    if (game.players.values.exists(_.screenName == screenName))
+    if (game.players.exists(_.screenName == screenName))
       Attempt.Left {
         Failure(
           "Duplicate screen name, joining game failed",
@@ -84,7 +84,7 @@ object Games {
   }
 
   def ensurePlayerKey(game: Game, playerId: PlayerId, playerKey: PlayerKey): Attempt[Unit] = {
-    game.players.get(playerId).fold[Attempt[Unit]] {
+    game.players.find(_.playerId == playerId).fold[Attempt[Unit]] {
       Attempt.Left(
         Failure(
           "Couldn't validate key for player that doesn not exist",
@@ -108,7 +108,7 @@ object Games {
 
   def getPlayer(playerId: PlayerId, game: Game): Attempt[Player] = {
     Attempt.fromOption(
-      game.players.get(playerId),
+      game.players.find(_.playerId == playerId),
       Failure(
         s"Couldn't get player from game `${playerId}`:`${game.gameId.gid}`",
         "Couldn't find your player entry in the game",

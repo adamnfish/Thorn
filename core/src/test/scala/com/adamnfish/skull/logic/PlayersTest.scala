@@ -72,9 +72,8 @@ class PlayersTest extends AnyFreeSpec with Matchers with AttemptValues {
     val player2 = newPlayer("player 2", PlayerAddress("a2"))
 
     "returns one of the provided players" in {
-      val players = Map(
-        player1.playerId -> player1,
-        player2.playerId -> player2
+      val players = List(
+        player1, player2
       )
       val result = startPlayer(players).value()
       result should (
@@ -84,7 +83,7 @@ class PlayersTest extends AnyFreeSpec with Matchers with AttemptValues {
     }
 
     "fails if players is empty" in {
-      startPlayer(Map.empty).isFailedAttempt()
+      startPlayer(Nil).isFailedAttempt()
     }
   }
 }

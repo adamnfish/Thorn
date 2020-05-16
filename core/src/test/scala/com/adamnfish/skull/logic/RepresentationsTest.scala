@@ -19,7 +19,7 @@ class RepresentationsTest
   val game = Game(
     GameId("id"),
     "game name",
-    Map.empty,
+    Nil,
     None,
     started = false,
     startTime = now
@@ -74,21 +74,20 @@ class RepresentationsTest
     "playerIds" - {
       "is empty if game has no players" in {
         gameForDb(
-          game.copy(players = Map.empty)
+          game.copy(players = Nil)
         ).playerIds shouldBe empty
       }
 
       "contains player id for single player" in {
         gameForDb(
-          game.copy(players = Map(player1.playerId -> player1))
+          game.copy(players = List(player1))
         ).playerIds shouldEqual List("id-1")
       }
 
       "contains player ids for multiple players" in {
         gameForDb(
-          game.copy(players = Map(
-            player1.playerId -> player1,
-            player2.playerId -> player2,
+          game.copy(players = List(
+            player1, player2,
           ))
         ).playerIds shouldEqual List("id-1", "id-2")
       }
@@ -548,9 +547,8 @@ class RepresentationsTest
     "returns playerDb if player exists in the game" in {
       playerForDb(
         game.copy(
-          players = Map(
-            player1.playerId -> player1,
-            player2.playerId -> player2,
+          players = List(
+            player1, player2,
           )
         ),
         player1.playerId
@@ -560,9 +558,8 @@ class RepresentationsTest
     "if player does not exist in the game, fails" in {
       playerForDb(
         game.copy(
-          players = Map(
-            player1.playerId -> player1,
-            player2.playerId -> player2,
+          players = List(
+            player1, player2,
           )
         ),
         PlayerId("another player id")
@@ -819,14 +816,14 @@ class RepresentationsTest
     "generates players correctly" - {
       "uses gameDB's player IDs as player 'keys'" in {
         val result = dbToGame(gameDb, playerDBs).value()
-        result.players.keys.toSet shouldEqual Set(
+        result.players.map(_.playerId).toSet shouldEqual Set(
           p1id, p2id,
         )
       }
 
       "example player 1 is correctly populated" in {
         val result = dbToGame(gameDb, playerDBs).value()
-        result.players.get(p1id).value should have(
+        result.players.find(_.playerId == p1id).value should have(
           "screenName" as player1.screenName,
           "playerId" as p1id.pid,
           "playerKey" as player1.playerKey,
@@ -837,7 +834,7 @@ class RepresentationsTest
 
       "example player 2 is correctly populated" in {
         val result = dbToGame(gameDb, playerDBs).value()
-        result.players.get(p2id).value should have(
+        result.players.find(_.playerId == p2id).value should have(
           "screenName" as player2.screenName,
           "playerId" as p2id.pid,
           "playerKey" as player2.playerKey,
@@ -852,9 +849,7 @@ class RepresentationsTest
     "fails if the provided playerId is not found" in {
       gameStatus(
         game.copy(
-          players = Map(
-            player1.playerId -> player1
-          )
+          players = List(player1)
         ),
         PlayerId("INVALID PLAYER ID")
       ).isFailedAttempt()
@@ -867,9 +862,7 @@ class RepresentationsTest
           gameStatus(
             game.copy(
               gameId = gid,
-              players = Map(
-                player1.playerId -> player1
-              )
+              players = List(player1)
             ),
             player1.playerId
           ).value().game.gameId shouldEqual gid
@@ -881,9 +874,7 @@ class RepresentationsTest
           gameStatus(
             game.copy(
               gameName = gameName,
-              players = Map(
-                player1.playerId -> player1
-              )
+              players = List(player1)
             ),
             player1.playerId
           ).value().game.gameName shouldEqual gameName
@@ -892,9 +883,8 @@ class RepresentationsTest
 
       "player summaries are set correctly" - {
         val gameWithPlayers = game.copy(
-          players = Map(
-            player1.playerId -> player1,
-            player2.playerId -> player2,
+          players = List(
+            player1, player2,
           )
         )
 
@@ -933,9 +923,8 @@ class RepresentationsTest
         "if round is no round" in {
           gameStatus(
             game.copy(
-              players = Map(
-                player1.playerId -> player1,
-                player2.playerId -> player2,
+              players = List(
+                player1, player2,
               ),
               round = None
             ),
@@ -945,9 +934,8 @@ class RepresentationsTest
 
         "if round is initial discs" - {
           val gameWithRound = game.copy(
-            players = Map(
-              player1.playerId -> player1,
-              player2.playerId -> player2,
+            players = List(
+              player1, player2,
             ),
             round = Some(InitialDiscs(
               firstPlayer = player1.playerId,
@@ -981,9 +969,8 @@ class RepresentationsTest
 
         "if round is placing" - {
           val gameWithRound = game.copy(
-            players = Map(
-              player1.playerId -> player1,
-              player2.playerId -> player2,
+            players = List(
+              player1, player2,
             ),
             round = Some(Placing(
               activePlayer = player1.playerId,
@@ -1017,9 +1004,8 @@ class RepresentationsTest
 
         "if round is bidding" - {
           val gameWithRound = game.copy(
-            players = Map(
-              player1.playerId -> player1,
-              player2.playerId -> player2,
+            players = List(
+              player1, player2,
             ),
             round = Some(Bidding(
               activePlayer = player1.playerId,
@@ -1065,9 +1051,8 @@ class RepresentationsTest
 
         "if round is flipping" - {
           val gameWithRound = game.copy(
-            players = Map(
-              player1.playerId -> player1,
-              player2.playerId -> player2,
+            players = List(
+              player1, player2,
             ),
             round = Some(Flipping(
               activePlayer = player1.playerId,
@@ -1109,9 +1094,8 @@ class RepresentationsTest
 
         "if round is finished" - {
           val gameWithRound = game.copy(
-            players = Map(
-              player1.playerId -> player1,
-              player2.playerId -> player2,
+            players = List(
+              player1, player2,
             ),
             round = Some(Finished(
               activePlayer = player1.playerId,
@@ -1160,8 +1144,8 @@ class RepresentationsTest
         forAll { (screenName: String) =>
           gameStatus(
             game.copy(
-              players = Map(
-                player1.playerId -> player1.copy(
+              players = List(
+                player1.copy(
                   screenName = screenName
                 )
               )
@@ -1175,8 +1159,8 @@ class RepresentationsTest
         forAll { (pid: String) =>
           gameStatus(
             game.copy(
-              players = Map(
-                PlayerId(pid) -> player1.copy(
+              players = List(
+                player1.copy(
                   playerId = PlayerId(pid)
                 )
               )
@@ -1190,8 +1174,8 @@ class RepresentationsTest
         forAll { (score: Int) =>
           gameStatus(
             game.copy(
-              players = Map(
-                player1.playerId -> player1.copy(
+              players = List(
+                player1.copy(
                   score = score
                 )
               )
@@ -1205,9 +1189,7 @@ class RepresentationsTest
         "if there is no round, discs is None" in {
           gameStatus(
             game.copy(
-              players = Map(
-                player1.playerId -> player1
-              ),
+              players = List(player1),
               round = None
             ),
             player1.playerId,
@@ -1218,9 +1200,7 @@ class RepresentationsTest
           forAll { (discs: List[Disc]) =>
             gameStatus(
               game.copy(
-                players = Map(
-                  player1.playerId -> player1
-                ),
+                players = List(player1),
                 round = Some(InitialDiscs(
                   player1.playerId,
                   Map(
@@ -1237,9 +1217,7 @@ class RepresentationsTest
           forAll { (discs: List[Disc]) =>
             gameStatus(
               game.copy(
-                players = Map(
-                  player1.playerId -> player1
-                ),
+                players = List(player1),
                 round = Some(Placing(
                   player1.playerId,
                   Map(
@@ -1256,9 +1234,7 @@ class RepresentationsTest
           forAll { (discs: List[Disc]) =>
             gameStatus(
               game.copy(
-                players = Map(
-                  player1.playerId -> player1
-                ),
+                players = List(player1),
                 round = Some(Bidding(
                   player1.playerId,
                   Map(
@@ -1277,9 +1253,7 @@ class RepresentationsTest
           forAll { (discs: List[Disc]) =>
             gameStatus(
               game.copy(
-                players = Map(
-                  player1.playerId -> player1
-                ),
+                players = List(player1),
                 round = Some(Flipping(
                   player1.playerId,
                   Map(
@@ -1297,9 +1271,7 @@ class RepresentationsTest
           forAll { (discs: List[Disc]) =>
             gameStatus(
               game.copy(
-                players = Map(
-                  player1.playerId -> player1
-                ),
+                players = List(player1),
                 round = Some(Finished(
                   player1.playerId,
                   Map(

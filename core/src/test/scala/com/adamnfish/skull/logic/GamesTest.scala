@@ -39,7 +39,7 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
     }
 
     "adds creator to game players" in {
-      newGame(gameName, creator).players shouldEqual Map(creator.playerId -> creator)
+      newGame(gameName, creator).players shouldEqual List(creator)
     }
 
     "start time is close enough to 'now' for testing purposes" in {
@@ -100,9 +100,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
       val player2Address = PlayerAddress("player-2-address")
       val player2 = Players.newPlayer("player 2", player2Address)
       val game = newGame("test", creator).copy(
-        players = Map(
-          creator.playerId -> creator,
-          player2.playerId -> player2,
+        players = List(
+          creator, player2,
         )
       )
       ensureNotAlreadyPlaying(game, player2Address).isFailedAttempt()
@@ -126,9 +125,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
       val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
       val player2 = Players.newPlayer("player 2", PlayerAddress("player-2-address"))
       val game = newGame("test", creator).copy(
-        players = Map(
-          creator.playerId -> creator,
-          player2.playerId -> player2,
+        players = List(
+          creator, player2,
         )
       )
       ensureNoDuplicateScreenName(game, player2.screenName).isFailedAttempt()
