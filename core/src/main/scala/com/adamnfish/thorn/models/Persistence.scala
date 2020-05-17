@@ -30,7 +30,7 @@ case class PlayerDB(
   playerAddress: String,
   screenName: String,
   score: Int,
-  discs: List[String],
+  placedDiscs: List[String],
   bid: Option[Int],
   passed: Option[Boolean],
 )

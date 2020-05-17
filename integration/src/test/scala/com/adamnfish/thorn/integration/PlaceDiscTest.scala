@@ -93,7 +93,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
           val creatorDb = playerDbs.find(_.playerId == creatorWelcome.playerId.pid).value
 
-          creatorDb.discs shouldEqual List("thorn")
+          creatorDb.placedDiscs shouldEqual List("thorn")
         }
       }
     }
@@ -221,7 +221,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
           val creatorDb = playerDbs.find(_.playerId == creatorWelcome.playerId.pid).value
 
-          creatorDb.discs shouldEqual List("thorn", "rose")
+          creatorDb.placedDiscs shouldEqual List("thorn", "rose")
         }
       }
     }

@@ -32,7 +32,7 @@ object Representations {
       playerAddress = player.playerAddress.address,
       screenName = player.screenName,
       score = player.score,
-      discs = game.round.map(playerRoundDiscs(player.playerId)).getOrElse(Nil),
+      placedDiscs = game.round.map(playerRoundDiscs(player.playerId)).getOrElse(Nil),
       bid = game.round.flatMap(playerRoundBid(player.playerId)),
       passed = game.round.flatMap(playerRoundPassed(player.playerId)),
     )
@@ -221,7 +221,7 @@ object Representations {
           screenName = player.screenName,
           playerId = player.playerId,
           score = player.score,
-          discs = playerDiscs,
+          placedDiscs = playerDiscs,
         ),
         GameSummary(
           gameId = game.gameId,
@@ -352,7 +352,7 @@ object Representations {
 
   private def playerDiscs(playerDBs: List[PlayerDB])(implicit ec: ExecutionContext): Attempt[Map[PlayerId, List[Disc]]] = {
     Attempt.traverse(playerDBs) { playerDB =>
-      Attempt.traverse(playerDB.discs) { discStr =>
+      Attempt.traverse(playerDB.placedDiscs) { discStr =>
         Attempt.fromEither(
           discFromString(discStr)
             .left.map(_.asAttempt)

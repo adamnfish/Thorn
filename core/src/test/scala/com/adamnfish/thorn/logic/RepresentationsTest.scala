@@ -371,7 +371,7 @@ class RepresentationsTest
         }
 
         "discs is empty" in {
-          newPlayerForDb(game, player1).discs shouldEqual Nil
+          newPlayerForDb(game, player1).placedDiscs shouldEqual Nil
         }
       }
 
@@ -388,7 +388,7 @@ class RepresentationsTest
         }
 
         "discs is empty for an empty round" in {
-          newPlayerForDb(gameRound, player1).discs shouldEqual Nil
+          newPlayerForDb(gameRound, player1).placedDiscs shouldEqual Nil
         }
 
         "discs is empty when only other players have placed" in {
@@ -397,7 +397,7 @@ class RepresentationsTest
               round = Some(round.copy(initialDiscs = Map(player2.playerId -> List(Rose))))
             ),
             player1
-          ).discs shouldEqual Nil
+          ).placedDiscs shouldEqual Nil
         }
 
         "discs is populated from this player's initial discs" in {
@@ -411,7 +411,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).discs shouldEqual List("thorn")
+          ).placedDiscs shouldEqual List("thorn")
         }
       }
 
@@ -438,7 +438,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).discs shouldEqual List("rose", "thorn")
+          ).placedDiscs shouldEqual List("rose", "thorn")
         }
       }
 
@@ -495,7 +495,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).discs shouldEqual List("rose", "thorn")
+          ).placedDiscs shouldEqual List("rose", "thorn")
         }
       }
 
@@ -522,7 +522,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).discs shouldEqual List("rose", "thorn")
+          ).placedDiscs shouldEqual List("rose", "thorn")
         }
       }
 
@@ -549,7 +549,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).discs shouldEqual List("rose", "thorn")
+          ).placedDiscs shouldEqual List("rose", "thorn")
         }
       }
     }
@@ -657,8 +657,8 @@ class RepresentationsTest
           currentPlayer = Some(p1id.pid),
         )
         val playersDBsWithDiscs = List(
-          player1.copy(discs = List("thorn")),
-          player2.copy(discs = List("rose")),
+          player1.copy(placedDiscs = List("thorn")),
+          player2.copy(placedDiscs = List("rose")),
         )
 
         "round is an instance of InitialDiscs" in {
@@ -684,8 +684,8 @@ class RepresentationsTest
           currentPlayer = Some(p1id.pid),
         )
         val playersDBsWithDiscs = List(
-          player1.copy(discs = List("thorn")),
-          player2.copy(discs = List("rose", "rose")),
+          player1.copy(placedDiscs = List("thorn")),
+          player2.copy(placedDiscs = List("rose", "rose")),
         )
 
         "round is an instance of Placing" in {
@@ -712,12 +712,12 @@ class RepresentationsTest
         )
         val playersDBsWithDiscs = List(
           player1.copy(
-            discs = List("thorn", "rose"),
+            placedDiscs = List("thorn", "rose"),
             passed = Some(false),
             bid = Some(2)
           ),
           player2.copy(
-            discs = List("rose", "rose"),
+            placedDiscs = List("rose", "rose"),
             passed = Some(true),
             bid = None
           ),
@@ -758,12 +758,12 @@ class RepresentationsTest
         )
         val playersDBsWithDiscs = List(
           player1.copy(
-            discs = List("thorn", "rose"),
+            placedDiscs = List("thorn", "rose"),
             passed = Some(false),
             bid = Some(2)
           ),
           player2.copy(
-            discs = List("rose", "rose"),
+            placedDiscs = List("rose", "rose"),
             passed = Some(true),
             bid = None
           ),
@@ -801,12 +801,12 @@ class RepresentationsTest
         )
         val playersDBsWithDiscs = List(
           player1.copy(
-            discs = List("thorn", "rose"),
+            placedDiscs = List("thorn", "rose"),
             passed = Some(false),
             bid = Some(2)
           ),
           player2.copy(
-            discs = List("rose", "rose"),
+            placedDiscs = List("rose", "rose"),
             passed = Some(true),
             bid = None
           ),
@@ -1242,7 +1242,7 @@ class RepresentationsTest
               round = None
             ),
             player1.playerId,
-          ).value().self.discs shouldEqual None
+          ).value().self.placedDiscs shouldEqual None
         }
 
         "InitialDiscs discs are drawn from round discs" in {
@@ -1258,7 +1258,7 @@ class RepresentationsTest
                 ))
               ),
               player1.playerId,
-            ).value().self.discs.value shouldEqual discs
+            ).value().self.placedDiscs.value shouldEqual discs
           }
         }
 
@@ -1275,7 +1275,7 @@ class RepresentationsTest
                 ))
               ),
               player1.playerId,
-            ).value().self.discs.value shouldEqual discs
+            ).value().self.placedDiscs.value shouldEqual discs
           }
         }
 
@@ -1294,7 +1294,7 @@ class RepresentationsTest
                 ))
               ),
               player1.playerId,
-            ).value().self.discs.value shouldEqual discs
+            ).value().self.placedDiscs.value shouldEqual discs
           }
         }
 
@@ -1312,7 +1312,7 @@ class RepresentationsTest
                 ))
               ),
               player1.playerId,
-            ).value().self.discs.value shouldEqual discs
+            ).value().self.placedDiscs.value shouldEqual discs
           }
         }
 
@@ -1331,7 +1331,7 @@ class RepresentationsTest
                 ))
               ),
               player1.playerId,
-            ).value().self.discs.value shouldEqual discs
+            ).value().self.placedDiscs.value shouldEqual discs
           }
         }
       }
