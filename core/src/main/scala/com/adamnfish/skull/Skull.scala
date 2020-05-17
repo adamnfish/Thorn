@@ -71,15 +71,16 @@ object Skull {
       _ <- validate(request)
       // fetch game data
       gameDbOpt <- context.db.lookupGame(request.gameCode)
-      gameDb <- Attempt.fromOption(gameDbOpt,
+      rawGameDb <- Attempt.fromOption(gameDbOpt,
         Failure(
           s"Game not found for code ${request.gameCode}",
           "Couldn't find game, is the code correct?",
           404
         ).asAttempt
       )
-      playerDbs <- context.db.getPlayers(GameId(gameDb.gameId))
+      playerDbs <- context.db.getPlayers(GameId(rawGameDb.gameId))
       // game logic
+      gameDb = Games.addPlayerIds(rawGameDb, playerDbs)
       game <- Representations.dbToGame(gameDb, playerDbs)
       _ <- Games.ensureNotStarted(game)
       _ <- Games.ensureNotAlreadyPlaying(game, context.playerAddress)
@@ -97,16 +98,16 @@ object Skull {
       _ <- validate(request)
       // fetch game / player data
       gameDbOpt <- context.db.getGame(request.gameId)
-      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      rawGameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       // game logic
-      // TODO: Add creator to models so we can enforce it here
-      // TODO: enforce minimum player count
+      gameDb = Games.addOrderedPlayerIds(rawGameDb, request.playerOrder)
       game <- Representations.dbToGame(gameDb, playerDbs)
+      _ <- Games.ensureCreator(request.playerId, game)
       _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       _ <- Games.ensureNotStarted(game)
-      startPlayer <- Players.startPlayer(game.players)
-      newGame = Games.startGame(game, startPlayer)
+      // TODO: enforce minimum player count
+      newGame = Games.startGame(game)
       response <- Responses.gameStatuses(newGame)
       // create and save new DB representations
       newGameDb = Representations.gameForDb(newGame)
@@ -146,7 +147,9 @@ object Skull {
       response <- Responses.gameStatuses(newGame)
       // create and save updated player and game for DB
       newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      newGameDb = Representations.gameForDb(newGame)
       _ <- context.db.writePlayer(newPlayerDb)
+      _ <- context.db.writeGame(newGameDb)
     } yield response
   }
 

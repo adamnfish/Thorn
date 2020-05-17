@@ -89,6 +89,32 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
+    "fails if this is not the creator" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = createGame(
+          createGameRequest,
+          context(creatorAddress)
+        ).value().response.value
+        val code = Games.gameCode(creatorWelcome.gameId)
+
+        val player2Address = PlayerAddress("player-2-address")
+        val joinGameWelcome = joinGame(
+          JoinGame(code, "screen name 2"),
+          context(player2Address)
+        ).value().response.value
+
+        val startGameRequest = StartGame(
+          creatorWelcome.gameId, creatorWelcome.playerId,
+          joinGameWelcome.playerKey,
+          List(creatorWelcome.playerId, joinGameWelcome.playerId)
+        )
+        startGame(
+          startGameRequest,
+          context(creatorAddress)
+        ).isFailedAttempt()
+      }
+    }
+
     "more cases" ignore {}
     // TODO:
   }

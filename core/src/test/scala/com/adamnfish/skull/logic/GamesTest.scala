@@ -7,9 +7,10 @@ import com.adamnfish.skull.logic.Games._
 import com.adamnfish.skull.models.{Player, PlayerAddress, PlayerId, PlayerKey}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 
-class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
+class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaCheckDrivenPropertyChecks {
   "newGame" - {
     val gameName = "game-name"
     val creator = Player(
@@ -78,6 +79,34 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues {
 
     "succeeds if value is present" in {
       requireGame(Some(1), "test").isSuccessfulAttempt()
+    }
+  }
+
+  "ensureCreator" - {
+    val creator = Player(
+      screenName = "screen-name",
+      playerId = PlayerId("id"),
+      playerKey = PlayerKey("key"),
+      playerAddress = PlayerAddress("address"),
+      0
+    )
+    val game = newGame("test", creator)
+
+    "succeeds if this is the game's creator" in {
+      forAll { (creatorIdStr: String) =>
+        val creatorId = PlayerId(creatorIdStr)
+        val game = newGame("test", creator.copy(playerId = creatorId))
+        ensureCreator(creatorId, game).isSuccessfulAttempt()
+      }
+    }
+
+    "fails if this is not the game's creator" in {
+      forAll { (playerIdStr: String) =>
+        whenever(playerIdStr != creator.playerId.pid) {
+          val game = newGame("test", creator)
+          ensureCreator(PlayerId(playerIdStr), game).isFailedAttempt()
+        }
+      }
     }
   }
 

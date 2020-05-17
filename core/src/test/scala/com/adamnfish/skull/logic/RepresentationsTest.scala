@@ -8,6 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import Representations._
 import com.adamnfish.skull.{AttemptValues, TestHelpers}
 import org.scalacheck.Arbitrary._
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -835,11 +836,26 @@ class RepresentationsTest
     }
 
     "generates players correctly" - {
-      "uses gameDB's player IDs as player 'keys'" in {
+      "uses player IDs from the provided playerDBs" in {
         val result = dbToGame(gameDb, playerDBs).value()
         result.players.map(_.playerId).toSet shouldEqual Set(
           p1id, p2id,
         )
+      }
+
+      "uses the order from gameDB's player IDs" in {
+        def test(playerOrder: List[String]) = {
+          val result = dbToGame(
+            gameDb.copy(
+              playerIds = playerOrder
+            ),
+            playerDBs
+          ).value()
+          result.players.map(_.playerId.pid) shouldEqual playerOrder
+        }
+
+        test(List(player1.playerId, player2.playerId))
+        test(List(player2.playerId, player1.playerId))
       }
 
       "example player 1 is correctly populated" in {
@@ -1319,6 +1335,32 @@ class RepresentationsTest
           }
         }
       }
+    }
+  }
+
+  "sortByKeyList" - {
+    "sorts by the key" in {
+      val result = sortByKeyList(
+        List(2, 1, 3),
+        List((1, "123"), (2, "234"), (3, "345"))
+      )(_._1).value
+      result shouldEqual List((2, "234"), (1, "123"), (3, "345"))
+    }
+
+    "returns None if there is a missing key" in {
+      val result = sortByKeyList(
+        List(2, 1),
+        List((1, "123"), (2, "234"), (3, "345"))
+      )(_._1)
+      result shouldEqual None
+    }
+
+    "returns None if there is a missing value" in {
+      val result = sortByKeyList(
+        List(2, 1, 3),
+        List((1, "123"), (3, "345"))
+      )(_._1)
+      result shouldEqual None
     }
   }
 }

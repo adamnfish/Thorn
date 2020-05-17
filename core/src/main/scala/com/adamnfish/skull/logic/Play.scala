@@ -7,6 +7,20 @@ import scala.concurrent.ExecutionContext
 
 
 object Play {
+  def advanceActivePlayer(players: List[Player], currentActivePlayerId: PlayerId): PlayerId = {
+    def loop(remainder: List[Player]): PlayerId = {
+      remainder match {
+        case head :: next :: _ if head.playerId == currentActivePlayerId =>
+          next.playerId
+        case Nil =>
+          players.head.playerId
+        case _ :: tail =>
+          loop(tail)
+      }
+    }
+    loop(players)
+  }
+
   def nextStartPlayer(finished: Finished): PlayerId = {
     ???
   }
@@ -55,6 +69,7 @@ object Play {
           case Some(round @ Placing(activePlayerId, discs)) =>
             if (activePlayerId == playerId) Attempt.Right {
               round.copy(
+                activePlayer = advanceActivePlayer(game.players, activePlayerId),
                 discs = discs.updatedWith(playerId) {
                   case Some(current) =>
                     Some(disc :: current)
@@ -103,8 +118,29 @@ object Play {
         failure("none")
       case Some(_: InitialDiscs) =>
         failure("initial discs")
-      case Some(_: Placing) =>
-        failure("placing")
+      case Some(placing: Placing) =>
+        if (placing.activePlayer != playerId) {
+          Attempt.Left(
+            Failure(
+              "Cannot bid on another player's turn",
+              "It's not your turn to bid",
+              400
+            )
+          )
+        } else {
+          Attempt.Right {
+            game.copy(
+              round = Some(Bidding(
+                activePlayer = advanceActivePlayer(game.players, placing.activePlayer),
+                discs = placing.discs,
+                bids = Map(
+                  playerId -> count
+                ),
+                passed = Nil
+              ))
+            )
+          }
+        }
       case Some(bidding: Bidding) =>
         if (bidding.activePlayer != playerId) {
           Attempt.Left(
@@ -139,6 +175,7 @@ object Play {
               game.copy(
                 round = Some(
                   bidding.copy(
+                    activePlayer = advanceActivePlayer(game.players, bidding.activePlayer),
                     bids = bidding.bids.updated(playerId, count)
                   )
                 )

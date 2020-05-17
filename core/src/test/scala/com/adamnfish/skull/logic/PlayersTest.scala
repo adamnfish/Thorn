@@ -67,24 +67,4 @@ class PlayersTest extends AnyFreeSpec with Matchers with AttemptValues {
       ).isFailedAttempt()
     }
   }
-
-  "startPlayer" - {
-    val player1 = newPlayer("player 1", PlayerAddress("a1"))
-    val player2 = newPlayer("player 2", PlayerAddress("a2"))
-
-    "returns one of the provided players" in {
-      val players = List(
-        player1, player2
-      )
-      val result = startPlayer(players).value()
-      result should (
-        equal (player1.playerId) or
-        equal (player2.playerId)
-      )
-    }
-
-    "fails if players is empty" in {
-      startPlayer(Nil).isFailedAttempt()
-    }
-  }
 }

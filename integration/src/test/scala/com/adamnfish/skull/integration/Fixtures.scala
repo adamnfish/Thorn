@@ -4,7 +4,6 @@ import com.adamnfish.skull.Skull
 import com.adamnfish.skull.attempt.Attempt
 import com.adamnfish.skull.logic.Games
 import com.adamnfish.skull.models._
-import javax.print.attribute.standard.MediaSize
 
 import scala.concurrent.ExecutionContext
 
@@ -53,6 +52,14 @@ object Fixtures {
     Skull.placeDisc(
       PlaceDisc(
         welcome.gameId, welcome.playerId, welcome.playerKey, disc
+      ), context
+    )
+  }
+
+  def bid(count: Int, welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    Skull.bid(
+      Bid(
+        welcome.gameId, welcome.playerId, welcome.playerKey, count
       ), context
     )
   }

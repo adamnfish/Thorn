@@ -11,7 +11,29 @@ import org.scalatest.matchers.should.Matchers
 class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues {
   val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
   val player1 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
+  val player2 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
   val game = Games.newGame("test game", creator)
+
+  "advanceActivePlayer" - {
+    val players = List(creator, player1, player2)
+    "advances to the next player" in {
+      advanceActivePlayer(players,
+        creator.playerId
+      ) shouldEqual player1.playerId
+    }
+
+    "advances from the middle of the pack" in {
+      advanceActivePlayer(players,
+        player1.playerId
+      ) shouldEqual player2.playerId
+    }
+
+    "wraps to the first player if we're at the last player now" in {
+      advanceActivePlayer(players,
+        player2.playerId
+      ) shouldEqual creator.playerId
+    }
+  }
 
   "placeDisc" - {
     "handles each possible round state" - {
@@ -40,6 +62,22 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           discs shouldEqual List(Skull)
         }
 
+        "does not change the first player" in {
+          val newGame = placeDisc(Skull, creator.playerId,
+            game.copy(
+              players = List(
+                creator, player1,
+              ),
+              round = Some(InitialDiscs(
+                creator.playerId, Map.empty
+              )),
+            )
+          ).value()
+          newGame.round.value shouldBe a[InitialDiscs]
+          val firstPlayer = newGame.round.value.asInstanceOf[InitialDiscs].firstPlayer
+          firstPlayer shouldEqual creator.playerId
+        }
+
         "does not allow a second disc to be placed during the initial discs round" in {
           placeDisc(Skull, creator.playerId,
             game.copy(
@@ -53,7 +91,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ).isFailedAttempt()
         }
 
-        "if all players haveplaced their initial disc" - {
+        "if all players have placed their initial disc" - {
           "advances round to 'placing'" in {
             placeDisc(Skull, creator.playerId,
               game.copy(
@@ -101,6 +139,59 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           newGame.round.value shouldBe a[Placing]
           val discs = newGame.round.value.asInstanceOf[Placing].discs.get(creator.playerId).value
           discs shouldEqual List(Skull)
+        }
+
+        "advances the active player in example 3-player game" - {
+          "once" in {
+            val newGame = placeDisc(Rose, creator.playerId,
+              game.copy(
+                players = List(
+                  creator, player1, player2
+                ),
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                )),
+              )
+            ).value()
+            newGame.round.value shouldBe a[Placing]
+            val activePlayer = newGame.round.value.asInstanceOf[Placing].activePlayer
+            activePlayer shouldEqual player1.playerId
+          }
+
+          "twice" in {
+            val newGame1 = placeDisc(Rose, creator.playerId,
+              game.copy(
+                players = List(
+                  creator, player1, player2
+                ),
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                )),
+              )
+            ).value()
+            val newGame2 = placeDisc(Rose, player1.playerId, newGame1).value()
+            newGame2.round.value shouldBe a[Placing]
+            val activePlayer = newGame2.round.value.asInstanceOf[Placing].activePlayer
+            activePlayer shouldEqual player2.playerId
+          }
+
+          "three times, back to the creator" in {
+            val newGame1 = placeDisc(Rose, creator.playerId,
+              game.copy(
+                players = List(
+                  creator, player1, player2
+                ),
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                )),
+              )
+            ).value()
+            val newGame2 = placeDisc(Rose, player1.playerId, newGame1).value()
+            val newGame3 = placeDisc(Rose, player2.playerId, newGame2).value()
+            newGame3.round.value shouldBe a[Placing]
+            val activePlayer = newGame3.round.value.asInstanceOf[Placing].activePlayer
+            activePlayer shouldEqual creator.playerId
+          }
         }
 
         "adds disc to the start of matching player's discs" in {
@@ -180,14 +271,58 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         ).isFailedAttempt()
       }
 
-      "fails for placing" in {
-        bidOnRound(1, creator.playerId,
-          game.copy(
-            round = Some(Placing(
-              creator.playerId, Map.empty
-            ))
-          )
-        ).isFailedAttempt()
+      "for placing" - {
+        "fails if it is not the player's turn" in {
+          bidOnRound(3, creator.playerId,
+            game.copy(
+              players = List(
+                creator, player1,
+              ),
+              round = Some(Placing(
+                player1.playerId, Map.empty
+              ))
+            )
+          ).isFailedAttempt()
+        }
+
+        "if it is the player's turn" - {
+          "advances the round to 'bidding'" in {
+            val result = bidOnRound(3, creator.playerId,
+              game.copy(
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                ))
+              )
+            ).value()
+            result.round.value shouldBe a[Bidding]
+          }
+
+          "updates player bid to the specified amount" in {
+            val result = bidOnRound(3, creator.playerId,
+              game.copy(
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                ))
+              )
+            ).value()
+            val bid = result.round.value.asInstanceOf[Bidding].bids.get(creator.playerId).value
+            bid shouldEqual 3
+          }
+
+          "advances the active player" in {
+            val result = bidOnRound(3, creator.playerId,
+              game.copy(
+                players = List(creator, player1),
+                round = Some(Placing(
+                  creator.playerId, Map.empty
+                ))
+              )
+            ).value()
+            result.round.value shouldBe a[Bidding]
+            val activePlayer = result.round.value.asInstanceOf[Bidding].activePlayer
+            activePlayer shouldEqual player1.playerId
+          }
+        }
       }
 
       "for bidding" - {
@@ -219,8 +354,23 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           bid shouldEqual 3
         }
 
-        "fails if the bid is lower than the player's previous bid" in {
+        "advances the active player" in {
           val result = bidOnRound(3, creator.playerId,
+            game.copy(
+              players = List(
+                creator, player1
+              ),
+              round = Some(Bidding(
+                creator.playerId, Map.empty, Map.empty, Nil
+              ))
+            )
+          ).value()
+          val activePlayer = result.round.value.asInstanceOf[Bidding].activePlayer
+          activePlayer shouldEqual player1.playerId
+        }
+
+        "fails if the bid is lower than the player's previous bid" in {
+          bidOnRound(3, creator.playerId,
             game.copy(
               round = Some(Bidding(
                 creator.playerId, Map.empty,
@@ -234,7 +384,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         }
 
         "fails if the bid is lower than another player's previous bid" in {
-          val result = bidOnRound(3, creator.playerId,
+          bidOnRound(3, creator.playerId,
             game.copy(
               players = List(
                 creator, player1,
@@ -252,7 +402,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         }
 
         "fails if it is not the player's turn" in {
-          val result = bidOnRound(3, creator.playerId,
+          bidOnRound(3, creator.playerId,
             game.copy(
               players = List(
                 creator, player1,
@@ -265,7 +415,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         }
 
         "fails if the player has passed" in {
-          val result = bidOnRound(3, creator.playerId,
+          bidOnRound(3, creator.playerId,
             game.copy(
               round = Some(Bidding(
                 creator.playerId, Map.empty, Map.empty,

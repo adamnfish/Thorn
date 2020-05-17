@@ -131,12 +131,28 @@ object Representations {
             None
           ))
       }
+      playerOrderingError = Failure(
+        "Database players out of sync with game players",
+        "There was an error loading this game's players",
+        500
+      )
+      orderedPlayerIds <-
+        if (playerDBs.map(_.playerId).toSet == gameDB.playerIds.toSet) {
+          Attempt.Right(gameDB.playerIds)
+        } else {
+          Attempt.Left(playerOrderingError)
+        }
+      allPlayers = playerDBs.map(dbToPlayer)
+      orderedPlayers <- Attempt.fromOption(
+        sortByKeyList(orderedPlayerIds, allPlayers)(_.playerId.pid),
+        playerOrderingError.asAttempt
+      )
     } yield {
       Game(
         gameId = GameId(gameDB.gameId),
         gameName = gameDB.gameName,
         creatorId = PlayerId(gameDB.creatorId),
-        players = playerDBs.map(dbToPlayer),
+        players = orderedPlayers,
         round = round,
         started = gameDB.started,
         startTime = gameDB.startTime,
@@ -381,5 +397,19 @@ object Representations {
 
   private def toDiscCount(discs: Map[PlayerId, List[Disc]]): Map[PlayerId, Int] = {
     discs.view.mapValues(_.length).toMap
+  }
+
+  private[logic] def sortByKeyList[A, K](keyOrder: List[K], as: List[A])(keyFn: A => K): Option[List[A]] = {
+    val asMap = as.map(a => keyFn(a) -> a).toMap
+    if (asMap.keys.toSet == keyOrder.toSet) {
+      keyOrder.foldRight[Option[List[A]]](Some(Nil)) {
+        case (k, Some(acc)) =>
+          asMap.get(k).map(_ :: acc)
+        case (_, None) =>
+          None
+      }
+    } else {
+      None
+    }
   }
 }

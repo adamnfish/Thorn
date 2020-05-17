@@ -33,20 +33,4 @@ object Players {
         }
     }
   }
-
-  def startPlayer(players: List[Player]): Attempt[PlayerId] = {
-    if (players.isEmpty) {
-      Attempt.Left {
-        Failure(
-          "Can't choose start player from empty list",
-          "Couldn't choose start player because there are no players",
-          500
-        ).asAttempt
-      }
-    } else {
-      Attempt.Right {
-        scala.util.Random.shuffle(players.map(_.playerId)).head
-      }
-    }
-  }
 }

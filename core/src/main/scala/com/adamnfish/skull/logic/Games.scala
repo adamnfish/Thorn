@@ -25,6 +25,18 @@ object Games {
     gameId.gid.take(4)
   }
 
+  def addOrderedPlayerIds(gameDB: GameDB, orderedPlayerIds: List[PlayerId]): GameDB = {
+    gameDB.copy(
+      playerIds = orderedPlayerIds.map(_.pid)
+    )
+  }
+
+  def addPlayerIds(gameDB: GameDB, playerDbs: List[PlayerDB]): GameDB = {
+    gameDB.copy(
+      playerIds = playerDbs.map(_.playerId)
+    )
+  }
+
   def requireGame[A](gameOpt: Option[A], query: String): Attempt[A] = {
     Attempt.fromOption(gameOpt,
       Failure(
@@ -33,6 +45,18 @@ object Games {
         404
       ).asAttempt
     )
+  }
+
+  def ensureCreator(playerId: PlayerId, game: Game): Attempt[Unit] = {
+    if (game.creatorId == playerId)
+      Attempt.unit
+    else
+      Attempt.Left {
+        Failure(
+          "Player is not the game creator", "You are not the game's creator",
+          400
+        )
+      }
   }
 
   def ensureNotStarted(game: Game): Attempt[Unit] = {
@@ -48,11 +72,11 @@ object Games {
       Attempt.unit
   }
 
-  def startGame(game: Game, startPlayer: PlayerId): Game = {
+  def startGame(game: Game): Game = {
     game.copy(
       started = true,
       round = Some(InitialDiscs(
-        firstPlayer = startPlayer,
+        firstPlayer = game.players.head.playerId,
         Map.empty
       ))
     )

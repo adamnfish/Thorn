@@ -11,6 +11,7 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
   with SkullIntegration with OneInstancePerTest with TestHelpers {
 
   case class TestGame(
+    gameId: GameId,
     creator: Welcome,
     player1: Welcome,
     player2: Welcome,
@@ -29,255 +30,171 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
 
     // initial placements
     Fixtures.placeDisc(
-      Skull, creatorWelcome, context(Fixtures.creatorAddress)
+      Rose, creatorWelcome, context(Fixtures.creatorAddress)
     ).isSuccessfulAttempt()
     Fixtures.placeDisc(
-      Skull, player1Welcome, context(Fixtures.player1Address)
+      Rose, player1Welcome, context(Fixtures.player1Address)
     ).isSuccessfulAttempt()
     // last initial placement will trigger placement round
-    val (_, gameStatus) = Fixtures.placeDisc(
-      Skull, player2Welcome, context(Fixtures.player1Address)
-    ).value().messages.head
+    Fixtures.placeDisc(
+      Rose, player2Welcome, context(Fixtures.player2Address)
+    ).isSuccessfulAttempt()
 
     // placing round begins
-    val roundSummary = gameStatus.game.round.value
-    roundSummary shouldBe a[PlacingSummary]
-    val activePlayer = roundSummary.asInstanceOf[PlacingSummary].activePlayer
-    val (activeWelcomeMessage, activePlayerAddress) = {
-      if (creatorWelcome.playerId == activePlayer) (creatorWelcome, Fixtures.creatorAddress)
-      else (player1Welcome, Fixtures.player1Address)
-    }
     Fixtures.placeDisc(
-      Skull, activeWelcomeMessage, context(activePlayerAddress)
+      Rose, creatorWelcome, context(Fixtures.creatorAddress)
+    ).isSuccessfulAttempt()
+    Fixtures.placeDisc(
+      Rose, player1Welcome, context(Fixtures.player1Address)
+    ).isSuccessfulAttempt()
+    Fixtures.placeDisc(
+      Rose, player2Welcome, context(Fixtures.player2Address)
     ).isSuccessfulAttempt()
 
     TestGame(
+      gameId = creatorWelcome.gameId,
       creator = creatorWelcome, player1Welcome, player2Welcome,
       order = List(creatorWelcome, player1Welcome, player2Welcome) // TODO lookup first player to make this correct
     )
   }
 
-  "for a valid request" - {
-    "is successful" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.joinGame2(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.placeDisc(
-          Skull, joinWelcome, context(Fixtures.player1Address)
-        ).isSuccessfulAttempt()
-      }
-    }
-
-    "sends a game summary to every player" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
-        val response = Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).value()
-
-        response.messages.values.map(_.self.playerId).toSet shouldEqual Set(
-          creatorWelcome.playerId,
-          joinGameWelcome.playerId,
-        )
-      }
-    }
-
-    "doesn't return a response message" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
-        val response = Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).value()
-
-        response.response shouldEqual None
-      }
-    }
-
-    "persists the game updates to the database" in {
-      withTestContext { (context, db) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).value()
-        val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
-        val creatorDb = playerDbs.find(_.playerId == creatorWelcome.playerId.pid).value
-
-        creatorDb.discs shouldEqual List("skull")
-      }
-    }
-  }
-
-  "as last initial disc" - {
-    "updates game round" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        val (_, gameStatus) = Fixtures.placeDisc(
-          Skull, joinWelcome, context(Fixtures.player1Address)
-        ).value().messages.head
-        gameStatus.game.round.value shouldBe a[PlacingSummary]
-      }
-    }
-
-    "persists round change to the database" in {
-      withTestContext { (context, db) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(
-          creatorWelcome,
-          List(creatorWelcome, joinWelcome),
-          context
-        ).isSuccessfulAttempt()
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.placeDisc(
-          Skull, joinWelcome, context(Fixtures.player1Address)
-        ).isSuccessfulAttempt()
-
-        val game = db.getGame(creatorWelcome.gameId).value().value
-        game.roundState shouldEqual "placing"
-      }
-    }
-  }
-
-  "in place disc round" - {
-    "is successful" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(
-          creatorWelcome,
-          List(creatorWelcome, joinWelcome),
-          context
-        ).isSuccessfulAttempt()
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        val (_, gameStatus) = Fixtures.placeDisc(
-          Skull, joinWelcome, context(Fixtures.player1Address)
-        ).value().messages.head
-
-        // placing round begins
-        val roundSummary = gameStatus.game.round.value
-        roundSummary shouldBe a[PlacingSummary]
-        val activePlayer = roundSummary.asInstanceOf[PlacingSummary].activePlayer
-        val (activeWelcomeMessage, activePlayerAddress) = {
-          if (creatorWelcome.playerId == activePlayer) (creatorWelcome, Fixtures.creatorAddress)
-          else (joinWelcome, Fixtures.player1Address)
+  "for valid requests" - {
+    "opening the bidding from a place round" - {
+      "successfully" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
         }
-        Fixtures.placeDisc(
-          Skull, activeWelcomeMessage, context(activePlayerAddress)
-        ).isSuccessfulAttempt()
       }
-    }
 
-    "persists player's disc change to the database" in {
-      withTestContext { (context, db) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val (_, startedStatus) = Fixtures.startGame(
-          creatorWelcome,
-          List(creatorWelcome, joinWelcome),
-          context
-        ).value().messages.head
-
-        Fixtures.placeDisc(
-          Rose, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        val (_, gameStatus) = Fixtures.placeDisc(
-          Rose, joinWelcome, context(Fixtures.player1Address)
-        ).value().messages.head
-
-        // placing round begins
-        val roundSummary = gameStatus.game.round.value
-        roundSummary shouldBe a[PlacingSummary]
-        val activePlayer = roundSummary.asInstanceOf[PlacingSummary].activePlayer
-        val (activeWelcomeMessage, activePlayerAddress) = {
-          if (creatorWelcome.playerId == activePlayer) (creatorWelcome, Fixtures.creatorAddress)
-          else (joinWelcome, Fixtures.player1Address)
+      "sends a game status to every player" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          val messages = Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).value().messages
+          messages.keys.toSet shouldEqual Set(Fixtures.creatorAddress, Fixtures.player1Address, Fixtures.player2Address)
         }
-        Fixtures.placeDisc(
-          Skull, activeWelcomeMessage, context(activePlayerAddress)
-        ).isSuccessfulAttempt()
-
-        val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
-        val activePlayerDb = playerDbs.find(_.playerId == activePlayer.pid).value
-
-        activePlayerDb.discs shouldEqual List("skull", "rose")
       }
-    }
-  }
 
-  "for invalid cases" - {
-    "does not allow second disc from a single player during initial discs phase" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        Fixtures.startGame(
-          creatorWelcome,
-          List(creatorWelcome, joinWelcome),
-          context
-        ).isSuccessfulAttempt()
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isFailedAttempt()
-      }
-    }
-
-    "does not allow a non-active player to place disc during place disc round" in {
-      withTestContext { (context, _) =>
-        val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val (_, startedStatus) = Fixtures.startGame(
-          creatorWelcome,
-          List(creatorWelcome, joinWelcome),
-          context
-        ).value().messages.head
-
-        Fixtures.placeDisc(
-          Skull, creatorWelcome, context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.placeDisc(
-          Skull, joinWelcome, context(Fixtures.player1Address)
-        ).isSuccessfulAttempt()
-
-        // placing round begins
-        val activePlayer = startedStatus.game.round.value.asInstanceOf[InitialDiscsSummary].activePlayer
-        val (nonActiveWelcomeMessage, nonActivePlayerAddress) = {
-          if (creatorWelcome.playerId == activePlayer) (joinWelcome, Fixtures.player1Address)
-          else (creatorWelcome, Fixtures.creatorAddress)
+      "doesn't return a response message" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          val response = Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).value()
+          response.response shouldEqual None
         }
-        Fixtures.placeDisc(
-          Skull, nonActiveWelcomeMessage, context(nonActivePlayerAddress)
-        ).isFailedAttempt()
+      }
+
+      "round is advanced to bidding in the game status messages" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          val messages = Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).value().messages
+          messages.head._2.game.round.value shouldBe a[BiddingSummary]
+        }
+      }
+
+      "includes player's bid on the round summary" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          val messages = Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).value().messages
+          val round = messages.head._2.game.round.value
+          round shouldBe a[BiddingSummary]
+          val playerBid = round.asInstanceOf[BiddingSummary].bids.get(testGame.creator.playerId).value
+          playerBid shouldEqual 1
+        }
+      }
+
+      "persists round status to game database" in {
+        withTestContext { (context, db) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+
+          val gameDb = db.getGame(testGame.gameId).value().value
+          gameDb.roundState shouldEqual "bidding"
+        }
+      }
+
+      "persists player's bid to their database record" in {
+        withTestContext { (context, db) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+
+          val playerDbs = db.getPlayers(testGame.gameId).value()
+          val creator = playerDbs.find(_.playerId == testGame.creator.playerId.pid).value
+          creator.bid shouldEqual Some(1)
+        }
+      }
+
+      "fails if it is not the player's turn" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.player2, context(Fixtures.player2Address)).isFailedAttempt()
+        }
       }
     }
 
-    "add cases" ignore {}
-    // TODO:
+    "for subsequent bid requests" - {
+      "is successful" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+          Fixtures.bid(3, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+        }
+      }
+
+      "persists player's bids to their database records" in {
+        withTestContext { (context, db) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+          Fixtures.bid(3, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+
+          val playerDbs = db.getPlayers(testGame.gameId).value()
+          val bids = playerDbs.map(pdb => (pdb.playerId, pdb.bid))
+          bids.toSet shouldEqual Set(
+            testGame.creator.playerId.pid -> Some(1),
+            testGame.player1.playerId.pid -> Some(2),
+            testGame.player2.playerId.pid -> Some(3),
+          )
+        }
+      }
+
+      "fails if the bid is lower than an existing bid" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+          Fixtures.bid(3, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.creator, context(Fixtures.creatorAddress)).isFailedAttempt()
+        }
+      }
+
+      "fails if the bid is lower than a previous bid by that player" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(2, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(3, testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+          Fixtures.bid(4, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isFailedAttempt()
+        }
+      }
+
+      "fails if it is not this player's turn" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.creator, context(Fixtures.creatorAddress)).isFailedAttempt()
+        }
+      }
+
+      "fails if the player has passed" ignore {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(2, testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+          Fixtures.bid(3, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+          // TODO: when pass is implemented
+        }
+      }
+    }
   }
 }

@@ -23,6 +23,20 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         }
       }
 
+      "does not change the active player" in {
+        withTestContext { (context, _) =>
+          val creatorWelcome = Fixtures.createGame(context).value().response.value
+          val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
+
+          val round = Fixtures.placeDisc(
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
+          ).value().messages.head._2.game.round.value
+          round shouldBe a[InitialDiscsSummary]
+          round.asInstanceOf[InitialDiscsSummary].activePlayer shouldEqual creatorWelcome.playerId
+        }
+      }
+
       "multiple places from different players are successful" in {
         withTestContext { (context, _) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
@@ -101,6 +115,23 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         }
       }
 
+      "uses the 'first active player' from previous round as the active player" in {
+        withTestContext { (context, _) =>
+          val creatorWelcome = Fixtures.createGame(context).value().response.value
+          val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
+
+          Fixtures.placeDisc(
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          val round = Fixtures.placeDisc(
+            Skull, joinWelcome, context(Fixtures.player1Address)
+          ).value().messages.head._2.game.round.value
+          round shouldBe a[PlacingSummary]
+          round.asInstanceOf[PlacingSummary].activePlayer shouldEqual creatorWelcome.playerId
+        }
+      }
+
       "persists round change to the database" in {
         withTestContext { (context, db) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
@@ -130,21 +161,38 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.placeDisc(
             Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
+          Fixtures.placeDisc(
+            Skull, joinWelcome, context(Fixtures.player1Address)
+          ).isSuccessfulAttempt()
+
+          // now at the placing round
+
+          Fixtures.placeDisc(
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+        }
+      }
+
+      "advances the active player" in {
+        withTestContext { (context, _) =>
+          val creatorWelcome = Fixtures.createGame(context).value().response.value
+          val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+          Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
+
+          Fixtures.placeDisc(
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
           val (_, gameStatus) = Fixtures.placeDisc(
             Skull, joinWelcome, context(Fixtures.player1Address)
           ).value().messages.head
 
-          // placing round begins
-          val roundSummary = gameStatus.game.round.value
-          roundSummary shouldBe a[PlacingSummary]
-          val activePlayer = roundSummary.asInstanceOf[PlacingSummary].activePlayer
-          val (activeWelcomeMessage, activePlayerAddress) = {
-            if (creatorWelcome.playerId == activePlayer) (creatorWelcome, Fixtures.creatorAddress)
-            else (joinWelcome, Fixtures.player1Address)
-          }
-          Fixtures.placeDisc(
-            Skull, activeWelcomeMessage, context(activePlayerAddress)
-          ).isSuccessfulAttempt()
+          // now at the placing round
+
+          val round = Fixtures.placeDisc(
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
+          ).value().messages.head._2.game.round.value
+          round shouldBe a[PlacingSummary]
+          round.asInstanceOf[PlacingSummary].activePlayer shouldEqual joinWelcome.playerId
         }
       }
 
@@ -152,10 +200,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, db) =>
           val creatorWelcome = Fixtures.createGame(context).value().response.value
           val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-          val (_, startedStatus) = Fixtures.startGame(
+          Fixtures.startGame(
             creatorWelcome, List(creatorWelcome, joinWelcome),
             context
-          ).value().messages.head
+          ).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
             Rose, creatorWelcome, context(Fixtures.creatorAddress)
@@ -164,22 +212,16 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
             Rose, joinWelcome, context(Fixtures.player1Address)
           ).value().messages.head
 
-          // placing round begins
-          val roundSummary = gameStatus.game.round.value
-          roundSummary shouldBe a[PlacingSummary]
-          val activePlayer = roundSummary.asInstanceOf[PlacingSummary].activePlayer
-          val (activeWelcomeMessage, activePlayerAddress) = {
-            if (creatorWelcome.playerId == activePlayer) (creatorWelcome, Fixtures.creatorAddress)
-            else (joinWelcome, Fixtures.player1Address)
-          }
+          // now at placing round
+
           Fixtures.placeDisc(
-            Skull, activeWelcomeMessage, context(activePlayerAddress)
+            Skull, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
 
           val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
-          val activePlayerDb = playerDbs.find(_.playerId == activePlayer.pid).value
+          val creatorDb = playerDbs.find(_.playerId == creatorWelcome.playerId.pid).value
 
-          activePlayerDb.discs shouldEqual List("skull", "rose")
+          creatorDb.discs shouldEqual List("skull", "rose")
         }
       }
     }
