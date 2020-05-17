@@ -19,7 +19,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       playerKey = PlayerKey("key"),
       playerAddress = PlayerAddress("address"),
       score = 0,
-      availableDiscs = List(Thorn, Rose, Rose, Rose),
+      roseCount = 3,
+      hasThorn = true,
     )
 
     "sets a random game id" in {
@@ -90,7 +91,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       playerKey = PlayerKey("key"),
       playerAddress = PlayerAddress("address"),
       score = 0,
-      availableDiscs = List(Thorn, Rose, Rose, Rose),
+      roseCount = 3,
+      hasThorn = true,
     )
     val game = newGame("test", creator)
 

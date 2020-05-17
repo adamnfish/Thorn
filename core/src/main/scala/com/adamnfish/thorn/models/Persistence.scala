@@ -31,7 +31,8 @@ case class PlayerDB(
   screenName: String,
   score: Int,
   placedDiscs: List[String],
-  availableDiscs: List[String],
+  roseCount: Int,
+  hasThorn: Boolean,
   bid: Option[Int],
   passed: Option[Boolean],
 )

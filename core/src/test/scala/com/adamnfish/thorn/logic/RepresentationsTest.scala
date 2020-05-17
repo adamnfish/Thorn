@@ -27,10 +27,10 @@ class RepresentationsTest
     startTime = now
   )
   val player1 = Player(
-    "Sreen name 1", PlayerId("id-1"), PlayerKey("key-1"), PlayerAddress("address-1"), 0, List(Thorn, Rose, Rose, Rose)
+    "Sreen name 1", PlayerId("id-1"), PlayerKey("key-1"), PlayerAddress("address-1"), 0, 3, true
   )
   val player2 = Player(
-    "Sreen name 2", PlayerId("id-2"), PlayerKey("key-2"), PlayerAddress("address-2"), 0, List(Thorn, Rose, Rose, Rose)
+    "Sreen name 2", PlayerId("id-2"), PlayerKey("key-2"), PlayerAddress("address-2"), 0, 3, true
   )
 
   "gameForDb" - {
@@ -583,11 +583,11 @@ class RepresentationsTest
     val p2id = PlayerId("id-2")
     val player1 = PlayerDB(
       "game-id", p1id.pid, "key-1", "address-1", "Sreen name 1", 0,
-      Nil, List("thorn", "rose", "rose", "rose"), None, None
+      Nil, 3, true, None, None
     )
     val player2 = PlayerDB(
       "game-id", p2id.pid, "key-2", "address-2", "Sreen name 2", 0,
-      Nil, List("thorn", "rose", "rose", "rose"), None, None
+      Nil, 3, true, None, None
     )
     val playerDBs = List(player1, player2)
     val gameDb = GameDB(

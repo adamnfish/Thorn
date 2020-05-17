@@ -16,7 +16,8 @@ object Players {
       playerKey = PlayerKey(key),
       playerAddress = address,
       score = 0,
-      availableDiscs = List(Thorn, Rose, Rose, Rose),
+      roseCount = 3,
+      hasThorn = true,
     )
   }
 

@@ -44,11 +44,11 @@ class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
     "round trips correctly" in {
       val playerDb1 = PlayerDB(
         "game-id", "player-1", "key-1", "player-1-address", "Player 1",
-        2, List("thorn", "rose"), List("thorn", "rose", "rose", "rose"), Some(1), Some(true)
+        2, List("thorn", "rose"), 3, hasThorn = true, Some(1), Some(true)
       )
       val playerDb2 = PlayerDB(
         "game-id", "player-2", "key-2", "player-2-address", "Player 2",
-        0, List("rose"), List("thorn", "rose", "rose", "rose"), None, Some(false)
+        0, List("rose"), 3, hasThorn = true, None, Some(false)
       )
 
       db.writePlayer(playerDb1).isSuccessfulAttempt()

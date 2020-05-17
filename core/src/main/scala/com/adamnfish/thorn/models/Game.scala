@@ -23,7 +23,8 @@ case class Player(
   playerKey: PlayerKey,
   playerAddress: PlayerAddress,
   score: Int,
-  availableDiscs: List[Disc],
+  roseCount: Int,
+  hasThorn: Boolean,
   // TODO: consider adding victories to track wins across restarts?
 )
 

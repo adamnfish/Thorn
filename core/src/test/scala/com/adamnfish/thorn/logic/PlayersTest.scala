@@ -41,10 +41,10 @@ class PlayersTest extends AnyFreeSpec with Matchers with AttemptValues {
 
   "ensureAllPlayersPresent" - {
     val player1 = PlayerDB(
-      "gid", "pid1", "pk", "pa", "sn", 0, Nil, List("thorn", "rose", "rose", "rose"), None, None
+      "gid", "pid1", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, None, None
     )
     val player2 = PlayerDB(
-      "gid", "pid2", "pk", "pa", "sn", 0, Nil, List("thorn", "rose", "rose", "rose"), None, None
+      "gid", "pid2", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, None, None
     )
     val gameDB = GameDB(
       "gcode", "gid", "name",

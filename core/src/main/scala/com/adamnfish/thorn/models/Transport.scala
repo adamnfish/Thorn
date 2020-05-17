@@ -23,7 +23,8 @@ case class SelfSummary(
   playerId: PlayerId,
   score: Int,
   placedDiscs: Option[List[Disc]],
-  availableDiscs: List[Disc],
+  roseCount: Int,
+  hasThorn: Boolean,
 )
 
 sealed trait RoundSummary extends Product
