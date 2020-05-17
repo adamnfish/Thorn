@@ -120,7 +120,7 @@ object Serialisation {
     c.downField("operation").as[String].flatMap {
       case "create-game" => c.as[CreateGame]
       case "join-game" => c.as[JoinGame]
-      case "start-round" => c.as[StartGame]
+      case "start-game" => c.as[StartGame]
       case "new-round" => c.as[NewRound]
       case "place-disc" => c.as[PlaceDisc]
       case "bid" => c.as[Bid]
@@ -129,6 +129,8 @@ object Serialisation {
       case "reconnect" => c.as[Reconnect]
       case "ping" => c.as[Ping]
       case "wake" => c.as[Wake]
+      case unexpected =>
+        Left(DecodingFailure.apply(s"Unexpected operation, $unexpected", Nil))
     }
   )
 
