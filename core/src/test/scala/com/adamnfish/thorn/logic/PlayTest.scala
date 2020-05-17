@@ -62,6 +62,38 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           discs shouldEqual List(Thorn)
         }
 
+        "fails to place a Rose that the player does not have" in {
+          placeDisc(Rose, creator.playerId,
+            game.copy(
+              players = List(
+                creator.copy(
+                  roseCount = 0
+                ),
+                player1,
+              ),
+              round = Some(InitialDiscs(
+                creator.playerId, Map.empty
+              )),
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails to place a Thorn that the player does not have" in {
+          placeDisc(Thorn, creator.playerId,
+            game.copy(
+              players = List(
+                creator.copy(
+                  hasThorn = false
+                ),
+                player1,
+              ),
+              round = Some(InitialDiscs(
+                creator.playerId, Map.empty
+              )),
+            )
+          ).isFailedAttempt()
+        }
+
         "does not change the first player" in {
           val newGame = placeDisc(Thorn, creator.playerId,
             game.copy(
@@ -106,7 +138,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
             ).value().round.value shouldBe a[Placing]
           }
 
-          "uses initial disc's player as" in {
+          "uses initial disc's player as active player" in {
             val activePlayer = creator.playerId
             val placingRound = placeDisc(Thorn, creator.playerId,
               game.copy(
@@ -208,6 +240,58 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           newGame.round.value shouldBe a[Placing]
           val discs = newGame.round.value.asInstanceOf[Placing].discs.get(creator.playerId).value
           discs shouldEqual List(Thorn, Rose)
+        }
+
+        "fails to place a Rose in excess of the player's remaining number" in {
+          placeDisc(Rose, creator.playerId,
+            game.copy(
+              players = List(
+                creator.copy(
+                  roseCount = 3
+                ),
+                player1,
+              ),
+              round = Some(Placing(
+                creator.playerId,
+                Map(creator.playerId -> List(Rose, Rose, Rose)),
+              )),
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails to place a Thorn that the player does not have" in {
+          placeDisc(Thorn, creator.playerId,
+            game.copy(
+              players = List(
+                creator.copy(
+                  hasThorn = false
+                ),
+                player1,
+              ),
+              round = Some(Placing(
+                creator.playerId, Map.empty
+              )),
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails to place a second Thorn, even if the player has one" in {
+          placeDisc(Thorn, creator.playerId,
+            game.copy(
+              players = List(
+                creator.copy(
+                  hasThorn = true
+                ),
+                player1,
+              ),
+              round = Some(Placing(
+                creator.playerId,
+                Map(
+                  creator.playerId -> List(Thorn)
+                ),
+              )),
+            )
+          ).isFailedAttempt()
         }
 
         "fails if this is not the active player" in {

@@ -18,7 +18,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
         }
       }
@@ -30,7 +30,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           val round = Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).value().messages.head._2.game.round.value
           round shouldBe a[InitialDiscsSummary]
           round.asInstanceOf[InitialDiscsSummary].activePlayer shouldEqual creatorWelcome.playerId
@@ -45,10 +45,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, join1Welcome, join2Welcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           Fixtures.placeDisc(
-            Thorn, join1Welcome, context(Fixtures.player1Address)
+            Rose, join1Welcome, context(Fixtures.player1Address)
           ).isSuccessfulAttempt()
         }
       }
@@ -59,7 +59,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
           val response = Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
 
           response.messages.values.map(_.self.playerId).toSet shouldEqual Set(
@@ -75,7 +75,7 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
           val response = Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
 
           response.response shouldEqual None
@@ -88,12 +88,12 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).value()
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).value()
           val playerDbs = db.getPlayers(creatorWelcome.gameId).value()
           val creatorDb = playerDbs.find(_.playerId == creatorWelcome.playerId.pid).value
 
-          creatorDb.placedDiscs shouldEqual List("thorn")
+          creatorDb.placedDiscs shouldEqual List("rose")
         }
       }
     }
@@ -106,10 +106,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           val (_, gameStatus) = Fixtures.placeDisc(
-            Thorn, joinWelcome, context(Fixtures.player1Address)
+            Rose, joinWelcome, context(Fixtures.player1Address)
           ).value().messages.head
           gameStatus.game.round.value shouldBe a[PlacingSummary]
         }
@@ -122,10 +122,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           val round = Fixtures.placeDisc(
-            Thorn, joinWelcome, context(Fixtures.player1Address)
+            Rose, joinWelcome, context(Fixtures.player1Address)
           ).value().messages.head._2.game.round.value
           round shouldBe a[PlacingSummary]
           round.asInstanceOf[PlacingSummary].activePlayer shouldEqual creatorWelcome.playerId
@@ -139,10 +139,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           Fixtures.placeDisc(
-            Thorn, joinWelcome, context(Fixtures.player1Address)
+            Rose, joinWelcome, context(Fixtures.player1Address)
           ).isSuccessfulAttempt()
 
           val game = db.getGame(creatorWelcome.gameId).value().value
@@ -159,16 +159,16 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
           Fixtures.placeDisc(
-            Thorn, joinWelcome, context(Fixtures.player1Address)
+            Rose, joinWelcome, context(Fixtures.player1Address)
           ).isSuccessfulAttempt()
 
           // now at the placing round
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
         }
       }
@@ -180,16 +180,16 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
           Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
-          val (_, gameStatus) = Fixtures.placeDisc(
-            Thorn, joinWelcome, context(Fixtures.player1Address)
-          ).value().messages.head
+          Fixtures.placeDisc(
+            Rose, joinWelcome, context(Fixtures.player1Address)
+          ).isSuccessfulAttempt()
 
           // now at the placing round
 
           val round = Fixtures.placeDisc(
-            Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+            Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).value().messages.head._2.game.round.value
           round shouldBe a[PlacingSummary]
           round.asInstanceOf[PlacingSummary].activePlayer shouldEqual joinWelcome.playerId
@@ -208,9 +208,9 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.placeDisc(
             Rose, creatorWelcome, context(Fixtures.creatorAddress)
           ).isSuccessfulAttempt()
-          val (_, gameStatus) = Fixtures.placeDisc(
+          Fixtures.placeDisc(
             Rose, joinWelcome, context(Fixtures.player1Address)
-          ).value().messages.head
+          ).isSuccessfulAttempt()
 
           // now at placing round
 
@@ -235,10 +235,10 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
         Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
         Fixtures.placeDisc(
-          Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
         ).isSuccessfulAttempt()
         Fixtures.placeDisc(
-          Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
         ).isFailedAttempt()
       }
     }
@@ -247,26 +247,79 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
-        val (_, startedStatus) = Fixtures.startGame(
+        Fixtures.startGame(
           creatorWelcome, List(creatorWelcome, joinWelcome),
           context
-        ).value().messages.head
+        ).isSuccessfulAttempt()
+
+        Fixtures.placeDisc(
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+        Fixtures.placeDisc(
+          Rose, joinWelcome, context(Fixtures.player1Address)
+        ).isSuccessfulAttempt()
+
+        // we're now in the placing round, first player is creator
+
+        Fixtures.placeDisc(
+          Rose, joinWelcome, context(Fixtures.player1Address)
+        ).isFailedAttempt()
+      }
+    }
+
+    "player cannot place two thorns" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
 
         Fixtures.placeDisc(
           Thorn, creatorWelcome, context(Fixtures.creatorAddress)
         ).isSuccessfulAttempt()
         Fixtures.placeDisc(
-          Thorn, joinWelcome, context(Fixtures.player1Address)
+          Rose, joinWelcome, context(Fixtures.player1Address)
         ).isSuccessfulAttempt()
 
-        // placing round begins
-        val activePlayer = startedStatus.game.round.value.asInstanceOf[InitialDiscsSummary].activePlayer
-        val (nonActiveWelcomeMessage, nonActivePlayerAddress) = {
-          if (creatorWelcome.playerId == activePlayer) (joinWelcome, Fixtures.player1Address)
-          else (creatorWelcome, Fixtures.creatorAddress)
-        }
+        // now at the placing round
+
         Fixtures.placeDisc(
-          Thorn, nonActiveWelcomeMessage, context(nonActivePlayerAddress)
+          Thorn, creatorWelcome, context(Fixtures.creatorAddress)
+        ).isFailedAttempt()
+      }
+    }
+
+    "player cannot place more than three roses" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val joinWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinWelcome), context).isSuccessfulAttempt()
+
+        Fixtures.placeDisc(
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+        Fixtures.placeDisc(
+          Rose, joinWelcome, context(Fixtures.player1Address)
+        ).isSuccessfulAttempt()
+
+        // now at the placing round
+
+        Fixtures.placeDisc(
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+        Fixtures.placeDisc(
+          Rose, joinWelcome, context(Fixtures.player1Address)
+        ).isSuccessfulAttempt()
+        Fixtures.placeDisc(
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+        Fixtures.placeDisc(
+          Rose, joinWelcome, context(Fixtures.player1Address)
+        ).isSuccessfulAttempt()
+
+        // all three roses placed
+
+        Fixtures.placeDisc(
+          Rose, creatorWelcome, context(Fixtures.creatorAddress)
         ).isFailedAttempt()
       }
     }

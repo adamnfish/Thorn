@@ -1,13 +1,15 @@
 package com.adamnfish.thorn.logic
 
 import com.adamnfish.thorn.attempt.{Attempt, Failure}
-import com.adamnfish.thorn.models.{Bidding, Disc, Finished, Flipping, Game, InitialDiscs, Placing, Player, PlayerId, Round}
+import com.adamnfish.thorn.models._
 
+import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
 
 
 object Play {
   def advanceActivePlayer(players: List[Player], currentActivePlayerId: PlayerId): PlayerId = {
+    @tailrec
     def loop(remainder: List[Player]): PlayerId = {
       remainder match {
         case head :: next :: _ if head.playerId == currentActivePlayerId =>
@@ -27,6 +29,7 @@ object Play {
 
   def placeDisc(disc: Disc, playerId: PlayerId, game: Game)(implicit ec: ExecutionContext): Attempt[Game] = {
     for {
+      player <- Games.getPlayer(playerId, game)
       newRound <- {
         val failure = (roundStr: String) => Failure(
           s"cannot place discs in $roundStr round",
@@ -49,6 +52,31 @@ object Play {
                     400
                   )
                 }
+              _ <-
+                disc match {
+                  case Rose =>
+                    if (player.roseCount > 0)
+                      Attempt.unit
+                    else
+                      Attempt.Left(
+                        Failure(
+                          "Cannot place a Rose when none remain",
+                          "You have run out of Roses",
+                          400
+                        )
+                      )
+                  case Thorn =>
+                    if (player.hasThorn)
+                      Attempt.unit
+                    else
+                      Attempt.Left(
+                        Failure(
+                          "Cannot place Thorn after it is lost",
+                          "You have lost your Thorn",
+                          400
+                        )
+                      )
+                }
               newDiscs = initialDiscs.updatedWith(playerId) {
                 case Some(Nil) =>
                   Some(List(disc))
@@ -66,9 +94,46 @@ object Play {
               else
                 round.copy(initialDiscs = newDiscs)
             }
+
           case Some(round @ Placing(activePlayerId, discs)) =>
-            if (activePlayerId == playerId) Attempt.Right {
-              round.copy(
+            if (activePlayerId == playerId) {
+              val playerPlacedDiscs = discs.getOrElse(playerId, Nil)
+              for {
+                _ <-
+                  disc match {
+                    case Rose =>
+                      if (playerPlacedDiscs.count(_ == Rose) < player.roseCount)
+                        Attempt.unit
+                      else
+                        Attempt.Left(
+                          Failure(
+                            "Cannot place a Rose when none remain",
+                            "You have run out of Roses",
+                            400
+                          )
+                        )
+                    case Thorn =>
+                      if (player.hasThorn) {
+                        if (playerPlacedDiscs.contains(Thorn)) {
+                          Attempt.Left(
+                            Failure(
+                              "Cannot place a second Thorn",
+                              "You have already placed your Thorn",
+                              400
+                            )
+                          )
+                        } else {
+                          Attempt.unit
+                        }
+                      } else Attempt.Left {
+                        Failure(
+                          "Cannot place Thorn after it is lost",
+                          "You have lost your Thorn",
+                          400
+                        )
+                      }
+                  }
+              } yield round.copy(
                 activePlayer = advanceActivePlayer(game.players, activePlayerId),
                 discs = discs.updatedWith(playerId) {
                   case Some(current) =>
