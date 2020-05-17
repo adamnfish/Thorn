@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 
 import com.adamnfish.thorn.AttemptValues
 import com.adamnfish.thorn.logic.Games._
-import com.adamnfish.thorn.models.{Player, PlayerAddress, PlayerId, PlayerKey}
+import com.adamnfish.thorn.models.{Player, PlayerAddress, PlayerId, PlayerKey, Rose, Thorn}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -18,7 +18,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       playerId = PlayerId("id"),
       playerKey = PlayerKey("key"),
       playerAddress = PlayerAddress("address"),
-      0
+      score = 0,
+      availableDiscs = List(Thorn, Rose, Rose, Rose),
     )
 
     "sets a random game id" in {
@@ -88,7 +89,8 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       playerId = PlayerId("id"),
       playerKey = PlayerKey("key"),
       playerAddress = PlayerAddress("address"),
-      0
+      score = 0,
+      availableDiscs = List(Thorn, Rose, Rose, Rose),
     )
     val game = newGame("test", creator)
 

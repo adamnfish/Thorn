@@ -33,6 +33,7 @@ object Representations {
       screenName = player.screenName,
       score = player.score,
       placedDiscs = game.round.map(playerRoundDiscs(player.playerId)).getOrElse(Nil),
+      availableDiscs = player.availableDiscs.map(discString),
       bid = game.round.flatMap(playerRoundBid(player.playerId)),
       passed = game.round.flatMap(playerRoundPassed(player.playerId)),
     )
@@ -142,7 +143,7 @@ object Representations {
         } else {
           Attempt.Left(playerOrderingError)
         }
-      allPlayers = playerDBs.map(dbToPlayer)
+      allPlayers <- Attempt.traverse(playerDBs)(dbToPlayer)
       orderedPlayers <- Attempt.fromOption(
         sortByKeyList(orderedPlayerIds, allPlayers)(_.playerId.pid),
         playerOrderingError.asAttempt
@@ -160,13 +161,18 @@ object Representations {
     }
   }
 
-  private def dbToPlayer(playerDB: PlayerDB): Player = {
-    Player(
+  private def dbToPlayer(playerDB: PlayerDB)(implicit ec: ExecutionContext): Attempt[Player] = {
+    for {
+      availableDiscs <- Attempt.traverse(playerDB.availableDiscs) { discStr =>
+        Attempt.fromEither(discFromString(discStr).left.map(_.asAttempt))
+      }
+    } yield Player(
       screenName = playerDB.screenName,
       playerId = PlayerId(playerDB.playerId),
       playerKey = PlayerKey(playerDB.playerKey),
       playerAddress = PlayerAddress(playerDB.playerAddress),
-      playerDB.score
+      score = playerDB.score,
+      availableDiscs = availableDiscs,
     )
   }
 
@@ -222,6 +228,7 @@ object Representations {
           playerId = player.playerId,
           score = player.score,
           placedDiscs = playerDiscs,
+          availableDiscs = player.availableDiscs,
         ),
         GameSummary(
           gameId = game.gameId,
