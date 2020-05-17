@@ -23,7 +23,7 @@ val commonDeps = Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "skull",
+    name := "thorn",
     libraryDependencies ++= commonDeps,
   )
   .aggregate(core, lambda, devServer, integration, cli)
