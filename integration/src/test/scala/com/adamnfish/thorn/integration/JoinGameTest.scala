@@ -29,12 +29,15 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
-    "doesn't send any other messages out" in {
+    "sends a game status message to the creator that includes the new player" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val response = Fixtures.joinGame(creatorWelcome, context).value()
+        val joinWelcome = response.response.value
 
-        response.messages shouldBe empty
+        val creatorMessage = response.messages.get(Fixtures.creatorAddress).value
+        val gameStatusPlayers = creatorMessage.game.players.map(_.playerId)
+        gameStatusPlayers should contain(joinWelcome.playerId)
       }
     }
 

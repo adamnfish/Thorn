@@ -41,4 +41,10 @@ object Responses {
       )
     }
   }
+
+  def messageAndStatuses[A <: Message](message: A, game: Game)(implicit ec: ExecutionContext): Attempt[Response[A]] = {
+    for {
+      response <- gameStatuses(game)
+    } yield response.copy(response = Some(message))
+  }
 }

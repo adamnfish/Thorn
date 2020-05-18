@@ -87,10 +87,12 @@ object Thorn {
       _ <- Games.ensureNoDuplicateScreenName(game, request.screenName)
       player = Players.newPlayer(request.screenName, context.playerAddress)
       welcome = Welcome(player.playerKey, player.playerId, game.gameId)
+      newGame = Games.addPlayer(player, game)
+      response <- Responses.messageAndStatuses(welcome, newGame)
       // create and save new DB representations
-      playerDb = Representations.newPlayerForDb(game, player)
+      playerDb = Representations.newPlayerForDb(newGame, player)
       _ <- context.db.writePlayer(playerDb)
-    } yield Responses.justRespond(welcome)
+    } yield response
   }
 
   def startGame(request: StartGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {

@@ -141,4 +141,10 @@ object Games {
       ).asAttempt
     )
   }
+
+  def addPlayer(player: Player, game: Game): Game = {
+    game.copy(
+      players = player :: game.players
+    )
+  }
 }

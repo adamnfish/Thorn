@@ -182,4 +182,14 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       ensurePlayerKey(game, player.playerId, PlayerKey("different key"))
     }
   }
+
+  "addPlayer" - {
+    "result includes the passed player" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("game-name", creator)
+      val player = Players.newPlayer("player", PlayerAddress("player-address"))
+
+      addPlayer(player, game).players should contain(player)
+    }
+  }
 }
