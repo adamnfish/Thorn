@@ -1,6 +1,6 @@
 package com.adamnfish.thorn.logic
 
-import com.adamnfish.thorn.AttemptValues
+import com.adamnfish.thorn.{AttemptValues, TestHelpers}
 import com.adamnfish.thorn.logic.Play._
 import com.adamnfish.thorn.models._
 import org.scalatest.OptionValues
@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 
-class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues {
+class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues with TestHelpers{
   val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
   val player1 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
   val player2 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
@@ -410,23 +410,50 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
       }
 
       "for bidding" - {
+        val testGame = game.copy(
+          players = List(creator, player1),
+          round = Some(Bidding(
+            creator.playerId, Map(
+              creator.playerId -> List(Rose, Rose),
+              player1.playerId -> List(Thorn, Rose),
+            ), Map.empty, Nil
+          ))
+        )
+
         "sets player bid to the specified amount if they had no previous bid" in {
-          val result = bidOnRound(1, creator.playerId,
-            game.copy(
-              round = Some(Bidding(
-                creator.playerId, Map.empty, Map.empty, Nil
-              ))
-            )
-          ).value()
+          val result = bidOnRound(1, creator.playerId, testGame).value()
           val bid = result.round.value.asInstanceOf[Bidding].bids.get(creator.playerId).value
           bid shouldEqual 1
+        }
+
+        "if the bid is equal to the number of discs" - {
+          "advances to flipping" in {
+            val result = bidOnRound(4, creator.playerId, testGame).value()
+            result.round.value.asInstanceOf[Flipping]
+          }
+
+          "sets up new round correctly" in {
+            val result = bidOnRound(4, creator.playerId, testGame).value()
+            val flipping = result.round.value.asInstanceOf[Flipping]
+            flipping should have(
+              "activePlayer" as creator.playerId.pid,
+              "discs" as Map(
+                creator.playerId -> List(Rose, Rose),
+                player1.playerId -> List(Thorn, Rose),
+              )
+            )
+          }
         }
 
         "updates player bid to the specified amount" in {
           val result = bidOnRound(3, creator.playerId,
             game.copy(
               round = Some(Bidding(
-                creator.playerId, Map.empty,
+                creator.playerId,
+                Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Thorn, Rose),
+                ),
                 Map(
                   creator.playerId -> 1
                 ),
@@ -439,16 +466,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         }
 
         "advances the active player" in {
-          val result = bidOnRound(3, creator.playerId,
-            game.copy(
-              players = List(
-                creator, player1
-              ),
-              round = Some(Bidding(
-                creator.playerId, Map.empty, Map.empty, Nil
-              ))
-            )
-          ).value()
+          val result = bidOnRound(3, creator.playerId, testGame).value()
           val activePlayer = result.round.value.asInstanceOf[Bidding].activePlayer
           activePlayer shouldEqual player1.playerId
         }
@@ -457,7 +475,11 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           bidOnRound(3, creator.playerId,
             game.copy(
               round = Some(Bidding(
-                creator.playerId, Map.empty,
+                creator.playerId,
+                Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Thorn, Rose),
+                ),
                 Map(
                   creator.playerId -> 5
                 ),
@@ -474,7 +496,11 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 creator, player1,
               ),
               round = Some(Bidding(
-                creator.playerId, Map.empty,
+                creator.playerId,
+                Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Thorn, Rose),
+                ),
                 Map(
                   creator.playerId -> 1,
                   player1.playerId -> 5,
@@ -485,6 +511,10 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ).isFailedAttempt()
         }
 
+        "fails if the bid exceeds the number of discs" in {
+          bidOnRound(5, creator.playerId, testGame).isFailedAttempt()
+        }
+
         "fails if it is not the player's turn" in {
           bidOnRound(3, creator.playerId,
             game.copy(
@@ -492,7 +522,12 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 creator, player1,
               ),
               round = Some(Bidding(
-                player1.playerId, Map.empty, Map.empty, Nil
+                player1.playerId,
+                Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Thorn, Rose),
+                ),
+                Map.empty, Nil
               ))
             )
           ).isFailedAttempt()
@@ -502,7 +537,12 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           bidOnRound(3, creator.playerId,
             game.copy(
               round = Some(Bidding(
-                creator.playerId, Map.empty, Map.empty,
+                creator.playerId,
+                Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Thorn, Rose),
+                ),
+                Map.empty,
                 List(creator.playerId)
               ))
             )

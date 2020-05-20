@@ -216,10 +216,12 @@ object Play {
             )
           )
         } else {
-          val max =
+          val currentBid =
             if (bidding.bids.isEmpty) 0
             else bidding.bids.values.max
-          if (count <= max) {
+          val numberOfDiscs =
+            bidding.discs.values.flatten.size
+          if (count <= currentBid) {
             Attempt.Left {
               Failure(
                 "Bid not larger than previous bids",
@@ -227,6 +229,24 @@ object Play {
                 400
               )
             }
+          } else if (count > numberOfDiscs) {
+            Attempt.Left {
+              Failure(
+                "Bid exceeds disc count",
+                "You can't bid more than the number of discs",
+                400
+              )
+            }
+          } else if (count == numberOfDiscs) {
+            Attempt.Right(
+              game.copy(
+                round = Some(Flipping(
+                  activePlayer = bidding.activePlayer,
+                  discs = bidding.discs,
+                  revealed = Map.empty
+                ))
+              )
+            )
           } else if (bidding.passed.contains(playerId)) {
             Attempt.Left {
               Failure(

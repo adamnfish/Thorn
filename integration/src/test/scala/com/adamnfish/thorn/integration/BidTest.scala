@@ -178,6 +178,13 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
         }
       }
 
+      "fails if the bid exceeds the number of discs" in {
+        withTestContext { (context, _) =>
+          val testGame = getToBiddingRound(context)
+          Fixtures.bid(8, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+        }
+      }
+
       "fails if it is not this player's turn" in {
         withTestContext { (context, _) =>
           val testGame = getToBiddingRound(context)
