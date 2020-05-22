@@ -158,7 +158,22 @@ object Thorn {
   def pass(request: Pass, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
+      // fetch player / game data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // game logic
+      newGame <- Play.passRound(request.playerId, game)
+      response <- Responses.gameStatuses(newGame)
+      // create and save updated player for DB
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      newGameDb = Representations.gameForDb(newGame)
+      _ <- context.db.writePlayer(
+        newPlayerDb.copy(passed = Some(true))
+      )
+      _ <- context.db.writeGame(newGameDb)
+    } yield response
   }
 
   def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
@@ -174,7 +189,7 @@ object Thorn {
       // fetch the game and players
       // check game state is finished
       // reset the game round
-      // updates the players as well
+      // updates the players as well - un-passes, empties discs etc
       // make messages for everyone
     } yield Responses.tbd[GameStatus]
   }

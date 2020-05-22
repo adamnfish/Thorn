@@ -12,6 +12,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
   val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
   val player1 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
   val player2 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
+  val player3 = Players.newPlayer("player3", PlayerAddress("player-3-address"))
   val game = Games.newGame("test game", creator)
 
   "advanceActivePlayer" - {
@@ -568,6 +569,285 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
             ))
           )
         ).isFailedAttempt()
+      }
+    }
+  }
+
+  "passRound" - {
+    "handles each round" - {
+      "fails for no round" in {
+        passRound(creator.playerId,
+          game.copy(
+            round = None
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for initial discs" in {
+        passRound(creator.playerId,
+          game.copy(
+            round = Some(InitialDiscs(
+              creator.playerId, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for placing" in {
+        passRound(creator.playerId,
+          game.copy(
+            round = Some(Placing(
+              creator.playerId, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "for bidding" - {
+        "adds this player to an empty list of passed players" in {
+          val result = passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Bidding(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Thorn),
+                  player2.playerId -> List(Thorn, Rose),
+                ),
+                bids = Map(
+                  player2.playerId -> 2,
+                ),
+                passed = Nil,
+              ))
+            )
+          ).value()
+          val round = result.round.value
+          round shouldBe a[Bidding]
+          round.asInstanceOf[Bidding].passed should contain(creator.playerId)
+        }
+
+        "advances the active player in example three player game" in {
+          val result = passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Bidding(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Thorn),
+                  player2.playerId -> List(Thorn, Rose),
+                ),
+                bids = Map(
+                  player2.playerId -> 2,
+                ),
+                passed = Nil,
+              ))
+            )
+          ).value()
+          val round = result.round.value
+          round shouldBe a[Bidding]
+          round.asInstanceOf[Bidding].activePlayer shouldEqual player1.playerId
+        }
+
+        "adds this player to an existing list of passed players" in {
+          val result = passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2, player3),
+              round = Some(Bidding(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Thorn),
+                  player2.playerId -> List(Thorn, Rose),
+                  player3.playerId -> List(Thorn, Rose),
+                ),
+                bids = Map(
+                  player2.playerId -> 2,
+                ),
+                passed = List(player3.playerId),
+              ))
+            )
+          ).value()
+          val round = result.round.value
+          result.round.value shouldBe a[Bidding]
+          round.asInstanceOf[Bidding].passed should contain allOf(creator.playerId, player3.playerId)
+        }
+
+        "advances the round to 'flipping' if this is the last player to pass" in {
+          val discs = Map(
+            creator.playerId -> List(Rose, Rose),
+            player1.playerId -> List(Rose, Thorn),
+            player2.playerId -> List(Thorn, Rose),
+          )
+          val result = passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Bidding(
+                activePlayer = creator.playerId,
+                discs = discs,
+                bids = Map(
+                  player2.playerId -> 2,
+                ),
+                passed = List(
+                  player1.playerId,
+                ),
+              ))
+            )
+          ).value()
+          val round = result.round.value
+          round shouldBe a[Flipping]
+          round.asInstanceOf[Flipping] should have(
+            "activePlayer" as player2.playerId.pid,
+            "discs" as discs,
+            "revealed" as Map.empty,
+          )
+        }
+
+        "fails if it is not the player's turn" in {
+          passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Bidding(
+                activePlayer = player1.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Thorn),
+                  player2.playerId -> List(Thorn, Rose),
+                ),
+                bids = Map(
+                  creator.playerId -> 2,
+                ),
+                passed = Nil,
+              ))
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails if the player has already passed" in {
+          passRound(
+            creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Bidding(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Thorn),
+                  player2.playerId -> List(Thorn, Rose),
+                ),
+                bids = Map(
+                  player2.playerId -> 2,
+                ),
+                passed = List(creator.playerId),
+              ))
+            )
+          ).isFailedAttempt()
+        }
+      }
+
+      "fails for flipping" in {
+        passRound(creator.playerId,
+          game.copy(
+            round = Some(Flipping(
+              creator.playerId, Map.empty, Map.empty
+            ))
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for finished" in {
+        passRound(creator.playerId,
+          game.copy(
+            round = Some(Finished(
+              creator.playerId, Map.empty, Map.empty, false
+            ))
+          )
+        ).isFailedAttempt()
+      }
+    }
+  }
+
+  "biddingRoundWinner" - {
+    "returns the hotseat player ID" - {
+      "for a 2P game where the other player has passed" in {
+        val hotseatPlayerId = biddingRoundWinner(
+          passed = List(player1.playerId),
+          bids = Map(
+            player2.playerId -> 2,
+          ),
+          players = List(player1, player2),
+        ).value
+        hotseatPlayerId shouldEqual player2.playerId
+      }
+
+      "for a 3P game where both the other players have passed" in {
+        val hotseatPlayerId = biddingRoundWinner(
+          passed = List(player1.playerId, player2.playerId),
+          bids = Map(
+            creator.playerId -> 3,
+            player1.playerId -> 2,
+          ),
+          players = List(creator, player1, player2),
+        ).value
+        hotseatPlayerId shouldEqual creator.playerId
+      }
+
+      "for a 4P game where everyone else has passed" in {
+        val hotseatPlayerId = biddingRoundWinner(
+          passed = List(player1.playerId, player2.playerId, player3.playerId),
+          bids = Map(
+            creator.playerId -> 3,
+          ),
+          players = List(creator, player1, player2, player3),
+        ).value
+        hotseatPlayerId shouldEqual creator.playerId
+      }
+    }
+
+    "returns None" - {
+      "when another player is yet to act" in {
+        val result = biddingRoundWinner(
+          passed = List(player1.playerId),
+          bids = Map(
+            creator.playerId -> 3,
+          ),
+          players = List(creator, player1, player2),
+        )
+        result shouldEqual None
+      }
+
+      "when all players are still bidding" in {
+        val result = biddingRoundWinner(
+          passed = Nil,
+          bids = Map(
+            creator.playerId -> 3,
+            player1.playerId -> 4,
+            player2.playerId -> 5,
+            player3.playerId -> 6,
+          ),
+          players = List(creator, player1, player2, player3),
+        )
+        result shouldEqual None
+      }
+
+      "when two players are still bidding" in {
+        val result = biddingRoundWinner(
+          passed = List(creator.playerId, player2.playerId),
+          bids = Map(
+            creator.playerId -> 3,
+            player1.playerId -> 4,
+            player2.playerId -> 5,
+            player3.playerId -> 6,
+          ),
+          players = List(creator, player1, player2, player3),
+        )
+        result shouldEqual None
       }
     }
   }

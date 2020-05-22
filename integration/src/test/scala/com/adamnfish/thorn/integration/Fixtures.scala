@@ -63,4 +63,12 @@ object Fixtures {
       ), context
     )
   }
+
+  def pass(welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    Thorn.pass(
+      Pass(
+        welcome.gameId, welcome.playerId, welcome.playerKey
+      ), context
+    )
+  }
 }

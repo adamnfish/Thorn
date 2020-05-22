@@ -1,6 +1,7 @@
 package com.adamnfish.thorn.logic
 
 import com.adamnfish.thorn.attempt.{Attempt, Failure}
+import com.adamnfish.thorn.models
 import com.adamnfish.thorn.models._
 
 import scala.annotation.tailrec
@@ -272,6 +273,80 @@ object Play {
         failure("flipping")
       case Some(_: Finished) =>
         failure("finished")
+    }
+  }
+
+  def passRound(playerId: PlayerId, game: Game): Attempt[Game] = {
+    val failure = (roundStr: String) => Attempt.Left(Failure(
+      s"cannot pass in $roundStr round",
+      "You can't pass now",
+      400
+    ).asAttempt)
+    game.round match {
+      case None =>
+        failure("none")
+      case Some(_: InitialDiscs) =>
+        failure("initial discs")
+      case Some(_: Placing) =>
+        failure("placing")
+      case Some(bidding: Bidding) =>
+        if (bidding.activePlayer != playerId) {
+          Attempt.Left {
+            Failure(
+              "Cannot pass on another player's turn",
+              "It's not your turn to pass",
+              400
+            )
+          }
+        } else if (bidding.passed.contains(playerId)) {
+          Attempt.Left {
+            Failure(
+              "Cannot pass a second time",
+              "You have already passed this round",
+              400
+            )
+          }
+        } else {
+          biddingRoundWinner(playerId :: bidding.passed, bidding.bids, game.players) match {
+            case Some(flipPlayerId) =>
+              Attempt.Right {
+                game.copy(
+                  round = Some(Flipping(
+                    activePlayer = flipPlayerId,
+                    bidding.discs,
+                    revealed = Map.empty,
+                  ))
+                )
+              }
+            case None =>
+              Attempt.Right {
+                game.copy(
+                  round = Some(
+                    bidding.copy(
+                      activePlayer = advanceActivePlayer(game.players, playerId),
+                      passed = playerId :: bidding.passed
+                    )
+                  )
+                )
+              }
+          }
+        }
+      case Some(_: Flipping) =>
+        failure("flipping")
+      case Some(_: Finished) =>
+        failure("finished")
+    }
+  }
+
+  private[logic] def biddingRoundWinner(passed: List[PlayerId], bids: Map[PlayerId, Int], players: List[Player]): Option[PlayerId] = {
+    players.map(_.playerId).toSet.removedAll(passed).toList match {
+      case remainingPlayerId :: Nil =>
+        if (bids.getOrElse(remainingPlayerId, 0) > 0)
+          Some(remainingPlayerId)
+        else
+          None
+      case _ =>
+        None
     }
   }
 }
