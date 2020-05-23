@@ -814,7 +814,7 @@ class RepresentationsTest
         )
 
         "round is an instance of Finished" in {
-          val result = dbToGame(gameDBWithRound, playerDBs).value()
+          val result = dbToGame(gameDBWithRound, playersDBsWithDiscs).value()
           result.round.value shouldBe a[Finished]
         }
 

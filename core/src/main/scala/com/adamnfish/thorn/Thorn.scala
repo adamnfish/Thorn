@@ -185,12 +185,10 @@ object Thorn {
       playerDbs <- context.db.getPlayers(request.gameId)
       game <- Representations.dbToGame(gameDb, playerDbs)
       // game logic
-      newGame <- Play.flipDisc(request.stack, game)
+      newGame <- Play.flipDisc(request.playerId, request.stack, game)
       response <- Responses.gameStatuses(newGame)
       // create and save updated player and game for DB
-      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
       newGameDb = Representations.gameForDb(newGame)
-      _ <- context.db.writePlayer(newPlayerDb)
       _ <- context.db.writeGame(newGameDb)
     } yield response
   }
@@ -207,12 +205,6 @@ object Thorn {
     } yield Responses.tbd[GameStatus]
   }
 
-  def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
-    for {
-      _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
-  }
-
   def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
@@ -223,5 +215,11 @@ object Thorn {
     Attempt.Right {
       Responses.ok()
     }
+  }
+
+  def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    for {
+      _ <- validate(request)
+    } yield Responses.tbd[GameStatus]
   }
 }

@@ -378,17 +378,18 @@ object Representations {
 
   private def playerRevealeds(discs: Map[PlayerId, List[Disc]], revealedCounts: Map[String, Int])(implicit ec: ExecutionContext): Attempt[Map[PlayerId, List[Disc]]] = {
     Attempt.traverse(discs.toList) { case (playerId, discs) =>
-      revealedCounts.get(playerId.pid).map { count =>
+      val count = revealedCounts.getOrElse(playerId.pid, 0)
+      if (count > discs.length) {
+        Attempt.Left {
+          Failure(
+            "More discs revealed than are available",
+            "Too many discs have been revealed",
+            500
+          )
+        }
+      } else {
         Attempt.Right(
           playerId -> discs.take(count)
-        )
-      }.getOrElse {
-        Attempt.Left(
-          Failure(
-            s"No revealed count for player ${playerId.pid}",
-            "Couldn't see how many discs each player has revealed",
-            500, None, None
-          )
         )
       }
     }.map(_.toMap)

@@ -71,4 +71,12 @@ object Fixtures {
       ), context
     )
   }
+
+  def flip(stackId: PlayerId, welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    Thorn.flip(
+      Flip(
+        welcome.gameId, welcome.playerId, welcome.playerKey, stackId
+      ), context
+    )
+  }
 }

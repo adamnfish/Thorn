@@ -53,4 +53,27 @@ trait Journeys extends AttemptValues with OptionValues {
       creator = creatorWelcome, player1Welcome, player2Welcome,
     )
   }
+
+  def goToRoseFlippingRound(context: PlayerAddress => Context)(implicit pos: source.Position): TestGame = {
+    val testGame = goToBeforeBiddingRound(context)
+    Fixtures.bid(5, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+    Fixtures.pass(testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+    Fixtures.pass(testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+    testGame
+  }
+
+  def goToThornFlippingRound(context: PlayerAddress => Context)(implicit pos: source.Position): TestGame = {
+    val testGame = goToBeforeBiddingRound(context)
+    Fixtures.placeDisc(
+      Rose, testGame.creator, context(Fixtures.creatorAddress)
+    ).isSuccessfulAttempt()
+    Fixtures.placeDisc(
+      Thorn, testGame.player1, context(Fixtures.player1Address)
+    ).isSuccessfulAttempt()
+    Fixtures.bid(1, testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+    Fixtures.bid(5, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+    Fixtures.pass(testGame.player1, context(Fixtures.player1Address)).isSuccessfulAttempt()
+    Fixtures.pass(testGame.player2, context(Fixtures.player2Address)).isSuccessfulAttempt()
+    testGame
+  }
 }

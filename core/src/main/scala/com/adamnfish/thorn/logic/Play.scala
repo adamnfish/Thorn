@@ -362,7 +362,94 @@ object Play {
     }
   }
 
-  def flipDisc(stack: PlayerId, game: Game): Attempt[Game] = {
-    ???
+  def flipDisc(playerId: PlayerId, stack: PlayerId, game: Game): Attempt[Game] = {
+    val failure = (roundStr: String) => Attempt.Left(Failure(
+      s"cannot flip discs in $roundStr round",
+      "You can't flip discs now",
+      400
+    ).asAttempt)
+    game.round match {
+      case None =>
+        failure("none")
+      case Some(_: InitialDiscs) =>
+        failure("initial discs")
+      case Some(_: Placing) =>
+        failure("placing")
+      case Some(_: Bidding) =>
+        failure("bidding")
+      case Some(flipping: Flipping) =>
+        val hasRevealedOwnDiscs =
+          flipping.revealed.getOrElse(playerId, Nil).length == flipping.discs.getOrElse(playerId, Nil).length
+        if (flipping.activePlayer != playerId) {
+          Attempt.Left(
+            Failure(
+              "Cannot flip on another player's turn",
+              "It's another player's chance to flip discs",
+              400
+            )
+          )
+        } else if (!hasRevealedOwnDiscs && stack != playerId) {
+          Attempt.Left {
+            Failure(
+              "Cannot flip other players' discs before your own",
+              "You must start by flipping all of your own discs",
+              400
+            )
+          }
+        } else {
+          val noMoreDiscs =
+            flipping.revealed.getOrElse(stack, Nil).length >= flipping.discs.getOrElse(stack, Nil).length
+          if (noMoreDiscs) {
+            Attempt.Left {
+              Failure(
+                "All this player's discs have already been flipped",
+                "All of this player's discs have already been revealed",
+                400
+              )
+            }
+          } else {
+            val newRevealed: Map[PlayerId, List[Disc]] = flipping.revealed.updatedWith(stack) { maybeDiscs =>
+              val currentlyRevealed = maybeDiscs.getOrElse(Nil)
+              val nextDisc = flipping.discs.getOrElse(stack, Nil).drop(currentlyRevealed.size).head
+              Some(currentlyRevealed :+ nextDisc)
+            }
+            val revealedCount = newRevealed.values.flatten.size
+
+            if (newRevealed.values.flatten.toSet.contains(Thorn)) {
+              Attempt.Right {
+                game.copy(
+                  round = Some(Finished(
+                    activePlayer = playerId,
+                    discs = flipping.discs,
+                    revealed = newRevealed,
+                    successful = false
+                  ))
+                )
+              }
+            } else if (revealedCount >= flipping.target) {
+              Attempt.Right {
+                game.copy(
+                  round = Some(Finished(
+                    activePlayer = playerId,
+                    discs = flipping.discs,
+                    revealed = newRevealed,
+                    successful = true
+                  ))
+                )
+              }
+            } else {
+              Attempt.Right {
+                game.copy(
+                  round = Some(flipping.copy(
+                    revealed = newRevealed
+                  ))
+                )
+              }
+            }
+          }
+        }
+      case Some(_: Finished) =>
+        failure("finished")
+    }
   }
 }

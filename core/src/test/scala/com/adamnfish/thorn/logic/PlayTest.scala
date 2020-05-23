@@ -850,41 +850,308 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
 
   "flipDisc" - {
     "handles each round" - {
-      "fails for no round" ignore {}
+      "fails for no round" in {
+        flipDisc(creator.playerId, stack = player1.playerId,
+          game.copy(
+            players = List(creator, player1, player2),
+            round = None,
+          )
+        ).isFailedAttempt()
+      }
 
-      "fails for initial discs" ignore {}
+      "fails for initial discs" in {
+        flipDisc(creator.playerId, stack = player1.playerId,
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(InitialDiscs(
+              firstPlayer = creator.playerId,
+              initialDiscs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+            )),
+          )
+        ).isFailedAttempt()
+      }
 
-      "fails for placing" ignore {}
+      "fails for placing" in {
+        flipDisc(creator.playerId, stack = player1.playerId,
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Placing(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+            )),
+          )
+        ).isFailedAttempt()
+      }
 
-      "fails for bidding" ignore {}
+      "fails for bidding" in {
+        flipDisc(creator.playerId, stack = player1.playerId,
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Bidding(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+              bids = Map.empty,
+              passed = Nil
+            )),
+          )
+        ).isFailedAttempt()
+      }
 
       "for flipping" - {
         "if the revealed disc is a Rose" - {
           "if this meets the player's bid amount" - {
-            "advances the round to finished" ignore {}
+            val testGame = game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Flipping(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose),
+                  player1.playerId -> List(Rose),
+                  player2.playerId -> List(Rose),
+                ),
+                target = 2,
+                revealed = Map(
+                  creator.playerId -> List(Rose),
+                ),
+              ))
+            )
 
-            "reveals the flipped Rose" ignore {}
+            "advances the round to finished" in {
+              val result = flipDisc(creator.playerId, player1.playerId, testGame).value()
+              result.round.value shouldBe a[Finished]
+            }
 
-            "round is successful" ignore {}
+            "correctly populates the new round" in {
+              val result = flipDisc(creator.playerId, player1.playerId, testGame).value()
+              result.round.value shouldBe a[Finished]
+              val finishedRound = result.round.value.asInstanceOf[Finished]
+              finishedRound should have(
+                "activePlayer" as creator.playerId.pid,
+                "discs" as Map(
+                  creator.playerId -> List(Rose),
+                  player1.playerId -> List(Rose),
+                  player2.playerId -> List(Rose),
+                ),
+                "revealed" as Map(
+                  creator.playerId -> List(Rose),
+                  player1.playerId -> List(Rose),
+                ),
+                "successful" as true,
+              )
+            }
           }
 
-          "if this does not meet the player's bd amount" - {
-            "reveals the flipped Rose" ignore {}
+          "if this does not meet the player's bid amount" - {
+            val testGame = game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Flipping(
+                activePlayer = creator.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose),
+                  player1.playerId -> List(Rose, Rose),
+                  player2.playerId -> List(Rose),
+                ),
+                target = 4,
+                revealed = Map(
+                  creator.playerId -> List(Rose),
+                ),
+              ))
+            )
+
+            "reveals the flipped Rose" in {
+              val result = flipDisc(creator.playerId, player1.playerId, testGame).value()
+              result.round.value shouldBe a[Flipping]
+              val flippingRound = result.round.value.asInstanceOf[Flipping]
+              flippingRound.revealed.get(player1.playerId).value shouldEqual List(Rose)
+            }
+
+            "reveals multiple flipped discs" in {
+              val game2 = flipDisc(creator.playerId, player1.playerId, testGame).value()
+              val result = flipDisc(creator.playerId, player2.playerId, game2).value()
+              result.round.value shouldBe a[Flipping]
+              val flippingRound = result.round.value.asInstanceOf[Flipping]
+              flippingRound.revealed shouldEqual Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              )
+            }
           }
         }
 
         "if the revealed disc is a Thorn" - {
-          "advances the round to finished" ignore {}
+          val testRound = Flipping(
+            activePlayer = creator.playerId,
+            discs = Map(
+              creator.playerId -> List(Rose),
+              player1.playerId -> List(Rose),
+              player2.playerId -> List(Rose, Thorn),
+            ),
+            target = 3,
+            revealed = Map(
+              creator.playerId -> List(Rose),
+              player2.playerId -> List(Rose),
+            ),
+          )
+          val testGame = game.copy(
+            players = List(creator, player1, player2),
+            round = Some(testRound)
+          )
 
-          "reveals the flipped Thorn" ignore {}
+          "advances the round to finished" in {
+            val result = flipDisc(creator.playerId, player2.playerId, testGame).value()
+            result.round.value shouldBe a[Finished]
+          }
 
-          "round is not successful" ignore {}
+          "correctly populates the finished round" in {
+            val result = flipDisc(creator.playerId, player2.playerId, testGame).value()
+            result.round.value shouldBe a[Finished]
+            val finishedRound = result.round.value.asInstanceOf[Finished]
+            finishedRound should have(
+              "activePlayer" as creator.playerId.pid,
+              "discs" as Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose, Thorn),
+              ),
+              "revealed" as Map(
+                creator.playerId -> List(Rose),
+                player2.playerId -> List(Rose, Thorn),
+              ),
+              "successful" as false,
+            )
+          }
         }
 
-        "fails if this is not the active player" ignore {}
+        "players must flip their own discs first" - {
+          val testRound = Flipping(
+            activePlayer = creator.playerId,
+            discs = Map(
+              creator.playerId -> List(Rose, Rose),
+              player1.playerId -> List(Rose, Rose),
+              player2.playerId -> List(Rose),
+            ),
+            target = 4,
+            revealed = Map.empty,
+          )
+          "fails if they haven't flipped any of their own discs" in {
+            flipDisc(creator.playerId, stack = player2.playerId,
+              game.copy(
+                players = List(creator, player1, player2),
+                round = Some(testRound),
+              )
+            ).isFailedAttempt()
+          }
+
+          "fails if they have not flipped all their discs" in {
+            flipDisc(creator.playerId, stack = player2.playerId,
+              game.copy(
+                players = List(creator, player1, player2),
+                round = Some(testRound.copy(
+                  revealed = Map(
+                    creator.playerId -> List(Rose)
+                  )
+                )),
+              )
+            ).isFailedAttempt()
+          }
+        }
+
+        "cannot flip discs beyond what has been placed" - {
+          "for themselves" in {
+            flipDisc(creator.playerId, stack = creator.playerId,
+              game.copy(
+                players = List(creator, player1, player2),
+                round = Some(Flipping(
+                  activePlayer = creator.playerId,
+                  discs = Map(
+                    creator.playerId -> List(Rose),
+                    player1.playerId -> List(Rose),
+                    player2.playerId -> List(Rose),
+                  ),
+                  target = 3,
+                  revealed = Map(
+                    creator.playerId -> List(Rose),
+                  ),
+                )),
+              )
+            ).isFailedAttempt()
+          }
+
+          "and for other players" in {
+            flipDisc(creator.playerId, stack = player1.playerId,
+              game.copy(
+                players = List(creator, player1, player2),
+                round = Some(Flipping(
+                  activePlayer = creator.playerId,
+                  discs = Map(
+                    creator.playerId -> List(Rose),
+                    player1.playerId -> List(Rose),
+                    player2.playerId -> List(Rose),
+                  ),
+                  target = 3,
+                  revealed = Map(
+                    creator.playerId -> List(Rose),
+                    player1.playerId -> List(Rose),
+                  ),
+                )),
+              )
+            ).isFailedAttempt()
+          }
+        }
+
+        "fails if this is not the active player" in {
+          flipDisc(creator.playerId, stack = creator.playerId,
+            game.copy(
+              players = List(creator, player1, player2),
+              round = Some(Flipping(
+                activePlayer = player2.playerId,
+                discs = Map(
+                  creator.playerId -> List(Rose),
+                  player1.playerId -> List(Rose),
+                  player2.playerId -> List(Rose),
+                ),
+                target = 2,
+                revealed = Map.empty,
+              ))
+            )
+          ).isFailedAttempt()
+        }
       }
 
-      "fails for finished" ignore {}
+      "fails for finished" in {
+        flipDisc(creator.playerId, stack = player1.playerId,
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Finished(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+              revealed = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+              successful = true,
+            )),
+          )
+        ).isFailedAttempt()
+      }
     }
   }
 }
