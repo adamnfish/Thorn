@@ -170,7 +170,7 @@ object Thorn {
       newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
       newGameDb = Representations.gameForDb(newGame)
       _ <- context.db.writePlayer(
-        newPlayerDb.copy(passed = Some(true))
+        newPlayerDb.copy(passed = true)
       )
       _ <- context.db.writeGame(newGameDb)
     } yield response
@@ -179,7 +179,20 @@ object Thorn {
   def flip(request: Flip, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
+      // fetch player / game data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // game logic
+      newGame <- Play.flipDisc(request.stack, game)
+      response <- Responses.gameStatuses(newGame)
+      // create and save updated player and game for DB
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      newGameDb = Representations.gameForDb(newGame)
+      _ <- context.db.writePlayer(newPlayerDb)
+      _ <- context.db.writeGame(newGameDb)
+    } yield response
   }
 
   def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {

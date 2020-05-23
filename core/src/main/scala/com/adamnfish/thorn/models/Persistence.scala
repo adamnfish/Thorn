@@ -33,6 +33,6 @@ case class PlayerDB(
   placedDiscs: List[String],
   roseCount: Int,
   hasThorn: Boolean,
-  bid: Option[Int],
-  passed: Option[Boolean],
+  bid: Int,
+  passed: Boolean,
 )

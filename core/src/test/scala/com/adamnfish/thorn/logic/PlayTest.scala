@@ -321,7 +321,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
       "fails if the round is flipping" in {
         placeDisc(Thorn, creator.playerId,
           game.copy(
-            round = Some(Flipping(creator.playerId, Map.empty, Map.empty))
+            round = Some(Flipping(creator.playerId, 3, Map.empty, Map.empty))
           )
         ).isFailedAttempt()
       }
@@ -371,41 +371,37 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         }
 
         "if it is the player's turn" - {
+          val testGame = game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Placing(
+              creator.playerId,
+              Map(
+                creator.playerId -> List(Rose, Rose),
+                player1.playerId -> List(Rose, Rose),
+                player2.playerId -> List(Thorn, Rose),
+              ),
+            ))
+          )
           "advances the round to 'bidding'" in {
-            val result = bidOnRound(3, creator.playerId,
-              game.copy(
-                round = Some(Placing(
-                  creator.playerId, Map.empty
-                ))
-              )
-            ).value()
+            val result = bidOnRound(3, creator.playerId, testGame).value()
             result.round.value shouldBe a[Bidding]
           }
 
           "updates player bid to the specified amount" in {
-            val result = bidOnRound(3, creator.playerId,
-              game.copy(
-                round = Some(Placing(
-                  creator.playerId, Map.empty
-                ))
-              )
-            ).value()
+            val result = bidOnRound(3, creator.playerId, testGame).value()
             val bid = result.round.value.asInstanceOf[Bidding].bids.get(creator.playerId).value
             bid shouldEqual 3
           }
 
           "advances the active player" in {
-            val result = bidOnRound(3, creator.playerId,
-              game.copy(
-                players = List(creator, player1),
-                round = Some(Placing(
-                  creator.playerId, Map.empty
-                ))
-              )
-            ).value()
+            val result = bidOnRound(3, creator.playerId, testGame).value()
             result.round.value shouldBe a[Bidding]
             val activePlayer = result.round.value.asInstanceOf[Bidding].activePlayer
             activePlayer shouldEqual player1.playerId
+          }
+
+          "fails if the bid exceeds the number of discs" in {
+            bidOnRound(8, creator.playerId, testGame).isFailedAttempt()
           }
         }
       }
@@ -555,7 +551,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         bidOnRound(1, creator.playerId,
           game.copy(
             round = Some(Flipping(
-              creator.playerId, Map.empty, Map.empty
+              creator.playerId, 3, Map.empty, Map.empty
             ))
           )
         ).isFailedAttempt()
@@ -755,7 +751,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         passRound(creator.playerId,
           game.copy(
             round = Some(Flipping(
-              creator.playerId, Map.empty, Map.empty
+              creator.playerId, 3, Map.empty, Map.empty
             ))
           )
         ).isFailedAttempt()
@@ -783,7 +779,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ),
           players = List(player1, player2),
         ).value
-        hotseatPlayerId shouldEqual player2.playerId
+        hotseatPlayerId shouldEqual (player2.playerId, 2)
       }
 
       "for a 3P game where both the other players have passed" in {
@@ -795,7 +791,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ),
           players = List(creator, player1, player2),
         ).value
-        hotseatPlayerId shouldEqual creator.playerId
+        hotseatPlayerId shouldEqual (creator.playerId, 3)
       }
 
       "for a 4P game where everyone else has passed" in {
@@ -806,7 +802,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ),
           players = List(creator, player1, player2, player3),
         ).value
-        hotseatPlayerId shouldEqual creator.playerId
+        hotseatPlayerId shouldEqual (creator.playerId, 3)
       }
     }
 
@@ -849,6 +845,46 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         )
         result shouldEqual None
       }
+    }
+  }
+
+  "flipDisc" - {
+    "handles each round" - {
+      "fails for no round" ignore {}
+
+      "fails for initial discs" ignore {}
+
+      "fails for placing" ignore {}
+
+      "fails for bidding" ignore {}
+
+      "for flipping" - {
+        "if the revealed disc is a Rose" - {
+          "if this meets the player's bid amount" - {
+            "advances the round to finished" ignore {}
+
+            "reveals the flipped Rose" ignore {}
+
+            "round is successful" ignore {}
+          }
+
+          "if this does not meet the player's bd amount" - {
+            "reveals the flipped Rose" ignore {}
+          }
+        }
+
+        "if the revealed disc is a Thorn" - {
+          "advances the round to finished" ignore {}
+
+          "reveals the flipped Thorn" ignore {}
+
+          "round is not successful" ignore {}
+        }
+
+        "fails if this is not the active player" ignore {}
+      }
+
+      "fails for finished" ignore {}
     }
   }
 }

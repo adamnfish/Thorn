@@ -70,7 +70,7 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
 
           val playerDbs = db.getPlayers(testGame.gameId).value()
           val creator = playerDbs.find(_.playerId == testGame.creator.playerId.pid).value
-          creator.bid shouldEqual Some(1)
+          creator.bid shouldEqual 1
         }
       }
 
@@ -78,6 +78,13 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
         withTestContext { (context, _) =>
           val testGame = goToBeforeBiddingRound(context)
           Fixtures.bid(1, testGame.player2, context(Fixtures.player2Address)).isFailedAttempt()
+        }
+      }
+
+      "fails if the bid exceeds the number of discs" in {
+        withTestContext { (context, _) =>
+          val testGame = goToBeforeBiddingRound(context)
+          Fixtures.bid(10, testGame.creator, context(Fixtures.creatorAddress)).isFailedAttempt()
         }
       }
     }
@@ -102,9 +109,9 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
           val playerDbs = db.getPlayers(testGame.gameId).value()
           val bids = playerDbs.map(pdb => (pdb.playerId, pdb.bid))
           bids.toSet shouldEqual Set(
-            testGame.creator.playerId.pid -> Some(1),
-            testGame.player1.playerId.pid -> Some(2),
-            testGame.player2.playerId.pid -> Some(3),
+            testGame.creator.playerId.pid -> 1,
+            testGame.player1.playerId.pid -> 2,
+            testGame.player2.playerId.pid -> 3,
           )
         }
       }
@@ -132,7 +139,8 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
       "fails if the bid exceeds the number of discs" in {
         withTestContext { (context, _) =>
           val testGame = goToBeforeBiddingRound(context)
-          Fixtures.bid(8, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.bid(10, testGame.player1, context(Fixtures.player1Address)).isFailedAttempt()
         }
       }
 

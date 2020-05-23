@@ -204,7 +204,7 @@ class RepresentationsTest
         }
 
         "for Flipping" - {
-          val round = Flipping(player1.playerId, Map.empty, Map.empty)
+          val round = Flipping(player1.playerId, 2, Map.empty, Map.empty)
           val roundWithDiscs = round.copy(
             discs = Map(
               player1.playerId -> List(Rose, Thorn),
@@ -362,11 +362,11 @@ class RepresentationsTest
     "correctly unpacks round information" - {
       "when round is empty" - {
         "player's bid is empty" in {
-          newPlayerForDb(game, player1).bid shouldEqual None
+          newPlayerForDb(game, player1).bid shouldEqual 0
         }
 
         "passed is empty" in {
-          newPlayerForDb(game, player1).passed shouldEqual None
+          newPlayerForDb(game, player1).passed shouldEqual false
         }
 
         "discs is empty" in {
@@ -379,11 +379,11 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          newPlayerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual 0
         }
 
         "passed is empty" in {
-          newPlayerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual false
         }
 
         "discs is empty for an empty round" in {
@@ -419,11 +419,11 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          newPlayerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual 0
         }
 
         "passed is empty" in {
-          newPlayerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual false
         }
 
         "discs is populated from this player's discs" in {
@@ -452,7 +452,7 @@ class RepresentationsTest
               ))
             ),
             player1
-          ).bid shouldEqual None
+          ).bid shouldEqual 0
         }
 
         "player's bid comes from round information, if present" in {
@@ -464,7 +464,7 @@ class RepresentationsTest
                 ))
               ),
               player1
-            ).bid shouldEqual Some(bid)
+            ).bid shouldEqual bid
           }
         }
 
@@ -479,7 +479,7 @@ class RepresentationsTest
                 ))
               ),
               player1
-            ).passed shouldEqual Some(passed)
+            ).passed shouldEqual passed
           }
         }
 
@@ -499,15 +499,15 @@ class RepresentationsTest
       }
 
       "when round is Flipping" - {
-        val round = Flipping(player1.playerId, Map.empty, Map.empty)
+        val round = Flipping(player1.playerId, 3, Map.empty, Map.empty)
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          newPlayerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual 0
         }
 
         "passed is empty" in {
-          newPlayerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual false
         }
 
         "discs is populated from this player's discs" in {
@@ -530,11 +530,11 @@ class RepresentationsTest
         val gameRound = game.copy(round = Some(round))
 
         "player's bid is empty" in {
-          newPlayerForDb(gameRound, player1).bid shouldEqual None
+          newPlayerForDb(gameRound, player1).bid shouldEqual 0
         }
 
         "passed is empty" in {
-          newPlayerForDb(gameRound, player1).passed shouldEqual None
+          newPlayerForDb(gameRound, player1).passed shouldEqual false
         }
 
         "discs is populated from this player's discs" in {
@@ -583,11 +583,11 @@ class RepresentationsTest
     val p2id = PlayerId("id-2")
     val player1 = PlayerDB(
       "game-id", p1id.pid, "key-1", "address-1", "Sreen name 1", 0,
-      Nil, 3, true, None, None
+      Nil, 3, true, 0, false
     )
     val player2 = PlayerDB(
       "game-id", p2id.pid, "key-2", "address-2", "Sreen name 2", 0,
-      Nil, 3, true, None, None
+      Nil, 3, true, 0, false
     )
     val playerDBs = List(player1, player2)
     val gameDb = GameDB(
@@ -714,13 +714,13 @@ class RepresentationsTest
         val playersDBsWithDiscs = List(
           player1.copy(
             placedDiscs = List("thorn", "rose"),
-            passed = Some(false),
-            bid = Some(2)
+            passed = false,
+            bid = 2
           ),
           player2.copy(
             placedDiscs = List("rose", "rose"),
-            passed = Some(true),
-            bid = None
+            passed = true,
+            bid = 0
           ),
         )
 
@@ -760,13 +760,13 @@ class RepresentationsTest
         val playersDBsWithDiscs = List(
           player1.copy(
             placedDiscs = List("thorn", "rose"),
-            passed = Some(false),
-            bid = Some(2)
+            passed = false,
+            bid = 2
           ),
           player2.copy(
             placedDiscs = List("rose", "rose"),
-            passed = Some(true),
-            bid = None
+            passed = true,
+            bid = 0
           ),
         )
 
@@ -803,13 +803,13 @@ class RepresentationsTest
         val playersDBsWithDiscs = List(
           player1.copy(
             placedDiscs = List("thorn", "rose"),
-            passed = Some(false),
-            bid = Some(2)
+            passed = false,
+            bid = 2
           ),
           player2.copy(
             placedDiscs = List("rose", "rose"),
-            passed = Some(true),
-            bid = None
+            passed = true,
+            bid = 0
           ),
         )
 
@@ -1106,6 +1106,7 @@ class RepresentationsTest
             ),
             round = Some(Flipping(
               activePlayer = player1.playerId,
+              target = 2,
               discs = Map(
                 player1.playerId -> List(Rose),
                 player2.playerId -> List(Thorn, Rose),
@@ -1306,6 +1307,7 @@ class RepresentationsTest
                 players = List(player1),
                 round = Some(Flipping(
                   player1.playerId,
+                  target = 3,
                   Map(
                     player1.playerId -> discs
                   ),

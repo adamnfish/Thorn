@@ -1,7 +1,6 @@
 package com.adamnfish.thorn.logic
 
 import com.adamnfish.thorn.attempt.{Attempt, Failure}
-import com.adamnfish.thorn.models
 import com.adamnfish.thorn.models._
 
 import scala.annotation.tailrec
@@ -185,6 +184,8 @@ object Play {
       case Some(_: InitialDiscs) =>
         failure("initial discs")
       case Some(placing: Placing) =>
+        val numberOfDiscs =
+          placing.discs.values.flatten.size
         if (placing.activePlayer != playerId) {
           Attempt.Left(
             Failure(
@@ -193,6 +194,14 @@ object Play {
               400
             )
           )
+        } else if (count > numberOfDiscs) {
+          Attempt.Left {
+            Failure(
+              "Bid exceeds disc count",
+              "You can't bid more than the number of discs",
+              400
+            )
+          }
         } else {
           Attempt.Right {
             game.copy(
@@ -238,16 +247,6 @@ object Play {
                 400
               )
             }
-          } else if (count == numberOfDiscs) {
-            Attempt.Right(
-              game.copy(
-                round = Some(Flipping(
-                  activePlayer = bidding.activePlayer,
-                  discs = bidding.discs,
-                  revealed = Map.empty
-                ))
-              )
-            )
           } else if (bidding.passed.contains(playerId)) {
             Attempt.Left {
               Failure(
@@ -256,6 +255,17 @@ object Play {
                 400
               )
             }
+          } else if (count == numberOfDiscs) {
+            Attempt.Right(
+              game.copy(
+                round = Some(Flipping(
+                  activePlayer = bidding.activePlayer,
+                  target = count,
+                  discs = bidding.discs,
+                  revealed = Map.empty
+                ))
+              )
+            )
           } else {
             Attempt.Right {
               game.copy(
@@ -308,11 +318,12 @@ object Play {
           }
         } else {
           biddingRoundWinner(playerId :: bidding.passed, bidding.bids, game.players) match {
-            case Some(flipPlayerId) =>
+            case Some((flipPlayerId, target)) =>
               Attempt.Right {
                 game.copy(
                   round = Some(Flipping(
                     activePlayer = flipPlayerId,
+                    target = target,
                     bidding.discs,
                     revealed = Map.empty,
                   ))
@@ -338,15 +349,20 @@ object Play {
     }
   }
 
-  private[logic] def biddingRoundWinner(passed: List[PlayerId], bids: Map[PlayerId, Int], players: List[Player]): Option[PlayerId] = {
+  private[logic] def biddingRoundWinner(passed: List[PlayerId], bids: Map[PlayerId, Int], players: List[Player]): Option[(PlayerId, Int)] = {
     players.map(_.playerId).toSet.removedAll(passed).toList match {
       case remainingPlayerId :: Nil =>
-        if (bids.getOrElse(remainingPlayerId, 0) > 0)
-          Some(remainingPlayerId)
+        val bid = bids.getOrElse(remainingPlayerId, 0)
+        if (bid > 0)
+          Some((remainingPlayerId, bid))
         else
           None
       case _ =>
         None
     }
+  }
+
+  def flipDisc(stack: PlayerId, game: Game): Attempt[Game] = {
+    ???
   }
 }

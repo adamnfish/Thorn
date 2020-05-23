@@ -35,8 +35,8 @@ object Representations {
       placedDiscs = game.round.map(playerRoundDiscs(player.playerId)).getOrElse(Nil),
       roseCount = player.roseCount,
       hasThorn = player.hasThorn,
-      bid = game.round.flatMap(playerRoundBid(player.playerId)),
-      passed = game.round.flatMap(playerRoundPassed(player.playerId)),
+      bid = game.round.flatMap(playerRoundBid(player.playerId)).getOrElse(0),
+      passed = game.round.flatMap(playerRoundPassed(player.playerId)).getOrElse(false),
     )
   }
 
@@ -104,10 +104,19 @@ object Representations {
             ).asAttempt)
             discs <- playerDiscs(playerDBs)
             revealed <- playerRevealeds(discs, gameDB.revealedDiscs)
+            target <- Attempt.fromOption(
+              playerBids(playerDBs).get(PlayerId(pid)),
+              Failure(
+                "Player cannot flip without a bid",
+                "The active player hasn't made a bid yet",
+                500
+              ).asAttempt
+            )
           } yield Some(Flipping(
             activePlayer = PlayerId(pid),
+            target = target,
             discs = discs,
-            revealed = revealed
+            revealed = revealed,
           ))
         case "finished" =>
           for {
@@ -200,8 +209,8 @@ object Representations {
           PlacingSummary(activePlayer, toDiscCount(discs))
         case Bidding(activePlayer, discs, bids, passed) =>
           BiddingSummary(activePlayer, toDiscCount(discs), bids, passed)
-        case Flipping(activePlayer, discs, revealed) =>
-          FlippingSummary(activePlayer, toDiscCount(discs), revealed)
+        case Flipping(activePlayer, target, discs, revealed) =>
+          FlippingSummary(activePlayer, target, toDiscCount(discs), revealed)
         case Finished(activePlayer, discs, revealed, successful) =>
           FinishedSummary(activePlayer, toDiscCount(discs), revealed, successful)
       }
@@ -214,7 +223,7 @@ object Representations {
           discs.get(playerId)
         case Bidding(_, discs, _, _) =>
           discs.get(playerId)
-        case Flipping(_, discs, _) =>
+        case Flipping(_, _, discs, _) =>
           discs.get(playerId)
         case Finished(_, discs, _, _) =>
           discs.get(playerId)
@@ -297,7 +306,7 @@ object Representations {
         activePlayer.pid
       case Bidding(activePlayer,_, _, _) =>
         activePlayer.pid
-      case Flipping(activePlayer, _, _) =>
+      case Flipping(activePlayer, _, _, _) =>
         activePlayer.pid
       case Finished(activePlayer, _, _, _) =>
         activePlayer.pid
@@ -312,7 +321,7 @@ object Representations {
         Map.empty
       case Bidding(_, _, _, _) =>
         Map.empty
-      case Flipping(_, _, revealed) =>
+      case Flipping(_, _, _, revealed) =>
         revealed.map { case (playerId, discs) =>
           playerId.pid -> discs.length
         }
@@ -331,7 +340,7 @@ object Representations {
         discs.getOrElse(playerId, Nil).map(discString)
       case Bidding(_, discs, _, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
-      case Flipping(_, discs, _) =>
+      case Flipping(_, _, discs, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
       case Finished(_, discs, _, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
@@ -387,13 +396,13 @@ object Representations {
 
   private def playerBids(playerDBs: List[PlayerDB])(implicit ec: ExecutionContext): Map[PlayerId, Int] = {
     playerDBs.map { playerDB =>
-      PlayerId(playerDB.playerId) -> playerDB.bid.getOrElse(0)
+      PlayerId(playerDB.playerId) -> playerDB.bid
     }.toMap
   }
 
   private def playerPasseds(playerDBs: List[PlayerDB])(implicit ec: ExecutionContext): List[PlayerId] = {
     playerDBs
-      .filter(_.passed.contains(true))
+      .filter(_.passed)
       .map(p => PlayerId(p.playerId))
   }
 

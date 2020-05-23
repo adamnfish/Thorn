@@ -59,7 +59,7 @@ class PassTest extends AnyFreeSpec with AttemptValues with OptionValues
 
           val playerDbs = db.getPlayers(testGame.gameId).value()
           val creator = playerDbs.find(_.playerId == testGame.player1.playerId.pid).value
-          creator.passed shouldEqual Some(true)
+          creator.passed shouldEqual true
         }
       }
 
@@ -111,9 +111,9 @@ class PassTest extends AnyFreeSpec with AttemptValues with OptionValues
           val playerDbs = db.getPlayers(testGame.gameId).value()
           val bids = playerDbs.map(pdb => (pdb.playerId, pdb.passed))
           bids.toSet shouldEqual Set(
-            testGame.creator.playerId.pid -> Some(false),
-            testGame.player1.playerId.pid -> Some(true),
-            testGame.player2.playerId.pid -> Some(true),
+            testGame.creator.playerId.pid -> false,
+            testGame.player1.playerId.pid -> true,
+            testGame.player2.playerId.pid -> true,
           )
         }
       }
