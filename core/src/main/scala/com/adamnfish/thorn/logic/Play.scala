@@ -12,15 +12,17 @@ object Play {
     @tailrec
     def loop(remainder: List[Player]): PlayerId = {
       remainder match {
-        case _ :: next :: _ if !Players.outOfDiscs(next) =>
-          next.playerId
-        case _ :: tail =>
-          loop(tail)
+        case next :: tail =>
+          if (Players.outOfDiscs(next))
+            loop(tail)
+          else
+            next.playerId
         case Nil =>
+          // fall back to the next player in table order, but this should be unreachable
           players.head.playerId
       }
     }
-    val nextPlayers = (players ++ players).dropWhile(_.playerId != currentActivePlayerId)
+    val nextPlayers = (players ++ players).dropWhile(_.playerId != currentActivePlayerId).drop(1)
     loop(nextPlayers)
   }
 
