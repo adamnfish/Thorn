@@ -217,6 +217,10 @@ object Thorn {
     }
   }
 
+  /**
+   * Essentially, the job here is to update the player's address.
+   * More sophisticated connect / disconnect / reconnect behaviour would be great at some point.
+   */
   def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)

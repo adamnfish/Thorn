@@ -34,6 +34,34 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         player2.playerId
       ) shouldEqual creator.playerId
     }
+
+    "skips a player with no discs left" in {
+      val players = List(
+        creator,
+        player1.copy(
+          roseCount = 0,
+          hasThorn = false,
+        ),
+        player2
+      )
+      advanceActivePlayer(players, creator.playerId) shouldEqual player2.playerId
+    }
+
+    "skips multiple players with no discs left" in {
+      val players = List(
+        creator,
+        player1.copy(
+          roseCount = 0,
+          hasThorn = false,
+        ),
+        player2.copy(
+          roseCount = 0,
+          hasThorn = false,
+        ),
+        player3
+      )
+      advanceActivePlayer(players, creator.playerId) shouldEqual player3.playerId
+    }
   }
 
   "placeDisc" - {
@@ -333,6 +361,46 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           )
         ).isFailedAttempt()
       }
+    }
+  }
+
+  "allPlayersPlaced" - {
+    "returns true of all players have placed discs" in {
+      allPlayersPlaced(
+        Map(
+          creator.playerId -> List(Rose),
+          player1.playerId -> List(Rose),
+          player2.playerId -> List(Rose),
+        ),
+        List(creator, player1, player2)
+      ) shouldEqual true
+    }
+
+    "returns false if players have not placed discs" ignore {
+      allPlayersPlaced(
+        Map(
+          creator.playerId -> List(Rose),
+          player1.playerId -> List(Rose),
+          player2.playerId -> Nil,
+        ),
+        List(creator, player1, player2)
+      ) shouldEqual false
+    }
+
+    "returns true if only dead players are yet to place" ignore {
+      allPlayersPlaced(
+        Map(
+          creator.playerId -> List(Rose),
+          player1.playerId -> List(Rose),
+          player2.playerId -> Nil,
+        ),
+        List(creator, player1,
+          player2.copy(
+            roseCount = 0,
+            hasThorn = false,
+          )
+        )
+      ) shouldEqual false
     }
   }
 
@@ -804,6 +872,22 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         ).value
         hotseatPlayerId shouldEqual (creator.playerId, 3)
       }
+
+      "for a 4P game where only dead players remain" in {
+        val hotseatPlayerId = biddingRoundWinner(
+          passed = List(player1.playerId, player2.playerId),
+          bids = Map(
+            creator.playerId -> 3,
+          ),
+          players = List(creator, player1, player2,
+            player3.copy(
+              roseCount = 0,
+              hasThorn = false,
+            )
+          ),
+        ).value
+        hotseatPlayerId shouldEqual (creator.playerId, 3)
+      }
     }
 
     "returns None" - {
@@ -1031,6 +1115,37 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 player2.playerId -> List(Rose, Thorn),
               ),
               "successful" as false,
+            )
+          }
+
+          "removes a disc from the player's pool" in {
+            sealed trait RemovedDisc
+            object RoseRemoved extends RemovedDisc
+            object ThornRemoved extends RemovedDisc
+
+            // repeat to allow rng to remove Thorns and Roses
+            val results = runMultiple[RemovedDisc](50) { _ =>
+              val result = flipDisc(creator.playerId, player2.playerId, testGame).value()
+              val updatedPlayer = result.players.find(_.playerId == creator.playerId).value
+              (updatedPlayer.roseCount, updatedPlayer.hasThorn) match {
+                case (3, true) =>
+                  Left("neither rose nor skull removed from players pool")
+                case (3, false) =>
+                  Right(ThornRemoved)
+                case (2, true) =>
+                  Right(RoseRemoved)
+                case (roseCount, hasThorn) =>
+                  Left(s"Too many discs removed - roses: $roseCount, thorn: $hasThorn")
+              }
+            }
+
+            results.fold(
+              { errs =>
+                fail(errs.distinct.mkString(", "))
+              },
+              { values =>
+                values should (contain(RoseRemoved) and contain(ThornRemoved))
+              }
             )
           }
         }

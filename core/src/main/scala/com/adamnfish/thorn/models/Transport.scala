@@ -16,6 +16,7 @@ case class PlayerSummary(
   screenName: String,
   playerId: PlayerId,
   score: Int,
+  discCount: Int,
 )
 
 case class SelfSummary(

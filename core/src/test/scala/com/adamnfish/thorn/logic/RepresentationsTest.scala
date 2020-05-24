@@ -954,6 +954,7 @@ class RepresentationsTest
             "screenName" as player1.screenName,
             "playerId" as player1.playerId.pid,
             "score" as player1.score,
+            "discCount" as 4,
           )
         }
 
@@ -965,7 +966,90 @@ class RepresentationsTest
             "screenName" as player2.screenName,
             "playerId" as player2.playerId.pid,
             "score" as player2.score,
+            "discCount" as 4,
           )
+        }
+
+        "player summary contains correct discsCount" - {
+          "for a player with all discs" in {
+            val testGame = game.copy(
+              players = List(
+                player1,
+                player2.copy(
+                  roseCount = 3,
+                  hasThorn = true,
+                ),
+              )
+            )
+            val playerSummary = gameStatus(
+              testGame, player2.playerId
+            ).value().game.players.find(_.playerId == player2.playerId).value
+            playerSummary.discCount shouldEqual 4
+          }
+
+          "for a player with no discs" in {
+            val testGame = game.copy(
+              players = List(
+                player1,
+                player2.copy(
+                  roseCount = 0,
+                  hasThorn = false,
+                ),
+              )
+            )
+            val playerSummary = gameStatus(
+              testGame, player2.playerId
+            ).value().game.players.find(_.playerId == player2.playerId).value
+            playerSummary.discCount shouldEqual 0
+          }
+
+          "for a player with Thorn and some Roses" in {
+            val testGame = game.copy(
+              players = List(
+                player1,
+                player2.copy(
+                  roseCount = 2,
+                  hasThorn = true,
+                ),
+              )
+            )
+            val playerSummary = gameStatus(
+              testGame, player2.playerId
+            ).value().game.players.find(_.playerId == player2.playerId).value
+            playerSummary.discCount shouldEqual 3
+          }
+
+          "for a player with no Roses" in {
+            val testGame = game.copy(
+              players = List(
+                player1,
+                player2.copy(
+                  roseCount = 0,
+                  hasThorn = true,
+                ),
+              )
+            )
+            val playerSummary = gameStatus(
+              testGame, player2.playerId
+            ).value().game.players.find(_.playerId == player2.playerId).value
+            playerSummary.discCount shouldEqual 1
+          }
+
+          "for a player with no Thorn" in {
+            val testGame = game.copy(
+              players = List(
+                player1,
+                player2.copy(
+                  roseCount = 2,
+                  hasThorn = false,
+                ),
+              )
+            )
+            val playerSummary = gameStatus(
+              testGame, player2.playerId
+            ).value().game.players.find(_.playerId == player2.playerId).value
+            playerSummary.discCount shouldEqual 2
+          }
         }
       }
 

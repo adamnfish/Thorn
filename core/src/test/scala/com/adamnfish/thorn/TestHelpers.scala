@@ -17,6 +17,23 @@ trait TestHelpers extends Matchers {
     }
   }
 
+  def runMultiple[A](times: Int)(f: Unit => Either[String, A]): Either[List[String], List[A]] = {
+    val results = (1 to times).map(_ => f(())).toList
+    val failures = results.collect {
+      case Left(msg) => msg
+    }
+    val successes = results.collect {
+      case Right(a) =>
+        a
+    }
+
+    if (failures.nonEmpty) {
+      Left(failures)
+    } else {
+      Right(successes)
+    }
+  }
+
   implicit val discGen: Gen[Disc] =
     Gen.oneOf(Thorn, Rose)
 

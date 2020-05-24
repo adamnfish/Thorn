@@ -12,15 +12,16 @@ object Play {
     @tailrec
     def loop(remainder: List[Player]): PlayerId = {
       remainder match {
-        case head :: next :: _ if head.playerId == currentActivePlayerId =>
+        case _ :: next :: _ if !Players.outOfDiscs(next) =>
           next.playerId
-        case Nil =>
-          players.head.playerId
         case _ :: tail =>
           loop(tail)
+        case Nil =>
+          players.head.playerId
       }
     }
-    loop(players)
+    val nextPlayers = (players ++ players).dropWhile(_.playerId != currentActivePlayerId)
+    loop(nextPlayers)
   }
 
   def nextStartPlayer(finished: Finished): PlayerId = {
@@ -166,8 +167,8 @@ object Play {
     } yield game.copy(round = Some(newRound))
   }
 
-  private def allPlayersPlaced[A](discs: Map[PlayerId, List[Disc]], players: List[Player]): Boolean = {
-    players.forall { player =>
+  private[logic] def allPlayersPlaced[A](discs: Map[PlayerId, List[Disc]], players: List[Player]): Boolean = {
+    players.filterNot(Players.outOfDiscs).forall { player =>
       discs.getOrElse(player.playerId, Nil).nonEmpty
     }
   }
@@ -350,7 +351,7 @@ object Play {
   }
 
   private[logic] def biddingRoundWinner(passed: List[PlayerId], bids: Map[PlayerId, Int], players: List[Player]): Option[(PlayerId, Int)] = {
-    players.map(_.playerId).toSet.removedAll(passed).toList match {
+    players.filterNot(Players.outOfDiscs).map(_.playerId).toSet.removedAll(passed).toList match {
       case remainingPlayerId :: Nil =>
         val bid = bids.getOrElse(remainingPlayerId, 0)
         if (bid > 0)
@@ -362,7 +363,7 @@ object Play {
     }
   }
 
-  def flipDisc(playerId: PlayerId, stack: PlayerId, game: Game): Attempt[Game] = {
+  def flipDisc(playerId: PlayerId, stack: PlayerId, game: Game)(implicit ec: ExecutionContext): Attempt[Game] = {
     val failure = (roundStr: String) => Attempt.Left(Failure(
       s"cannot flip discs in $roundStr round",
       "You can't flip discs now",
@@ -416,16 +417,17 @@ object Play {
             val revealedCount = newRevealed.values.flatten.size
 
             if (newRevealed.values.flatten.toSet.contains(Thorn)) {
-              Attempt.Right {
-                game.copy(
-                  round = Some(Finished(
-                    activePlayer = playerId,
-                    discs = flipping.discs,
-                    revealed = newRevealed,
-                    successful = false
-                  ))
-                )
-              }
+              for {
+                updatedPlayers <- Players.removeDiscFromThisPlayer(playerId, game.players)
+              } yield game.copy(
+                players = updatedPlayers,
+                round = Some(Finished(
+                  activePlayer = playerId,
+                  discs = flipping.discs,
+                  revealed = newRevealed,
+                  successful = false
+                ))
+              )
             } else if (revealedCount >= flipping.target) {
               Attempt.Right {
                 game.copy(

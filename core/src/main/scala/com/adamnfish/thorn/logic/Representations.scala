@@ -199,7 +199,8 @@ object Representations {
         PlayerSummary(
           screenName = player.screenName,
           playerId = player.playerId,
-          score = player.score
+          score = player.score,
+          discCount = Players.discCount(player),
         )
       }
       val round = game.round.map {
