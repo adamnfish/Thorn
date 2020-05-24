@@ -189,6 +189,8 @@ object Thorn {
       response <- Responses.gameStatuses(newGame)
       // create and save updated player and game for DB
       newGameDb = Representations.gameForDb(newGame)
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      _ <- context.db.writePlayer(newPlayerDb)
       _ <- context.db.writeGame(newGameDb)
     } yield response
   }
