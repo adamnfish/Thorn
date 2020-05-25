@@ -147,4 +147,28 @@ object Games {
       players = player :: game.players
     )
   }
+
+  def updatePlayerAddress(playerId: PlayerId, playerAddress: PlayerAddress, game: Game):Attempt[Game] = {
+    if (game.players.exists(_.playerId == playerId)) {
+      Attempt.Right {
+        game.copy(
+          players = game.players.map {
+            case player if player.playerId == playerId =>
+              player.copy(
+                playerAddress = playerAddress
+              )
+            case player => player
+          }
+        )
+      }
+    } else {
+      Attempt.Left {
+        Failure(
+          "Can't update player address for player not in the game",
+          "Can't reconnect you to this game",
+          404
+        )
+      }
+    }
+  }
 }

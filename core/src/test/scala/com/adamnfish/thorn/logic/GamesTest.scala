@@ -5,12 +5,13 @@ import java.time.ZonedDateTime
 import com.adamnfish.thorn.AttemptValues
 import com.adamnfish.thorn.logic.Games._
 import com.adamnfish.thorn.models.{Player, PlayerAddress, PlayerId, PlayerKey, Rose, Thorn}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 
-class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaCheckDrivenPropertyChecks {
+class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues with ScalaCheckDrivenPropertyChecks {
   "newGame" - {
     val gameName = "game-name"
     val creator = Player(
@@ -190,6 +191,28 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with ScalaC
       val player = Players.newPlayer("player", PlayerAddress("player-address"))
 
       addPlayer(player, game).players should contain(player)
+    }
+  }
+
+  "updatePlayerAddress" - {
+    "updates the game to use the provided address for the player" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("game-name", creator)
+
+      val updatedGame = updatePlayerAddress(creator.playerId, PlayerAddress("new address"), game).value()
+      val updatedCreator = updatedGame.players.find(_.playerId == creator.playerId).value
+      updatedCreator.playerAddress shouldEqual PlayerAddress("new address")
+    }
+
+    "fails if the player does not exist" in {
+      val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
+      val game = newGame("game-name", creator)
+
+      updatePlayerAddress(
+        PlayerId("does not exist"),
+        PlayerAddress("new address"),
+        game,
+      ).isFailedAttempt()
     }
   }
 }

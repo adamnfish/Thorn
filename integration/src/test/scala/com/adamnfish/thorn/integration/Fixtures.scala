@@ -88,4 +88,13 @@ object Fixtures {
       context
     )
   }
+
+  def reconnect(welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    Thorn.reconnect(
+      Reconnect(
+        welcome.gameId, welcome.playerId, welcome.playerKey
+      ),
+      context
+    )
+  }
 }

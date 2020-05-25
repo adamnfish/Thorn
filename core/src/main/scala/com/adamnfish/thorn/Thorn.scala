@@ -243,6 +243,19 @@ object Thorn {
   def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
+      // fetch player / game data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
+      message <- Representations.gameStatus(game, request.playerId)
+      // logic
+      newGame <- Games.updatePlayerAddress(request.playerId, context.playerAddress, game)
+      // create and save updated player for DB
+      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
+      _ <- context.db.writePlayer(newPlayerDb)
+    } yield Responses.justRespond(message)
   }
 }
