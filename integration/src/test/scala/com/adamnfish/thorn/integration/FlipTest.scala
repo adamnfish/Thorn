@@ -184,6 +184,80 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
           )
         }
       }
+
+      "can cause the round to end successfully" in {
+        withTestContext { (context, _) =>
+          val testGame = goToRoseFlippingRound(context)
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          // flip other discs
+          Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          // the winning flip for this round
+          val gameStatus = Fixtures.flip(
+            stackId = testGame.player2.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).value().messages.get(Fixtures.creatorAddress).value
+          gameStatus.game.round.value shouldBe a[FinishedSummary]
+          val round = gameStatus.game.round.value.asInstanceOf[FinishedSummary]
+          round.successful shouldEqual true
+        }
+      }
+
+      "persists the round to end to the database" in {
+        withTestContext { (context, db) =>
+          val testGame = goToRoseFlippingRound(context)
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          // flip other discs
+          Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          // the winning flip for this round
+          val gameStatus = Fixtures.flip(
+            stackId = testGame.player2.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          val gameDb = db.getGame(testGame.gameId).value().value
+          gameDb.roundState shouldEqual "finished"
+        }
+      }
     }
 
     "can flip another player's Thorn" - {
