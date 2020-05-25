@@ -210,7 +210,16 @@ object Thorn {
   def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-    } yield Responses.tbd[GameStatus]
+      // fetch player / game data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
+      // game data for response
+      gameStatus <- Representations.gameStatus(game, request.playerId)
+    } yield Responses.justRespond(gameStatus)
   }
 
   def wake(request: Wake, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Status]] = {

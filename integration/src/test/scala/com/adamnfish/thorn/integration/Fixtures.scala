@@ -79,4 +79,13 @@ object Fixtures {
       ), context
     )
   }
+
+  def ping(welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+    Thorn.ping(
+      Ping(
+        welcome.gameId, welcome.playerId, welcome.playerKey
+      ),
+      context
+    )
+  }
 }
