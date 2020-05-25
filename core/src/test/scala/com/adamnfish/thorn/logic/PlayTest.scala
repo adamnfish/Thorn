@@ -349,7 +349,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
       "fails if the round is flipping" in {
         placeDisc(Thorn, creator.playerId,
           game.copy(
-            round = Some(Flipping(creator.playerId, 3, Map.empty, Map.empty))
+            round = Some(Flipping(creator.playerId, 3, Map.empty, Map.empty, Map.empty))
           )
         ).isFailedAttempt()
       }
@@ -502,11 +502,18 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
             val flipping = result.round.value.asInstanceOf[Flipping]
             flipping should have(
               "activePlayer" as creator.playerId.pid,
+              "target" as 4,
               "discs" as Map(
                 creator.playerId -> List(Rose, Rose),
                 player1.playerId -> List(Thorn, Rose),
               )
             )
+          }
+
+          "includes player bid on the new round" in {
+            val result = bidOnRound(4, creator.playerId, testGame).value()
+            val flipping = result.round.value.asInstanceOf[Flipping]
+            flipping.bids.get(creator.playerId).value shouldEqual 4
           }
         }
 
@@ -619,7 +626,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         bidOnRound(1, creator.playerId,
           game.copy(
             round = Some(Flipping(
-              creator.playerId, 3, Map.empty, Map.empty
+              creator.playerId, 3, Map.empty, Map.empty, Map.empty
             ))
           )
         ).isFailedAttempt()
@@ -768,6 +775,10 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           round.asInstanceOf[Flipping] should have(
             "activePlayer" as player2.playerId.pid,
             "discs" as discs,
+            "target" as 2,
+            "bids" as Map(
+              player2.playerId -> 2,
+            ),
             "revealed" as Map.empty,
           )
         }
@@ -819,7 +830,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         passRound(creator.playerId,
           game.copy(
             round = Some(Flipping(
-              creator.playerId, 3, Map.empty, Map.empty
+              creator.playerId, 3, Map.empty, Map.empty, Map.empty
             ))
           )
         ).isFailedAttempt()
@@ -1006,6 +1017,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                   player2.playerId -> List(Rose),
                 ),
                 target = 2,
+                bids = Map(
+                  creator.playerId -> 2,
+                ),
                 revealed = Map(
                   creator.playerId -> List(Rose),
                 ),
@@ -1047,6 +1061,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                   player1.playerId -> List(Rose, Rose),
                   player2.playerId -> List(Rose),
                 ),
+                bids = Map(
+                  creator.playerId -> 4,
+                ),
                 target = 4,
                 revealed = Map(
                   creator.playerId -> List(Rose),
@@ -1082,6 +1099,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
               creator.playerId -> List(Rose),
               player1.playerId -> List(Rose),
               player2.playerId -> List(Rose, Thorn),
+            ),
+            bids = Map(
+              creator.playerId -> 3,
             ),
             target = 3,
             revealed = Map(
@@ -1158,6 +1178,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
               player1.playerId -> List(Rose, Rose),
               player2.playerId -> List(Rose),
             ),
+            bids = Map(
+              creator.playerId -> 4,
+            ),
             target = 4,
             revealed = Map.empty,
           )
@@ -1197,6 +1220,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                     player2.playerId -> List(Rose),
                   ),
                   target = 3,
+                  bids = Map(
+                    creator.playerId -> 3,
+                  ),
                   revealed = Map(
                     creator.playerId -> List(Rose),
                   ),
@@ -1217,6 +1243,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                     player2.playerId -> List(Rose),
                   ),
                   target = 3,
+                  bids = Map(
+                    creator.playerId -> 3,
+                  ),
                   revealed = Map(
                     creator.playerId -> List(Rose),
                     player1.playerId -> List(Rose),
@@ -1239,6 +1268,9 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                   player2.playerId -> List(Rose),
                 ),
                 target = 2,
+                bids = Map(
+                  creator.playerId -> 2,
+                ),
                 revealed = Map.empty,
               ))
             )

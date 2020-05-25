@@ -46,6 +46,7 @@ case class Bidding(
 case class Flipping(
   activePlayer: PlayerId,
   target: Int,
+  bids: Map[PlayerId, Int],
   discs: Map[PlayerId, List[Disc]],
   revealed: Map[PlayerId, List[Disc]],  // TODO: or just Int here? Think about use cases.
 ) extends Round

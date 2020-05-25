@@ -46,6 +46,7 @@ case class BiddingSummary(
 case class FlippingSummary(
   activePlayer: PlayerId,
   target: Int,
+  bids: Map[PlayerId, Int],
   discs: Map[PlayerId, Int],
   revealed: Map[PlayerId, List[Disc]],
 ) extends RoundSummary

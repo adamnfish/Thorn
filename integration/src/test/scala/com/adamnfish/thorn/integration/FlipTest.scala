@@ -259,6 +259,70 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         }
       }
 
+      "the returned message shows the player has had a disc removed from their pool" in {
+        withTestContext { (context, _) =>
+          val testGame = goToThornFlippingRound(context)
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          // player 1 has a Thorn on top of their stack
+          val message = Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).value().messages.head._2
+          val creatorSummary = message.game.players.find(_.playerId == testGame.creator.playerId).value
+          creatorSummary.discCount shouldEqual 3
+        }
+      }
+
+      "the player's self summary shows the player has had a disc removed from their pool" in {
+        withTestContext { (context, _) =>
+          val testGame = goToThornFlippingRound(context)
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          // player 1 has a Thorn on top of their stack
+          val message = Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).value().messages.head._2
+
+          val thornRemoved = !message.self.hasThorn
+          val roseRemoved = message.self.roseCount == 2
+          withClue(s"Expect one removed of Thorn:$thornRemoved Rose:$roseRemoved") {
+            (thornRemoved != roseRemoved) shouldEqual true
+          }
+        }
+      }
+
       "finished state is persisted to the database" in {
         withTestContext { (context, db) =>
           val testGame = goToThornFlippingRound(context)
@@ -292,6 +356,42 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
             testGame.player1.playerId.pid -> 1,
             testGame.player2.playerId.pid -> 0,
           )
+        }
+      }
+
+      "player's disc removal is persisted to the database" in {
+        withTestContext { (context, db) =>
+          val testGame = goToThornFlippingRound(context)
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+          Fixtures.flip(
+            stackId = testGame.creator.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          // player 1 has a Thorn on top of their stack
+          Fixtures.flip(
+            stackId = testGame.player1.playerId,
+            testGame.creator,
+            context(Fixtures.creatorAddress)
+          ).isSuccessfulAttempt()
+
+          val playerDbs = db.getPlayers(testGame.gameId).value()
+          val creatorDb = playerDbs.find(_.playerId == testGame.creator.playerId.pid).value
+          val thornRemoved = !creatorDb.hasThorn
+          val roseRemoved = creatorDb.roseCount == 2
+          withClue(s"Expect one removed of Thorn:$thornRemoved Rose:$roseRemoved") {
+            (thornRemoved != roseRemoved) shouldEqual true
+          }
         }
       }
     }

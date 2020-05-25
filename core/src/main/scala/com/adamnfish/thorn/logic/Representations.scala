@@ -115,6 +115,7 @@ object Representations {
           } yield Some(Flipping(
             activePlayer = PlayerId(pid),
             target = target,
+            bids = playerBids(playerDBs),
             discs = discs,
             revealed = revealed,
           ))
@@ -210,8 +211,8 @@ object Representations {
           PlacingSummary(activePlayer, toDiscCount(discs))
         case Bidding(activePlayer, discs, bids, passed) =>
           BiddingSummary(activePlayer, toDiscCount(discs), bids, passed)
-        case Flipping(activePlayer, target, discs, revealed) =>
-          FlippingSummary(activePlayer, target, toDiscCount(discs), revealed)
+        case Flipping(activePlayer, target, bids, discs, revealed) =>
+          FlippingSummary(activePlayer, target, bids, toDiscCount(discs), revealed)
         case Finished(activePlayer, discs, revealed, successful) =>
           FinishedSummary(activePlayer, toDiscCount(discs), revealed, successful)
       }
@@ -224,7 +225,7 @@ object Representations {
           discs.get(playerId)
         case Bidding(_, discs, _, _) =>
           discs.get(playerId)
-        case Flipping(_, _, discs, _) =>
+        case Flipping(_, _, _, discs, _) =>
           discs.get(playerId)
         case Finished(_, discs, _, _) =>
           discs.get(playerId)
@@ -307,7 +308,7 @@ object Representations {
         activePlayer.pid
       case Bidding(activePlayer,_, _, _) =>
         activePlayer.pid
-      case Flipping(activePlayer, _, _, _) =>
+      case Flipping(activePlayer, _, _, _, _) =>
         activePlayer.pid
       case Finished(activePlayer, _, _, _) =>
         activePlayer.pid
@@ -322,7 +323,7 @@ object Representations {
         Map.empty
       case Bidding(_, _, _, _) =>
         Map.empty
-      case Flipping(_, _, _, revealed) =>
+      case Flipping(_, _, _, _, revealed) =>
         revealed.map { case (playerId, discs) =>
           playerId.pid -> discs.length
         }
@@ -341,7 +342,7 @@ object Representations {
         discs.getOrElse(playerId, Nil).map(discString)
       case Bidding(_, discs, _, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
-      case Flipping(_, _, discs, _) =>
+      case Flipping(_, _, _, discs, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
       case Finished(_, discs, _, _) =>
         discs.getOrElse(playerId, Nil).map(discString)
@@ -351,6 +352,8 @@ object Representations {
   private def playerRoundBid(playerId: PlayerId)(round: Round): Option[Int] = {
     round match {
       case Bidding(_, _, bids, _) =>
+        bids.get(playerId)
+      case Flipping(_, _, bids, _, _) =>
         bids.get(playerId)
       case _ =>
         None

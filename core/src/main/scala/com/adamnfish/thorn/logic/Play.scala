@@ -264,6 +264,7 @@ object Play {
                 round = Some(Flipping(
                   activePlayer = bidding.activePlayer,
                   target = count,
+                  bids = bidding.bids.updated(playerId, count),
                   discs = bidding.discs,
                   revealed = Map.empty
                 ))
@@ -327,6 +328,7 @@ object Play {
                   round = Some(Flipping(
                     activePlayer = flipPlayerId,
                     target = target,
+                    bids = bidding.bids,
                     bidding.discs,
                     revealed = Map.empty,
                   ))

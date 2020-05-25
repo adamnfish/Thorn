@@ -19,7 +19,7 @@ case class GameDB(
   startTime: ZonedDateTime,
   roundState: String,
   currentPlayer: Option[String], // player id
-  revealedDiscs: Map[String, Int]
+  revealedDiscs: Map[String, Int],
 )
 
 // only updatable by the player themselves

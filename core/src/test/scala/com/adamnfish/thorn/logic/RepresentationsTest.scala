@@ -204,7 +204,7 @@ class RepresentationsTest
         }
 
         "for Flipping" - {
-          val round = Flipping(player1.playerId, 2, Map.empty, Map.empty)
+          val round = Flipping(player1.playerId, 2, Map.empty, Map.empty, Map.empty)
           val roundWithDiscs = round.copy(
             discs = Map(
               player1.playerId -> List(Rose, Thorn),
@@ -499,11 +499,17 @@ class RepresentationsTest
       }
 
       "when round is Flipping" - {
-        val round = Flipping(player1.playerId, 3, Map.empty, Map.empty)
+        val round = Flipping(player1.playerId, 3, Map.empty, Map.empty, Map.empty)
         val gameRound = game.copy(round = Some(round))
 
-        "player's bid is empty" in {
-          newPlayerForDb(gameRound, player1).bid shouldEqual 0
+        "player's bid matches their entry in the bids property" in {
+          forAll { (bid: Int) =>
+            newPlayerForDb(game.copy(
+              round = Some(round.copy(
+                bids = Map(player1.playerId -> bid)
+              ))
+            ), player1).bid shouldEqual bid
+          }
         }
 
         "passed is empty" in {
@@ -1191,6 +1197,10 @@ class RepresentationsTest
             round = Some(Flipping(
               activePlayer = player1.playerId,
               target = 2,
+              bids = Map(
+                player1.playerId -> 2,
+                player2.playerId -> 1,
+              ),
               discs = Map(
                 player1.playerId -> List(Rose),
                 player2.playerId -> List(Thorn, Rose),
@@ -1218,6 +1228,11 @@ class RepresentationsTest
               "discs" as Map(
                 player1.playerId -> 1,
                 player2.playerId -> 2,
+              ),
+              "target" as 2,
+              "bids" as Map(
+                player1.playerId -> 2,
+                player2.playerId -> 1,
               ),
               "revealed" as Map(
                 player1.playerId -> List(Rose),
@@ -1392,10 +1407,11 @@ class RepresentationsTest
                 round = Some(Flipping(
                   player1.playerId,
                   target = 3,
-                  Map(
+                  bids = Map.empty,
+                  discs = Map(
                     player1.playerId -> discs
                   ),
-                  Map.empty,
+                  revealed = Map.empty,
                 ))
               ),
               player1.playerId,
