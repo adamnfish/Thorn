@@ -2,12 +2,12 @@ package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.models._
 import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with OneInstancePerTest with TestHelpers {
+  with ThornIntegration with TestHelpers {
 
   "for a valid request" - {
     "after game start" - {

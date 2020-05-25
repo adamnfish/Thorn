@@ -2,12 +2,12 @@ package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.models._
 import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with OneInstancePerTest with TestHelpers with Journeys {
+  with ThornIntegration with TestHelpers with Journeys {
 
   "at the start of the flipping round" - {
     "is successful when flipping their first discs" in {

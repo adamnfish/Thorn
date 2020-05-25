@@ -2,14 +2,14 @@ package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.Thorn._
 import com.adamnfish.thorn.logic.Games
-import com.adamnfish.thorn.models.{CreateGame, JoinGame, PlayerAddress, PlayerKey, StartGame}
+import com.adamnfish.thorn.models._
 import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with OneInstancePerTest with TestHelpers {
+  with ThornIntegration with TestHelpers {
   "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>

@@ -1,12 +1,12 @@
 package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class PingTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with OneInstancePerTest with TestHelpers {
+  with ThornIntegration with TestHelpers {
 
   "for a newly created game" - {
     "is successful" in {

@@ -2,12 +2,12 @@ package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.models.{CreateGame, PlayerAddress}
 import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.{OneInstancePerTest, OptionValues}
 
 
 class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with OneInstancePerTest with TestHelpers {
+  with ThornIntegration with TestHelpers {
 
   val validRequest = CreateGame("screen name", "game name")
   val creatorAddress = PlayerAddress("creator-address")
