@@ -125,6 +125,8 @@ object Thorn {
       gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       // game logic
       newGame <- Play.placeDisc(request.disc, request.playerId, game)
       response <- Responses.gameStatuses(newGame)
@@ -144,6 +146,8 @@ object Thorn {
       gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       // game logic
       newGame <- Play.bidOnRound(request.count, request.playerId, game)
       response <- Responses.gameStatuses(newGame)
@@ -163,6 +167,8 @@ object Thorn {
       gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       // game logic
       newGame <- Play.passRound(request.playerId, game)
       response <- Responses.gameStatuses(newGame)
@@ -184,6 +190,8 @@ object Thorn {
       gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       // game logic
       newGame <- Play.flipDisc(request.playerId, request.stack, game)
       response <- Responses.gameStatuses(newGame)
