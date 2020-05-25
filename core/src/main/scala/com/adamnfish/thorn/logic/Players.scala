@@ -73,4 +73,25 @@ object Players {
     if (player.hasThorn) 1 + player.roseCount
     else player.roseCount
   }
+
+  def bumpPlayerScore(playerId: PlayerId, players: List[Player]): Attempt[List[Player]] = {
+    if (players.exists(_.playerId == playerId)) {
+      Attempt.Right {
+        players.map { player =>
+          if (player.playerId == playerId)
+            player.copy(score = player.score + 1)
+          else
+            player
+        }
+      }
+    } else {
+      Attempt.Left {
+        Failure(
+          "Bumping score for player that does not exist",
+          "Cannot award point to a player that does not exist",
+          500
+        )
+      }
+    }
+  }
 }

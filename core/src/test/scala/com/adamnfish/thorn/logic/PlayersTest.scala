@@ -206,4 +206,31 @@ class PlayersTest extends AnyFreeSpec with Matchers with OptionValues with Attem
       ) shouldEqual true
     }
   }
+
+  "bumpPlayerScore" - {
+    val player1 = newPlayer("player 1", PlayerAddress("address-1"))
+    val player2 = newPlayer("player 2", PlayerAddress("address-2"))
+
+    "adds one to an empty score for first success" in {
+      val newPlayers = bumpPlayerScore(player1.playerId, List(player1, player2)).value()
+      val newPlayer1 = newPlayers.find(_.playerId == player1.playerId).value
+      newPlayer1.score shouldEqual 1
+    }
+
+    "adds one to an existing score for another success" in {
+      val newPlayers = bumpPlayerScore(
+        player1.playerId,
+        List(
+          player1.copy(score = 1),
+          player2,
+        )
+      ).value()
+      val newPlayer1 = newPlayers.find(_.playerId == player1.playerId).value
+      newPlayer1.score shouldEqual 2
+    }
+
+    "fails if the player does not exist" in {
+      bumpPlayerScore(PlayerId("does not exist"), List(player1, player2)).isFailedAttempt()
+    }
+  }
 }

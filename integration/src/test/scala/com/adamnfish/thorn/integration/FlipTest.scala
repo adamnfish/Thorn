@@ -185,77 +185,156 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         }
       }
 
-      "can cause the round to end successfully" in {
-        withTestContext { (context, _) =>
-          val testGame = goToRoseFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          // flip other discs
-          Fixtures.flip(
-            stackId = testGame.player1.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.player1.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+      "if this Rose flip meets the round target" - {
+        "is successful" in {
+          withTestContext { (context, _) =>
+            val testGame = goToRoseFlippingRound(context)
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            // flip other discs
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
 
-          // the winning flip for this round
-          val gameStatus = Fixtures.flip(
-            stackId = testGame.player2.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).value().messages.get(Fixtures.creatorAddress).value
-          gameStatus.game.round.value shouldBe a[FinishedSummary]
-          val round = gameStatus.game.round.value.asInstanceOf[FinishedSummary]
-          round.successful shouldEqual true
+            // the winning flip for this round
+            val gameStatus = Fixtures.flip(
+              stackId = testGame.player2.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).value().messages.get(Fixtures.creatorAddress).value
+            gameStatus.game.round.value shouldBe a[FinishedSummary]
+            val round = gameStatus.game.round.value.asInstanceOf[FinishedSummary]
+            round.successful shouldEqual true
+          }
         }
-      }
 
-      "persists the round to end to the database" in {
-        withTestContext { (context, db) =>
-          val testGame = goToRoseFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          // flip other discs
-          Fixtures.flip(
-            stackId = testGame.player1.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.player1.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+        "persists the round to end to the database" in {
+          withTestContext { (context, db) =>
+            val testGame = goToRoseFlippingRound(context)
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            // flip other discs
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
 
-          // the winning flip for this round
-          val gameStatus = Fixtures.flip(
-            stackId = testGame.player2.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+            // the winning flip for this round
+            Fixtures.flip(
+              stackId = testGame.player2.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
 
-          val gameDb = db.getGame(testGame.gameId).value().value
-          gameDb.roundState shouldEqual "finished"
+            val gameDb = db.getGame(testGame.gameId).value().value
+            gameDb.roundState shouldEqual "finished"
+          }
+        }
+
+        "updates the player's score in the returned message" in {
+          withTestContext { (context, _) =>
+            val testGame = goToRoseFlippingRound(context)
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            // flip other discs
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+
+            // the winning flip for this round
+            val gameStatus = Fixtures.flip(
+              stackId = testGame.player2.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).value().messages.get(Fixtures.creatorAddress).value
+            // game summary
+            val updatedCreator = gameStatus.game.players.find(_.playerId == testGame.creator.playerId).value
+            updatedCreator.score shouldEqual 1
+            // self summary
+            gameStatus.self.score shouldEqual 1
+          }
+        }
+
+        "persists the player's score change to the database" in {
+          withTestContext { (context, db) =>
+            val testGame = goToRoseFlippingRound(context)
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.creator.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            // flip other discs
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+            Fixtures.flip(
+              stackId = testGame.player1.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+
+            // the winning flip for this round
+            Fixtures.flip(
+              stackId = testGame.player2.playerId,
+              testGame.creator,
+              context(Fixtures.creatorAddress)
+            ).isSuccessfulAttempt()
+
+            val playerDbs = db.getPlayers(testGame.gameId).value()
+            val creatorDb = playerDbs.find(_.playerId == testGame.creator.playerId.pid).value
+            creatorDb.score shouldEqual 1
+          }
         }
       }
     }

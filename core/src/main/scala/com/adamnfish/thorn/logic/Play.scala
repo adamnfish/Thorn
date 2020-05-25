@@ -433,16 +433,17 @@ object Play {
                 ))
               )
             } else if (revealedCount >= flipping.target) {
-              Attempt.Right {
-                game.copy(
-                  round = Some(Finished(
-                    activePlayer = playerId,
-                    discs = flipping.discs,
-                    revealed = newRevealed,
-                    successful = true
-                  ))
-                )
-              }
+              for {
+                newPlayers <- Players.bumpPlayerScore(playerId, game.players)
+              } yield game.copy(
+                players = newPlayers,
+                round = Some(Finished(
+                  activePlayer = playerId,
+                  discs = flipping.discs,
+                  revealed = newRevealed,
+                  successful = true
+                ))
+              )
             } else {
               Attempt.Right {
                 game.copy(

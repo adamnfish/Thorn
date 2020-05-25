@@ -1049,6 +1049,12 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 "successful" as true,
               )
             }
+
+            "updates the active player's score" in {
+              val newGame = flipDisc(creator.playerId, player1.playerId, testGame).value()
+              val updatedCreator = newGame.players.find(_.playerId == creator.playerId).value
+              updatedCreator.score shouldEqual 1
+            }
           }
 
           "if this does not meet the player's bid amount" - {
