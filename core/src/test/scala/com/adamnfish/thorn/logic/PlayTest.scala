@@ -1155,7 +1155,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
               val updatedPlayer = result.players.find(_.playerId == creator.playerId).value
               (updatedPlayer.roseCount, updatedPlayer.hasThorn) match {
                 case (3, true) =>
-                  Left("neither rose nor skull removed from players pool")
+                  Left("neither rose nor Thorn removed from players pool")
                 case (3, false) =>
                   Right(ThornRemoved)
                 case (2, true) =>
@@ -1304,6 +1304,270 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
             )),
           )
         ).isFailedAttempt()
+      }
+    }
+  }
+
+  "newRound" - {
+    "handles each round" - {
+      "fails for no round" in {
+        newRound(
+          game.copy(
+            players = List(creator, player1, player2),
+            round = None,
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for initial discs" in {
+        newRound(
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(InitialDiscs(
+              firstPlayer = creator.playerId,
+              initialDiscs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+            )),
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for placing" in {
+        newRound(
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Placing(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+            )),
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for bidding" in {
+        newRound(
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Bidding(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+              bids = Map.empty,
+              passed = Nil,
+            )),
+          )
+        ).isFailedAttempt()
+      }
+
+      "fails for flipping" in {
+        newRound(
+          game.copy(
+            players = List(creator, player1, player2),
+            round = Some(Flipping(
+              activePlayer = creator.playerId,
+              discs = Map(
+                creator.playerId -> List(Rose),
+                player1.playerId -> List(Rose),
+                player2.playerId -> List(Rose),
+              ),
+              bids = Map.empty,
+              target = 4,
+              revealed = Map.empty,
+            )),
+          )
+        ).isFailedAttempt()
+      }
+
+      "for finished" - {
+        val finishedRound = Finished(
+          activePlayer = creator.playerId,
+          discs = Map(
+            creator.playerId -> List(Rose, Rose),
+            player1.playerId -> List(Rose, Rose),
+            player2.playerId -> List(Rose, Thorn),
+          ),
+          revealed = Map(
+            creator.playerId -> List(Rose, Rose),
+            player1.playerId -> List(Rose),
+            player2.playerId -> List(Rose),
+          ),
+          successful = true,
+        )
+        val finishedGame = game.copy(
+          players = List(creator, player1, player2),
+          round = Some(finishedRound),
+        )
+
+        "sets up the new game round correctly" - {
+          "new round is 'placing'" in {
+            val nextRound = newRound(finishedGame).value().round.value
+            nextRound shouldBe a[Placing]
+          }
+
+          "no discs are placed" in {
+            val nextRound = newRound(finishedGame).value().round.value
+            nextRound shouldBe a[Placing]
+            nextRound.asInstanceOf[Placing].discs shouldBe empty
+          }
+
+          "active player is the round winner if they succeeded" in {
+            val nextRound = newRound(finishedGame).value().round.value
+            nextRound shouldBe a[Placing]
+            nextRound.asInstanceOf[Placing].activePlayer shouldBe creator.playerId
+          }
+
+          "active player is the player with a revealed Thorn if round failed" in {
+            val nextRound = newRound(
+              finishedGame.copy(
+                round = Some(finishedRound.copy(
+                  revealed = Map(
+                    creator.playerId -> List(Rose, Rose),
+                    player1.playerId -> List(Rose),
+                    player2.playerId -> List(Rose, Thorn),
+                  ),
+                  successful = false,
+                ))
+              )
+            ).value().round.value
+            nextRound shouldBe a[Placing]
+            nextRound.asInstanceOf[Placing].activePlayer shouldBe player2.playerId
+          }
+        }
+
+        "does not update the player's score (this happens at the end of the prev round)" in {
+          val nextGame = newRound(finishedGame).value()
+          val newCreator = Games.getPlayer(creator.playerId, nextGame).value()
+          newCreator.score shouldEqual creator.score
+        }
+
+        "fails if the player has won by meeting the succeed threshold" in {
+          newRound(
+            finishedGame.copy(
+              players = List(
+                creator.copy(
+                  score = 2
+                ),
+                player1,
+                player2
+              ),
+              round = Some(finishedRound)
+            )
+          ).isFailedAttempt()
+        }
+
+        "fails if a player has won by being last standing" in {
+          newRound(
+            finishedGame.copy(
+              players = List(
+                creator.copy(
+                  roseCount = 0,
+                  hasThorn = false
+                ),
+                player1.copy(
+                  roseCount = 0,
+                  hasThorn = false
+                ),
+                player2.copy(
+                  roseCount = 1,
+                  hasThorn = true
+                )
+              ),
+              round = Some(finishedRound)
+            )
+          ).isFailedAttempt()
+        }
+      }
+    }
+  }
+
+  "roundWinner" - {
+    "returns winner if there is only one player with any discs remaining" in {
+      val p0 = creator.copy(
+        roseCount = 0,
+        hasThorn = false,
+      )
+      val p1 = player1.copy(
+        roseCount = 3,
+        hasThorn = true,
+      )
+      val p2 = player2.copy(
+        roseCount = 0,
+        hasThorn = false,
+      )
+      roundWinner(List(p0, p1, p2)).value shouldEqual p1
+    }
+
+    "returns winner if a player has reached the winning score (2)" in {
+      val p0 = creator.copy(
+        score = 1
+      )
+      val p1 = player1.copy(
+        score = 0
+      )
+      val p2 = player2.copy(
+        score = 2
+      )
+      roundWinner(List(p0, p1, p2)).value shouldEqual p2
+    }
+
+    "No winner for a normal game state" in {
+      roundWinner(List(creator, player1, player2)) shouldEqual None
+    }
+
+    "No winner if players have not reached the required score" in {
+      val p0 = creator.copy(
+        score = 1
+      )
+      val p1 = player1.copy(
+        score = 0
+      )
+      val p2 = player2.copy(
+        score = 1
+      )
+      roundWinner(List(p0, p1, p2)) shouldEqual None
+    }
+
+    "No winner if more than one player still possesses discs" - {
+      "another player has a thorn" in {
+        val p0 = creator.copy(
+          roseCount = 0,
+          hasThorn = true,
+        )
+        val p1 = player1.copy(
+          roseCount = 3,
+          hasThorn = true,
+        )
+        val p2 = player2.copy(
+          roseCount = 0,
+          hasThorn = false,
+        )
+        roundWinner(List(p0, p1, p2)) shouldEqual None
+      }
+
+      "another player has a Rose" in {
+        val p0 = creator.copy(
+          roseCount = 0,
+          hasThorn = false,
+        )
+        val p1 = player1.copy(
+          roseCount = 3,
+          hasThorn = true,
+        )
+        val p2 = player2.copy(
+          roseCount = 1,
+          hasThorn = false,
+        )
+        roundWinner(List(p0, p1, p2)) shouldEqual None
       }
     }
   }

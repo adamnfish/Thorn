@@ -459,4 +459,73 @@ object Play {
         failure("finished")
     }
   }
+
+  def newRound(game: Game)(implicit ec: ExecutionContext): Attempt[Game] = {
+    val failure = (roundStr: String) => Attempt.Left(Failure(
+      s"cannot start new round from $roundStr round",
+      "Finish this round before starting a new one",
+      400
+    ).asAttempt)
+    game.round match {
+      case None =>
+        failure("none")
+      case Some(_: InitialDiscs) =>
+        failure("initial discs")
+      case Some(_: Placing) =>
+        failure("placing")
+      case Some(_: Bidding) =>
+        failure("bidding")
+      case Some(_: Flipping) =>
+        failure("flipping")
+      case Some(finished: Finished) =>
+        roundWinner(game.players) match {
+          case Some(winner) =>
+            Attempt.Left {
+              Failure(
+                s"Cannot start a new round after a player has won s:${winner.score}, d:${winner.roseCount}-${winner.hasThorn}",
+                s"Can't start a new round because ${winner.screenName} has won this game",
+                400
+              )
+            }
+          case None =>
+            for {
+              activePlayer <-
+                if (finished.successful) {
+                  Attempt.Right {
+                    finished.activePlayer
+                  }
+                } else {
+                  Attempt.fromOption(
+                    finished.revealed.find { case (_, revealedDiscs) =>
+                      revealedDiscs.contains(Thorn)
+                    }.map(_._1),
+                    Failure(
+                      "unsuccessful round finished with no revealed discs",
+                      "Couldn't determine first player for next round",
+                      500
+                    ).asAttempt
+                  )
+                }
+            } yield game.copy(
+              round = Some(Placing(
+                activePlayer = activePlayer,
+                discs = Map.empty,
+              ))
+            )
+        }
+    }
+  }
+
+  private[logic] def roundWinner(players: List[Player]): Option[Player] = {
+    val maybeScoreWinner = players.find(_.score >= 2)
+    val maybeLastPlayerStanding = players.filter { player =>
+      player.roseCount > 0 || player.hasThorn
+    } match {
+      case lastPlayerStanding :: Nil =>
+        Some(lastPlayerStanding)
+      case _ =>
+        None
+    }
+    maybeLastPlayerStanding.orElse(maybeScoreWinner)
+  }
 }

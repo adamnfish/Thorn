@@ -105,8 +105,8 @@ object Thorn {
       // game logic
       gameDb = Games.addOrderedPlayerIds(rawGameDb, request.playerOrder)
       game <- Representations.dbToGame(gameDb, playerDbs)
-      _ <- Games.ensureCreator(request.playerId, game)
       _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
+      _ <- Games.ensureCreator(request.playerId, game)
       _ <- Games.ensureNotStarted(game)
       // TODO: enforce minimum player count
       newGame = Games.startGame(game)
@@ -206,13 +206,23 @@ object Thorn {
   def newRound(request: NewRound, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
-      // validate request
-      // fetch the game and players
-      // check game state is finished
+      // fetch player / game data
+      gameDbOpt <- context.db.getGame(request.gameId)
+      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
+      playerDbs <- context.db.getPlayers(request.gameId)
+      game <- Representations.dbToGame(gameDb, playerDbs)
+      // check player
+      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       // reset the game round
-      // updates the players as well - un-passes, empties discs etc
+      newGame <- Play.newRound(game)
       // make messages for everyone
-    } yield Responses.tbd[GameStatus]
+      response <- Responses.gameStatuses(newGame)
+      // updates the players as well - un-passes, empties discs etc
+      newGameDb = Representations.gameForDb(newGame)
+      newPlayerDbs = Representations.playersForDb(newGame)
+      _ <- Attempt.traverse(newPlayerDbs)(context.db.writePlayer)
+      _ <- context.db.writeGame(newGameDb)
+    } yield response
   }
 
   def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
