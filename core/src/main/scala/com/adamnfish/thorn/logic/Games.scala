@@ -112,7 +112,7 @@ object Games {
     game.players.find(_.playerId == playerId).fold[Attempt[Unit]] {
       Attempt.Left(
         Failure(
-          "Couldn't validate key for player that doesn not exist",
+          "Couldn't validate key for player that does not exist",
           "Couldn't find you in the game",
           404
         ).asAttempt

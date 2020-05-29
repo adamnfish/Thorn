@@ -324,6 +324,20 @@ class PlaceDiscTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
+    "fails if an incorrect player key is provided" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+
+        Fixtures.placeDisc(
+          Rose,
+          creatorWelcome.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+          context(Fixtures.creatorAddress),
+        ).isFailedAttempt()
+      }
+    }
+
     "add cases" ignore {}
     // TODO:
   }

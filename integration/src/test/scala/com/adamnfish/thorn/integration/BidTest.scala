@@ -87,6 +87,17 @@ class BidTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.bid(10, testGame.creator, context(Fixtures.creatorAddress)).isFailedAttempt()
         }
       }
+
+      "fails if an incorrect player key is provided" in {
+        withTestContext { (context, _) =>
+          val testGame = goToBeforeBiddingRound(context)
+          Fixtures.bid(
+            1,
+            testGame.creator.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+            context(Fixtures.creatorAddress)
+          ).isFailedAttempt()
+        }
+      }
     }
 
     "for subsequent bid requests" - {

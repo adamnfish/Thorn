@@ -130,6 +130,17 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         ).isFailedAttempt()
       }
     }
+
+    "fails if an incorrect player key is provided" in {
+      withTestContext { (context, _) =>
+        val testGame = goToRoseFlippingRound(context)
+        Fixtures.flip(
+          stackId = testGame.creator.playerId,
+          testGame.creator.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+          context(Fixtures.creatorAddress)
+        ).isFailedAttempt()
+      }
+    }
   }
 
   "after flipping their own discs" - {

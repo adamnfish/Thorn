@@ -79,7 +79,7 @@ class StartGameTest extends AnyFreeSpec with AttemptValues with OptionValues
 
         val startGameRequest = StartGame(
           creatorWelcome.gameId, creatorWelcome.playerId,
-          PlayerKey("INCORRECT KEY"),
+          PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
           List(creatorWelcome.playerId, joinGameWelcome.playerId)
         )
         startGame(

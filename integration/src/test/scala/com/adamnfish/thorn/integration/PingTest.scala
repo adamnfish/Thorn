@@ -1,5 +1,6 @@
 package com.adamnfish.thorn.integration
 
+import com.adamnfish.thorn.models.PlayerKey
 import com.adamnfish.thorn.{AttemptValues, Fixtures, TestHelpers, ThornIntegration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -42,6 +43,16 @@ class PingTest extends AnyFreeSpec with AttemptValues with OptionValues
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val messages = Fixtures.ping(creatorWelcome, context(Fixtures.creatorAddress)).value().messages
         messages shouldBe empty
+      }
+    }
+
+    "fails if the player key is incorrect" in {
+      withTestContext { (context, _) =>
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        Fixtures.ping(
+          creatorWelcome.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+          context(Fixtures.creatorAddress)
+        ).isFailedAttempt()
       }
     }
   }

@@ -69,6 +69,17 @@ class PassTest extends AnyFreeSpec with AttemptValues with OptionValues
           Fixtures.pass(testGame.player2, context(Fixtures.player2Address)).isFailedAttempt()
         }
       }
+
+      "fails if an incorrect player key is provided" in {
+        withTestContext { (context, _) =>
+          val testGame = goToBeforeBiddingRound(context)
+          Fixtures.bid(1, testGame.creator, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+          Fixtures.pass(
+            testGame.player1.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+            context(Fixtures.player1Address),
+          ).isFailedAttempt()
+        }
+      }
     }
 
     "when the last player passes" - {
