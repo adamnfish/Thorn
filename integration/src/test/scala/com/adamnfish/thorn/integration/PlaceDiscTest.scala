@@ -1,7 +1,7 @@
 package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.models._
-import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import com.adamnfish.thorn.{AttemptValues, Fixtures, TestHelpers, ThornIntegration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 

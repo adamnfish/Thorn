@@ -1,9 +1,9 @@
-package com.adamnfish.thorn.integration
+package com.adamnfish.thorn
 
-import com.adamnfish.thorn.Thorn
 import com.adamnfish.thorn.attempt.Attempt
 import com.adamnfish.thorn.logic.Games
-import com.adamnfish.thorn.models._
+import com.adamnfish.thorn.Thorn
+import com.adamnfish.thorn.models.{Bid, Context, CreateGame, Disc, Flip, GameStatus, JoinGame, Pass, Ping, PlaceDisc, PlayerAddress, PlayerId, Reconnect, Response, StartGame, Welcome}
 
 import scala.concurrent.ExecutionContext
 

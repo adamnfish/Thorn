@@ -2,7 +2,7 @@ package com.adamnfish.thorn.integration
 
 import com.adamnfish.thorn.Thorn.wake
 import com.adamnfish.thorn.models.Wake
-import com.adamnfish.thorn.{AttemptValues, TestHelpers}
+import com.adamnfish.thorn.{AttemptValues, TestHelpers, ThornIntegration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 

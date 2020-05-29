@@ -1,7 +1,6 @@
-package com.adamnfish.thorn.integration
+package com.adamnfish.thorn
 
-import com.adamnfish.thorn.AttemptValues
-import com.adamnfish.thorn.models._
+import com.adamnfish.thorn.models.{Context, GameId, PlayerAddress, Rose, Thorn, Welcome}
 import org.scalactic.source
 import org.scalatest.OptionValues
 
