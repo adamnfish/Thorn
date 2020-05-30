@@ -8,11 +8,20 @@ import Json.Encode
 
 type Msg
     = NoOp
+    | ServerMessage Json.Encode.Value
+    | SendMessageTmpTest
+    | SocketConnect
 
 
-type Model
-    = Playing Game
-    | Home
+type alias Model =
+    { library : Dict String GameInProgress
+    , current : Maybe GameInProgress
+    }
+
+
+type GameInProgress
+    = Waiting WelcomeMessage
+    | Playing Game Self WelcomeMessage
 
 
 type GameId
@@ -412,6 +421,7 @@ createGameEncoder createGame =
     Json.Encode.object <|
         [ ( "screenName", Json.Encode.string createGame.screenName )
         , ( "gameName", Json.Encode.string createGame.gameName )
+        , ( "operation", Json.Encode.string "create-game" )
         ]
 
 
@@ -420,6 +430,7 @@ joinGameEncoder joinGame =
     Json.Encode.object <|
         [ ( "gameCode", Json.Encode.string joinGame.gameCode )
         , ( "screenName", Json.Encode.string joinGame.screenName )
+        , ( "operation", Json.Encode.string "join-game" )
         ]
 
 
@@ -430,6 +441,7 @@ startGameEncoder startGame =
         , ( "playerId", encodePlayerId startGame.playerId )
         , ( "playerKey", encodePlayerKey startGame.playerKey )
         , ( "playerOrder", Json.Encode.list encodePlayerId startGame.playerOrder )
+        , ( "operation", Json.Encode.string "start-game" )
         ]
 
 
@@ -440,6 +452,7 @@ placeDiscEncoder placeDisc =
         , ( "playerId", encodePlayerId placeDisc.playerId )
         , ( "playerKey", encodePlayerKey placeDisc.playerKey )
         , ( "disc", encodeDisc placeDisc.disc )
+        , ( "operation", Json.Encode.string "place-disc" )
         ]
 
 
@@ -450,6 +463,7 @@ bidEncoder bid =
         , ( "playerId", encodePlayerId bid.playerId )
         , ( "playerKey", encodePlayerKey bid.playerKey )
         , ( "count", Json.Encode.int bid.count )
+        , ( "operation", Json.Encode.string "bid" )
         ]
 
 
@@ -459,6 +473,7 @@ passEncoder pass =
         [ ( "gameId", encodeGameId pass.gameId )
         , ( "playerId", encodePlayerId pass.playerId )
         , ( "playerKey", encodePlayerKey pass.playerKey )
+        , ( "operation", Json.Encode.string "pass" )
         ]
 
 
@@ -469,6 +484,7 @@ flipEncoder flip =
         , ( "playerId", encodePlayerId flip.playerId )
         , ( "playerKey", encodePlayerKey flip.playerKey )
         , ( "stack", encodePlayerId flip.stack )
+        , ( "operation", Json.Encode.string "flip" )
         ]
 
 
@@ -478,6 +494,7 @@ newRoundEncoder newRound =
         [ ( "gameId", encodeGameId newRound.gameId )
         , ( "playerId", encodePlayerId newRound.playerId )
         , ( "playerKey", encodePlayerKey newRound.playerKey )
+        , ( "operation", Json.Encode.string "new-round" )
         ]
 
 
@@ -487,6 +504,7 @@ reconnectEncoder reconnect =
         [ ( "gameId", encodeGameId reconnect.gameId )
         , ( "playerId", encodePlayerId reconnect.playerId )
         , ( "playerKey", encodePlayerKey reconnect.playerKey )
+        , ( "operation", Json.Encode.string "reconnect" )
         ]
 
 
@@ -496,9 +514,12 @@ pingEncoder ping =
         [ ( "gameId", encodeGameId ping.gameId )
         , ( "playerId", encodePlayerId ping.playerId )
         , ( "playerKey", encodePlayerKey ping.playerKey )
+        , ( "operation", Json.Encode.string "ping" )
         ]
 
 
 wakeEncoder : Wake -> Json.Encode.Value
 wakeEncoder wake =
-    Json.Encode.object []
+    Json.Encode.object <|
+        [ ( "operation", Json.Encode.string "ping" )
+        ]

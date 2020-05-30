@@ -1,14 +1,25 @@
 module Main exposing (..)
 
 import Browser
+import Dict
 import Model exposing (..)
 import Msg exposing (update)
+import Ports exposing (receiveMessage)
 import Views.Ui exposing (view)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Home, Cmd.none )
+    ( { library = Dict.empty
+      , current = Nothing
+      }
+    , Cmd.none
+    )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    receiveMessage ServerMessage
 
 
 
@@ -21,5 +32,5 @@ main =
         { view = view
         , init = \_ -> init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
