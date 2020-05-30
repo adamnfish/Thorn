@@ -21,6 +21,10 @@ update msg model =
                     -- TODO: think about messaging / logging
                     ( model, Cmd.none )
 
+                Ok (FailedAttempt failures) ->
+                    -- TODO: think about error messaging / logging
+                    ( model, Cmd.none )
+
                 Ok (Status statusMessage) ->
                     -- TODO: think about messaging / logging
                     ( model, Cmd.none )

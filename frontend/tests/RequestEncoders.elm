@@ -1,4 +1,4 @@
-module Codecs exposing (..)
+module RequestEncoders exposing (..)
 
 import Expect exposing (Expectation, fail)
 import Json.Decode
@@ -9,7 +9,7 @@ import Test exposing (..)
 
 all : Test
 all =
-    describe "Message encoders"
+    describe "Request encoders"
         [ describe "include correct operation field"
             [ test "createGame" <|
                 \_ ->

@@ -197,6 +197,7 @@ type Message
     = Status StatusMessage
     | Welcome WelcomeMessage
     | GameStatus GameStatusMessage
+    | FailedAttempt (List Failure)
 
 
 type alias StatusMessage =
@@ -217,31 +218,14 @@ type alias GameStatusMessage =
     }
 
 
+type alias Failure =
+    { friendlyMessage : String
+    , statusCode : Int
+    }
+
+
 
 -- JSON Decoders
-
-
-messageDecoder : Json.Decode.Decoder Message
-messageDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.map Welcome welcomeMessageMessageDecoder
-        , Json.Decode.map GameStatus gameStatusMessageDecoder
-        , Json.Decode.map Status statusMessageDecoder
-        ]
-
-
-statusMessageDecoder : Json.Decode.Decoder StatusMessage
-statusMessageDecoder =
-    Json.Decode.succeed StatusMessage
-        |> required "message" Json.Decode.string
-
-
-welcomeMessageMessageDecoder : Json.Decode.Decoder WelcomeMessage
-welcomeMessageMessageDecoder =
-    Json.Decode.succeed WelcomeMessage
-        |> required "playerKey" playerKeyDecoder
-        |> required "playerId" playerIdDecoder
-        |> required "gameId" gameIdDecoder
 
 
 playerKeyDecoder : Json.Decode.Decoder PlayerKey
@@ -259,11 +243,48 @@ gameIdDecoder =
     Json.Decode.map Gid Json.Decode.string
 
 
+failureDecoder : Json.Decode.Decoder Failure
+failureDecoder =
+    Json.Decode.succeed Failure
+        |> required "friendlyMessage" Json.Decode.string
+        |> required "statusCode" Json.Decode.int
+
+
+messageDecoder : Json.Decode.Decoder Message
+messageDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.map Welcome welcomeMessageDecoder
+        , Json.Decode.map GameStatus gameStatusMessageDecoder
+        , Json.Decode.map Status statusMessageDecoder
+        , Json.Decode.map FailedAttempt failedAttemptDecoder
+        ]
+
+
+statusMessageDecoder : Json.Decode.Decoder StatusMessage
+statusMessageDecoder =
+    Json.Decode.succeed StatusMessage
+        |> required "message" Json.Decode.string
+
+
+welcomeMessageDecoder : Json.Decode.Decoder WelcomeMessage
+welcomeMessageDecoder =
+    Json.Decode.succeed WelcomeMessage
+        |> required "playerKey" playerKeyDecoder
+        |> required "playerId" playerIdDecoder
+        |> required "gameId" gameIdDecoder
+
+
 gameStatusMessageDecoder : Json.Decode.Decoder GameStatusMessage
 gameStatusMessageDecoder =
     Json.Decode.succeed GameStatusMessage
         |> required "self" selfDecoder
         |> required "game" gameDecoder
+
+
+failedAttemptDecoder : Json.Decode.Decoder (List Failure)
+failedAttemptDecoder =
+    Json.Decode.field "failures" <|
+        Json.Decode.list failureDecoder
 
 
 discDecoder : Json.Decode.Decoder Disc
