@@ -30,20 +30,24 @@ case class SelfSummary(
 
 sealed trait RoundSummary extends Product
 case class InitialDiscsSummary(
+  round: String,
   activePlayer: PlayerId,
   initialDiscs: Map[PlayerId, Int]
 ) extends RoundSummary
 case class PlacingSummary(
+  round: String,
   activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
 ) extends RoundSummary
 case class BiddingSummary(
+  round: String,
   activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
   bids: Map[PlayerId, Int],
   passed: List[PlayerId],
 ) extends RoundSummary
 case class FlippingSummary(
+  round: String,
   activePlayer: PlayerId,
   target: Int,
   bids: Map[PlayerId, Int],
@@ -51,6 +55,7 @@ case class FlippingSummary(
   revealed: Map[PlayerId, List[Disc]],
 ) extends RoundSummary
 case class FinishedSummary(
+  round: String,
   activePlayer: PlayerId,
   discs: Map[PlayerId, Int],
   revealed: Map[PlayerId, List[Disc]],

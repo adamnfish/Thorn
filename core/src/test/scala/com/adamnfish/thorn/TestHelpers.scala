@@ -2,6 +2,7 @@ package com.adamnfish.thorn
 
 import com.adamnfish.thorn.models.{Disc, Rose, Thorn}
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalactic.source
 import org.scalatest.matchers.HavePropertyMatcher
 import org.scalatest.matchers.should.Matchers
 

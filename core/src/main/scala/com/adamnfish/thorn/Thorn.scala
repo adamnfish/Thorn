@@ -38,11 +38,11 @@ object Thorn {
       }
       // send message back to the requesting player
       _ <- response.response.fold(Attempt.unit) { msg =>
-        context.messaging.sendMessage(context.playerAddress, msg)(ec)
+        context.messaging.sendMessage(context.playerAddress, msg)
       }
       // send other messages
       _ <- Attempt.traverse(response.messages.toList) { case (address, msg) =>
-        context.messaging.sendMessage(address, msg)(ec)
+        context.messaging.sendMessage(address, msg)
       }
     } yield ()
     // if there has been a failure we tell the requesting player

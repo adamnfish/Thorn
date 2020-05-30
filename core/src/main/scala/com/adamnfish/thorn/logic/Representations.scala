@@ -206,15 +206,25 @@ object Representations {
       }
       val round = game.round.map {
         case InitialDiscs(firstPlayer, initialDiscs) =>
-          InitialDiscsSummary(firstPlayer, toDiscCount(initialDiscs))
+          InitialDiscsSummary("initialdiscs",
+            firstPlayer, toDiscCount(initialDiscs)
+          )
         case Placing(activePlayer, discs) =>
-          PlacingSummary(activePlayer, toDiscCount(discs))
+          PlacingSummary("placing",
+            activePlayer, toDiscCount(discs)
+          )
         case Bidding(activePlayer, discs, bids, passed) =>
-          BiddingSummary(activePlayer, toDiscCount(discs), bids, passed)
+          BiddingSummary("bidding",
+            activePlayer, toDiscCount(discs), bids, passed
+          )
         case Flipping(activePlayer, target, bids, discs, revealed) =>
-          FlippingSummary(activePlayer, target, bids, toDiscCount(discs), revealed)
+          FlippingSummary("flipping",
+            activePlayer, target, bids, toDiscCount(discs), revealed
+          )
         case Finished(activePlayer, discs, revealed, successful) =>
-          FinishedSummary(activePlayer, toDiscCount(discs), revealed, successful)
+          FinishedSummary("finished",
+            activePlayer, toDiscCount(discs), revealed, successful
+          )
       }
       // TODO: edge case here where we return None for player discs instead of
       //  failing, if we're unable to extract info from the round
