@@ -1,14 +1,10 @@
 module Codecs exposing (..)
 
-import Expect
+import Expect exposing (Expectation, fail)
 import Json.Decode
+import Json.Encode
 import Model exposing (..)
 import Test exposing (..)
-import TestUtils exposing (okResult)
-
-
-
--- Check out https://package.elm-lang.org/packages/elm-explorations/test/latest to learn more about testing in Elm!
 
 
 all : Test
@@ -23,13 +19,8 @@ all =
                                 { screenName = "screen name"
                                 , gameName = "game name"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "create-game") operationResult
+                    expectOperationField "create-game" json
             , test "joinGame" <|
                 \_ ->
                     let
@@ -38,13 +29,8 @@ all =
                                 { screenName = "screen name"
                                 , gameCode = "abcde"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "join-game") operationResult
+                    expectOperationField "join-game" json
             , test "startGame" <|
                 \_ ->
                     let
@@ -55,13 +41,8 @@ all =
                                 , gameId = Gid "gid"
                                 , playerOrder = []
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "start-game") operationResult
+                    expectOperationField "start-game" json
             , test "placeDisc" <|
                 \_ ->
                     let
@@ -72,13 +53,8 @@ all =
                                 , gameId = Gid "gid"
                                 , disc = Thorn
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "place-disc") operationResult
+                    expectOperationField "place-disc" json
             , test "bid" <|
                 \_ ->
                     let
@@ -89,13 +65,8 @@ all =
                                 , gameId = Gid "gid"
                                 , count = 1
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "bid") operationResult
+                    expectOperationField "bid" json
             , test "pass" <|
                 \_ ->
                     let
@@ -105,13 +76,8 @@ all =
                                 , playerKey = Pkey "key"
                                 , gameId = Gid "gid"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "pass") operationResult
+                    expectOperationField "pass" json
             , test "flip" <|
                 \_ ->
                     let
@@ -122,13 +88,8 @@ all =
                                 , gameId = Gid "gid"
                                 , stack = Pid "another-pid"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "flip") operationResult
+                    expectOperationField "flip" json
             , test "newRound" <|
                 \_ ->
                     let
@@ -138,13 +99,8 @@ all =
                                 , playerKey = Pkey "key"
                                 , gameId = Gid "gid"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "new-round") operationResult
+                    expectOperationField "new-round" json
             , test "reconnect" <|
                 \_ ->
                     let
@@ -154,13 +110,8 @@ all =
                                 , playerKey = Pkey "key"
                                 , gameId = Gid "gid"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "reconnect") operationResult
+                    expectOperationField "reconnect" json
             , test "ping" <|
                 \_ ->
                     let
@@ -170,37 +121,30 @@ all =
                                 , playerKey = Pkey "key"
                                 , gameId = Gid "gid"
                                 }
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "ping") operationResult
+                    expectOperationField "ping" json
             , test "wake" <|
                 \_ ->
                     let
                         json =
                             wakeEncoder ()
-
-                        operationResult =
-                            Json.Decode.decodeValue
-                                (Json.Decode.field "operation" Json.Decode.string)
-                                json
                     in
-                    okResult (Expect.equal "wake") operationResult
+                    expectOperationField "wake" json
             ]
         ]
 
 
+expectOperationField : String -> Json.Encode.Value -> Expectation
+expectOperationField expected json =
+    let
+        result =
+            Json.Decode.decodeValue
+                (Json.Decode.field "operation" Json.Decode.string)
+                json
+    in
+    case result of
+        Ok actual ->
+            Expect.equal expected actual
 
---[ test "Addition" <|
---    \_ ->
---        Expect.equal 10 (3 + 7)
---, test "String.left" <|
---    \_ ->
---        Expect.equal "a" (String.left 1 "abcdefg")
---, test "This test should fail" <|
---    \_ ->
---        Expect.fail "failed as expected!"
---]
+        Err err ->
+            fail <| Json.Decode.errorToString err
