@@ -189,10 +189,6 @@ type alias Ping =
     }
 
 
-type alias Wake =
-    {}
-
-
 
 -- messages
 
@@ -518,8 +514,8 @@ pingEncoder ping =
         ]
 
 
-wakeEncoder : Wake -> Json.Encode.Value
-wakeEncoder wake =
+wakeEncoder : () -> Json.Encode.Value
+wakeEncoder _ =
     Json.Encode.object <|
-        [ ( "operation", Json.Encode.string "ping" )
+        [ ( "operation", Json.Encode.string "wake" )
         ]

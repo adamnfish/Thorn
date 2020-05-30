@@ -124,6 +124,6 @@ sendPing ping =
     sendMessage <| pingEncoder ping
 
 
-sendWake : Wake -> Cmd msg
-sendWake wake =
-    sendMessage <| wakeEncoder wake
+sendWake : () -> Cmd msg
+sendWake _ =
+    sendMessage <| wakeEncoder ()
