@@ -1,6 +1,10 @@
 .idea
 .dynamodb-local/
 
+# just dev dependencies for IntelliJ etc
+node_modules
+package-lock.json
+
 # Created by https://www.gitignore.io/api/elm,sbt,scala,emacs,intellij
 # Edit at https://www.gitignore.io/?templates=elm,sbt,scala,emacs,intellij
 
