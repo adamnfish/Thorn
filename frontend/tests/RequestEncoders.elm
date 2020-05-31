@@ -13,123 +13,91 @@ all =
         [ describe "include correct operation field"
             [ test "createGame" <|
                 \_ ->
-                    let
-                        json =
-                            createGameEncoder
-                                { screenName = "screen name"
-                                , gameName = "game name"
-                                }
-                    in
-                    expectOperationField "create-game" json
+                    createGameEncoder
+                        { screenName = "screen name"
+                        , gameName = "game name"
+                        }
+                        |> expectOperationField "create-game"
             , test "joinGame" <|
                 \_ ->
-                    let
-                        json =
-                            joinGameEncoder
-                                { screenName = "screen name"
-                                , gameCode = "abcde"
-                                }
-                    in
-                    expectOperationField "join-game" json
+                    joinGameEncoder
+                        { screenName = "screen name"
+                        , gameCode = "abcde"
+                        }
+                        |> expectOperationField "join-game"
             , test "startGame" <|
                 \_ ->
-                    let
-                        json =
-                            startGameEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                , playerOrder = []
-                                }
-                    in
-                    expectOperationField "start-game" json
+                    startGameEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        , playerOrder = []
+                        }
+                        |> expectOperationField "start-game"
             , test "placeDisc" <|
                 \_ ->
-                    let
-                        json =
-                            placeDiscEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                , disc = Thorn
-                                }
-                    in
-                    expectOperationField "place-disc" json
+                    placeDiscEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        , disc = Thorn
+                        }
+                        |> expectOperationField "place-disc"
             , test "bid" <|
                 \_ ->
-                    let
-                        json =
-                            bidEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                , count = 1
-                                }
-                    in
-                    expectOperationField "bid" json
+                    bidEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        , count = 1
+                        }
+                        |> expectOperationField "bid"
             , test "pass" <|
                 \_ ->
-                    let
-                        json =
-                            passEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                }
-                    in
-                    expectOperationField "pass" json
+                    passEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        }
+                        |> expectOperationField "pass"
             , test "flip" <|
                 \_ ->
-                    let
-                        json =
-                            flipEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                , stack = Pid "another-pid"
-                                }
-                    in
-                    expectOperationField "flip" json
+                    flipEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        , stack = Pid "another-pid"
+                        }
+                        |> expectOperationField "flip"
             , test "newRound" <|
                 \_ ->
-                    let
-                        json =
-                            newRoundEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                }
-                    in
-                    expectOperationField "new-round" json
+                    newRoundEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        }
+                        |> expectOperationField "new-round"
             , test "reconnect" <|
                 \_ ->
-                    let
-                        json =
-                            reconnectEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                }
-                    in
-                    expectOperationField "reconnect" json
+                    reconnectEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        }
+                        |> expectOperationField "reconnect"
             , test "ping" <|
                 \_ ->
-                    let
-                        json =
-                            pingEncoder
-                                { playerId = Pid "pid"
-                                , playerKey = Pkey "key"
-                                , gameId = Gid "gid"
-                                }
-                    in
-                    expectOperationField "ping" json
+                    pingEncoder
+                        { playerId = Pid "pid"
+                        , playerKey = Pkey "key"
+                        , gameId = Gid "gid"
+                        }
+                        |> expectOperationField "ping"
             , test "wake" <|
                 \_ ->
-                    let
-                        json =
-                            wakeEncoder ()
-                    in
-                    expectOperationField "wake" json
+                    wakeEncoder
+                        ()
+                        |> expectOperationField "wake"
             ]
         ]
 
