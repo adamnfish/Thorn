@@ -11,11 +11,13 @@ type Msg
     | ServerMessage Json.Encode.Value
     | SendMessageTmpTest
     | SocketConnect
+    | SocketDisconnect
 
 
 type alias Model =
     { library : Dict String GameInProgress
     , current : Maybe GameInProgress
+    , connected : Bool
     }
 
 

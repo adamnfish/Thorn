@@ -4,7 +4,7 @@ import Browser
 import Dict
 import Model exposing (..)
 import Msg exposing (update)
-import Ports exposing (receiveMessage)
+import Ports exposing (receiveMessage, socketConnect, socketDisconnect)
 import Views.Ui exposing (view)
 
 
@@ -12,6 +12,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { library = Dict.empty
       , current = Nothing
+      , connected = False
       }
     , Cmd.none
     )
@@ -19,7 +20,11 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    receiveMessage ServerMessage
+    Sub.batch
+        [ receiveMessage ServerMessage
+        , socketConnect <| always SocketConnect
+        , socketDisconnect <| always SocketDisconnect
+        ]
 
 
 

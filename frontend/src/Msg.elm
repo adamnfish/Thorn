@@ -62,19 +62,28 @@ update msg model =
             )
 
         SocketConnect ->
+            let
+                newModel =
+                    { model | connected = True }
+            in
             case model.current of
                 Just (Waiting welcome) ->
-                    ( model
+                    ( newModel
                     , sendReconnect welcome
                     )
 
                 Just (Playing _ _ welcome) ->
-                    ( model
+                    ( newModel
                     , sendReconnect welcome
                     )
 
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( newModel, Cmd.none )
+
+        SocketDisconnect ->
+            ( { model | connected = False }
+            , Cmd.none
+            )
 
 
 sendCreateGame : CreateGame -> Cmd msg

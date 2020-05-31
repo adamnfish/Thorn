@@ -1,12 +1,29 @@
 import './main.css';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 
-
-const socket = new WebSocket('ws://localhost:7000/api');
 
 const app = Elm.Main.init({
   node: document.getElementById('root')
+});
+
+
+const socket = new ReconnectingWebSocket('ws://localhost:7000/api');
+
+socket.addEventListener('open', function (event) {
+  console.log('Websocket connection opened', event.data);
+  app.ports.socketConnect.send(null);
+});
+
+socket.addEventListener('close', function (event) {
+  console.log('Websocket connection closed', event.data);
+  app.ports.socketDisconnect.send(null);
+});
+
+socket.addEventListener('error', function (event) {
+  console.log('Websocket connection error', event.data);
+  app.ports.socketDisconnect.send(null);
 });
 
 socket.addEventListener('message', function (event) {
