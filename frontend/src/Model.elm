@@ -2,27 +2,69 @@ module Model exposing (..)
 
 import Dict exposing (Dict)
 import Json.Decode
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode
+import Time
 
 
 type Msg
     = NoOp
+    | Tick Time.Posix
+      -- Connection status and server messages
     | ServerMessage Json.Encode.Value
-    | SendMessageTmpTest
     | SocketConnect
     | SocketDisconnect
+      -- create game
+    | NavigateCreateGame
+    | InputCreateGame String String LoadingStatus
+    | SubmitCreateGame String String
+      -- join game
+    | NavigateJoinGame
+    | InputJoinGame String String LoadingStatus
+    | SubmitJoinGame String String
+      -- lobby
+    | InputReorderPlayers (List Player)
+    | SubmitStartGame
+
+
+
+-- in-game messages
+--| SubmitPlaceDisc Disc
+--| SubmitBid Int
+--| SubmitPass
+--| SubmitFlip PlayerId
 
 
 type alias Model =
     { library : Dict String GameInProgress
-    , current : Maybe GameInProgress
     , connected : Bool
+    , ui : UI
+    , errors : List UIError
+    , now : Time.Posix
+    }
+
+
+type UI
+    = HomeScreen
+    | CreateGameScreen String String LoadingStatus
+    | JoinGameScreen String String LoadingStatus
+    | LobbyScreen (List Player) LoadingStatus WelcomeMessage
+    | CurrentGameScreen Game Self WelcomeMessage
+
+
+type LoadingStatus
+    = NotLoading
+    | AwaitingMessage
+
+
+type alias UIError =
+    { message : Failure
+    , time : Time.Posix
     }
 
 
 type GameInProgress
-    = Waiting WelcomeMessage
+    = Waiting WelcomeMessage (List Player)
     | Playing Game Self WelcomeMessage
 
 
@@ -112,6 +154,7 @@ type alias Game =
     , creatorId : PlayerId
     , players : List Player
     , round : Maybe Round
+    , started : Bool
     }
 
 
@@ -120,8 +163,8 @@ type alias Game =
 
 
 type alias CreateGame =
-    { screenName : String
-    , gameName : String
+    { gameName : String
+    , screenName : String
     }
 
 
@@ -223,7 +266,22 @@ type alias GameStatusMessage =
 type alias Failure =
     { friendlyMessage : String
     , statusCode : Int
+    , context : Maybe String
     }
+
+
+
+-- Extractors
+
+
+getGid : GameId -> String
+getGid (Gid gameId) =
+    gameId
+
+
+getPid : PlayerId -> String
+getPid (Pid playerId) =
+    playerId
 
 
 
@@ -250,6 +308,7 @@ failureDecoder =
     Json.Decode.succeed Failure
         |> required "friendlyMessage" Json.Decode.string
         |> required "statusCode" Json.Decode.int
+        |> optional "context" (Json.Decode.nullable Json.Decode.string) Nothing
 
 
 messageDecoder : Json.Decode.Decoder Message
@@ -294,10 +353,10 @@ discDecoder =
     let
         get id =
             case id of
-                "Thorn" ->
+                "thorn" ->
                     Json.Decode.succeed Thorn
 
-                "Rose" ->
+                "rose" ->
                     Json.Decode.succeed Rose
 
                 _ ->
@@ -404,6 +463,7 @@ gameDecoder =
         |> required "creatorId" playerIdDecoder
         |> required "players" (Json.Decode.list playerDecoder)
         |> required "round" (Json.Decode.nullable roundDecoder)
+        |> required "started" Json.Decode.bool
 
 
 
@@ -429,17 +489,17 @@ encodeDisc : Disc -> Json.Encode.Value
 encodeDisc disc =
     case disc of
         Thorn ->
-            Json.Encode.string "Thorn"
+            Json.Encode.string "thorn"
 
         Rose ->
-            Json.Encode.string "Rose"
+            Json.Encode.string "rose"
 
 
 createGameEncoder : CreateGame -> Json.Encode.Value
 createGameEncoder createGame =
     Json.Encode.object <|
-        [ ( "screenName", Json.Encode.string createGame.screenName )
-        , ( "gameName", Json.Encode.string createGame.gameName )
+        [ ( "gameName", Json.Encode.string createGame.gameName )
+        , ( "screenName", Json.Encode.string createGame.screenName )
         , ( "operation", Json.Encode.string "create-game" )
         ]
 

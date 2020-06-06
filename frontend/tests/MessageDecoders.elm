@@ -36,7 +36,7 @@ all =
                 \_ ->
                     let
                         gameStatusMessageStr =
-                            """{"self":{"screenName":"test","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","score":0,"placedDiscs":null,"roseCount":3,"hasThorn":true},"game":{"gameId":"9750edfd-a87e-4e2f-bef9-a76d989f18b4","gameName":"Test Game","creatorId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","players":[{"screenName":"test","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","score":0,"discCount":4}],"round":null}}"""
+                            """{"self":{"screenName":"test","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","score":0,"placedDiscs":null,"roseCount":3,"hasThorn":true},"game":{"gameId":"9750edfd-a87e-4e2f-bef9-a76d989f18b4","gameName":"Test Game","creatorId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","players":[{"screenName":"test","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","score":0,"discCount":4}],"round":null,"started":true}}"""
 
                         result =
                             Json.Decode.decodeString messageDecoder gameStatusMessageStr
@@ -51,6 +51,7 @@ all =
                                 , Expect.equal data.self.playerId <| Pid "6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3"
                                 , Expect.equal data.game.gameId <| Gid "9750edfd-a87e-4e2f-bef9-a76d989f18b4"
                                 , Expect.equal data.game.gameName <| "Test Game"
+                                , Expect.equal data.game.started <| True
                                 , Expect.equal (List.length data.game.players) 1
                                 ]
 
@@ -83,7 +84,7 @@ all =
                 \_ ->
                     let
                         gameStatusMessageStr =
-                            """{"failures":[{"friendlyMessage":"message text","statusCode":404}]}"""
+                            """{"failures":[{"friendlyMessage":"message text","statusCode":404,"context":null}]}"""
 
                         result =
                             Json.Decode.decodeString messageDecoder gameStatusMessageStr
@@ -93,6 +94,7 @@ all =
                             Expect.equal failures
                                 [ { friendlyMessage = "message text"
                                   , statusCode = 404
+                                  , context = Nothing
                                   }
                                 ]
 
@@ -105,7 +107,7 @@ all =
                 \_ ->
                     let
                         gameStatusMessageStr =
-                            """{"failures":[{"friendlyMessage":"message text","statusCode":404},{"friendlyMessage":"another message with text","statusCode":500}]}"""
+                            """{"failures":[{"friendlyMessage":"message text","statusCode":404,"context":null},{"friendlyMessage":"another message with text","statusCode":500}]}"""
 
                         result =
                             Json.Decode.decodeString messageDecoder gameStatusMessageStr
@@ -115,9 +117,11 @@ all =
                             Expect.equal failures
                                 [ { friendlyMessage = "message text"
                                   , statusCode = 404
+                                  , context = Nothing
                                   }
                                 , { friendlyMessage = "another message with text"
                                   , statusCode = 500
+                                  , context = Nothing
                                   }
                                 ]
 

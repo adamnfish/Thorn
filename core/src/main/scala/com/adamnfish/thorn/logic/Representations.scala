@@ -256,6 +256,7 @@ object Representations {
           creatorId = game.creatorId,
           players = playerSummaries,
           round = round,
+          started = game.started,
         )
       )
     }

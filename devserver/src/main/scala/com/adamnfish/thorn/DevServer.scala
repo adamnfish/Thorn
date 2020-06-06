@@ -25,14 +25,16 @@ object DevServer {
     app.ws("/api", { ws =>
       ws.onConnect { wctx =>
         val id = messaging.connect(wctx)
-        println(s"id: $id")
+        println(s"Connected: $id")
       }
       ws.onClose { wctx =>
         messaging.disconnect(wctx)
+        println(s"Disconnected: ${wctx.getSessionId}")
       }
       ws.onMessage { wctx =>
         // TODO: consider whether errors are sent as messages or responses?
         // (start with messages for simplicity, change to response in the future to save $$)
+        println(s"Message: ${wctx.getSessionId} <- ${wctx.message}")
         val context = Context(PlayerAddress(wctx.getSessionId), db, messaging)
         val result = Thorn.main(wctx.message, context).tapFailure { failure =>
           println(s"[ERROR] ${failure.logString}")

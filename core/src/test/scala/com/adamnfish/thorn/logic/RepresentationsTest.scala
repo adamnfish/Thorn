@@ -937,6 +937,17 @@ class RepresentationsTest
         }
       }
 
+      "sets started from game" in {
+        forAll { (started: Boolean) =>
+          gameStatus(
+            game.copy(
+              started = started
+            ),
+            player1.playerId
+          ).value().game.started shouldEqual started
+        }
+      }
+
       "player summaries are set correctly" - {
         val gameWithPlayers = game.copy(
           players = List(

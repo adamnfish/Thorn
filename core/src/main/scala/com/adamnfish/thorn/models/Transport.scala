@@ -10,6 +10,7 @@ case class GameSummary(
   creatorId: PlayerId,
   players: List[PlayerSummary],
   round: Option[RoundSummary],
+  started: Boolean,
 )
 
 case class PlayerSummary(

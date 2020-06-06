@@ -33,7 +33,7 @@ socket.addEventListener('message', function (event) {
 
 app.ports.sendMessage.subscribe(function (messageData) {
   console.log('Sending message ', messageData);
-  socket.send(messageData);
+  socket.send(JSON.stringify(messageData));
 });
 
 // If you want your app to work offline and load faster, you can change
