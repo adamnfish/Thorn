@@ -1,5 +1,6 @@
 module Model exposing (..)
 
+import Browser.Dom exposing (Viewport)
 import Dict exposing (Dict)
 import Json.Decode
 import Json.Decode.Pipeline exposing (optional, required)
@@ -10,10 +11,13 @@ import Time
 type Msg
     = NoOp
     | Tick Time.Posix
+    | OnResize
+    | Resized Viewport
       -- Connection status and server messages
     | ServerMessage Json.Encode.Value
     | SocketConnect
     | SocketDisconnect
+    | NavigateHome
       -- create game
     | NavigateCreateGame
     | InputCreateGame String String LoadingStatus
@@ -41,6 +45,7 @@ type alias Model =
     , ui : UI
     , errors : List UIError
     , now : Time.Posix
+    , viewport : Maybe Viewport
     }
 
 

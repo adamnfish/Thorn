@@ -1,10 +1,12 @@
 module Msg exposing (..)
 
+import Browser.Dom
 import Dict
 import Json.Decode
 import List.Extra
 import Model exposing (..)
 import Ports exposing (sendMessage)
+import Task
 import Time
 import Utils exposing (flip)
 
@@ -27,6 +29,18 @@ update msg model =
             ( { model
                 | now = time
                 , errors = filteredErrors
+              }
+            , Cmd.none
+            )
+
+        OnResize ->
+            ( model
+            , Task.perform Resized Browser.Dom.getViewport
+            )
+
+        Resized viewport ->
+            ( { model
+                | viewport = Just viewport
               }
             , Cmd.none
             )
@@ -184,11 +198,11 @@ update msg model =
                                     , Cmd.none
                                     )
 
-                                CreateGameScreen _ _ loadingStatus ->
+                                CreateGameScreen _ _ _ ->
                                     -- message is for another game, just update lib in background
                                     ( modelWithLib, Cmd.none )
 
-                                JoinGameScreen _ _ loadingStatus ->
+                                JoinGameScreen _ _ _ ->
                                     -- message is for another game, just update lib in background
                                     ( modelWithLib, Cmd.none )
 
@@ -237,6 +251,11 @@ update msg model =
 
         SocketDisconnect ->
             ( { model | connected = False }
+            , Cmd.none
+            )
+
+        NavigateHome ->
+            ( { model | ui = HomeScreen }
             , Cmd.none
             )
 

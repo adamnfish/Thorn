@@ -1,6 +1,8 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Dict
 import Model as Msg exposing (..)
 import Msg exposing (sendWake, update)
@@ -20,12 +22,14 @@ init =
             , ui = HomeScreen
             , errors = []
             , now = Time.millisToPosix 0
+            , viewport = Nothing
             }
     in
     ( initial
     , Cmd.batch
         [ Task.perform Msg.Tick Time.now
         , sendWake ()
+        , Task.perform Resized Browser.Dom.getViewport
         ]
     )
 
@@ -37,6 +41,7 @@ subscriptions _ =
         , socketConnect <| always SocketConnect
         , socketDisconnect <| always SocketDisconnect
         , Time.every 1000 Tick
+        , Browser.Events.onResize (\_ _ -> OnResize)
         ]
 
 
