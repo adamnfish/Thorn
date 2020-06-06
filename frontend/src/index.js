@@ -9,7 +9,9 @@ const app = Elm.Main.init({
 });
 
 
-const socket = new ReconnectingWebSocket('ws://localhost:7000/api');
+// Server communication
+
+const socket = new ReconnectingWebSocket('ws://' + window.location.hostname + ':7000/api');
 
 socket.addEventListener('open', function (event) {
   console.log('Websocket connection opened', event.data);
