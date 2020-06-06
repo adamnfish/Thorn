@@ -26,7 +26,7 @@ lazy val root = (project in file("."))
     name := "thorn",
     libraryDependencies ++= commonDeps,
   )
-  .aggregate(core, lambda, devServer, integration, cli)
+  .aggregate(core, lambda, devServer, integration)
 
 lazy val core = (project in file("core"))
   .settings(
@@ -91,9 +91,3 @@ lazy val devServer = (project in file("devserver"))
     (run in Compile) := (run in Compile).dependsOn(startDynamoDBLocal).evaluated,
   )
   .dependsOn(core)
-
-lazy val cli = (project in file("cli"))
-  .settings()
-  .dependsOn(core)
-
-// See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.
