@@ -18,7 +18,7 @@ type Msg
     | SocketConnect
     | SocketDisconnect
     | NavigateHome
-    | NavigateGame Game Self WelcomeMessage
+    | NavigateGame GameStatusMessage WelcomeMessage
       -- create game
     | NavigateCreateGame
     | InputCreateGame String String LoadingStatus
@@ -56,7 +56,7 @@ type UI
     | JoinGameScreen String String LoadingStatus
     | LobbyScreen (List Player) LoadingStatus WelcomeMessage
       -- TODO: this will be split into UIs for each round
-    | CurrentGameScreen Game Self WelcomeMessage
+    | CurrentGameScreen GameStatusMessage WelcomeMessage
 
 
 type LoadingStatus
@@ -72,8 +72,8 @@ type alias UIError =
 
 type GameInProgress
     = Waiting WelcomeMessage (List Player)
-    | Playing Game Self WelcomeMessage
-    | NotPlaying Game Self
+    | Playing GameStatusMessage WelcomeMessage
+    | NotPlaying GameStatusMessage
 
 
 type GameId

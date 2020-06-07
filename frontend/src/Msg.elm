@@ -111,14 +111,14 @@ update msg model =
                                         Nothing ->
                                             Just <| Waiting welcomeMessage []
 
-                                        Just (Playing game self _) ->
-                                            Just <| Playing game self welcomeMessage
+                                        Just (Playing gameStatus _) ->
+                                            Just <| Playing gameStatus welcomeMessage
 
                                         Just (Waiting _ playerOrder) ->
                                             Just <| Waiting welcomeMessage playerOrder
 
-                                        Just (NotPlaying game self) ->
-                                            Just <| Playing game self welcomeMessage
+                                        Just (NotPlaying gameStatus) ->
+                                            Just <| Playing gameStatus welcomeMessage
                                 )
                                 model.library
                     in
@@ -147,7 +147,7 @@ update msg model =
                             , Cmd.none
                             )
 
-                        CurrentGameScreen _ _ _ ->
+                        CurrentGameScreen _ _ ->
                             -- TODO: think about messaging / logging
                             ( { model
                                 | library = newLibrary
@@ -173,10 +173,10 @@ update msg model =
                                 Just (Waiting welcomeMessage _) ->
                                     Just welcomeMessage
 
-                                Just (Playing _ _ welcomeMessage) ->
+                                Just (Playing _ welcomeMessage) ->
                                     Just welcomeMessage
 
-                                Just (NotPlaying _ _) ->
+                                Just (NotPlaying _) ->
                                     Nothing
 
                                 Nothing ->
@@ -187,7 +187,7 @@ update msg model =
                             let
                                 newLibrary =
                                     Dict.insert gid
-                                        (Playing gameStatusMessage.game gameStatusMessage.self welcomeMessage)
+                                        (Playing gameStatusMessage welcomeMessage)
                                         model.library
 
                                 modelWithLib =
@@ -197,9 +197,9 @@ update msg model =
                                 HomeScreen ->
                                     ( modelWithLib, Cmd.none )
 
-                                CurrentGameScreen _ _ _ ->
+                                CurrentGameScreen _ _ ->
                                     ( { modelWithLib
-                                        | ui = CurrentGameScreen gameStatusMessage.game gameStatusMessage.self welcomeMessage
+                                        | ui = CurrentGameScreen gameStatusMessage welcomeMessage
                                       }
                                     , Cmd.none
                                     )
@@ -215,7 +215,7 @@ update msg model =
                                 LobbyScreen playerOrder loadingStatus _ ->
                                     if gameStatusMessage.game.started then
                                         ( { modelWithLib
-                                            | ui = CurrentGameScreen gameStatusMessage.game gameStatusMessage.self welcomeMessage
+                                            | ui = CurrentGameScreen gameStatusMessage welcomeMessage
                                           }
                                         , Cmd.none
                                         )
@@ -235,7 +235,7 @@ update msg model =
                             let
                                 newLibrary =
                                     Dict.insert gid
-                                        (NotPlaying gameStatusMessage.game gameStatusMessage.self)
+                                        (NotPlaying gameStatusMessage)
                                         model.library
 
                                 modelWithLib =
@@ -250,7 +250,7 @@ update msg model =
                     { model | connected = True }
             in
             case model.ui of
-                CurrentGameScreen _ _ welcome ->
+                CurrentGameScreen _ welcome ->
                     ( newModel
                     , sendReconnect welcome
                     )
@@ -273,8 +273,8 @@ update msg model =
             , Cmd.none
             )
 
-        NavigateGame game self welcome ->
-            ( { model | ui = CurrentGameScreen game self welcome }
+        NavigateGame gameStatus welcome ->
+            ( { model | ui = CurrentGameScreen gameStatus welcome }
             , Cmd.none
             )
 

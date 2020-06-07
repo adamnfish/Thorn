@@ -47,17 +47,11 @@ view model =
                     let
                         maybeGameStatus =
                             case Dict.get (getGid welcomeMessage.gameId) model.library of
-                                Just (Playing game self _) ->
-                                    Just
-                                        { game = game
-                                        , self = self
-                                        }
+                                Just (Playing gameStatus _) ->
+                                    Just gameStatus
 
-                                Just (NotPlaying game self) ->
-                                    Just
-                                        { game = game
-                                        , self = self
-                                        }
+                                Just (NotPlaying gameStatus) ->
+                                    Just gameStatus
 
                                 Just (Waiting _ _) ->
                                     Nothing
@@ -70,9 +64,9 @@ view model =
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                CurrentGameScreen game self welcomeMessage ->
-                    { title = game.gameName ++ " | Thorn"
-                    , body = currentGame model game self welcomeMessage
+                CurrentGameScreen gameStatus welcomeMessage ->
+                    { title = gameStatus.game.gameName ++ " | Thorn"
+                    , body = currentGame model gameStatus welcomeMessage
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
     in
@@ -107,11 +101,11 @@ home model =
             List.map
                 (\gameInProgress ->
                     case gameInProgress of
-                        Playing game self welcomeMessage ->
+                        Playing gameStatus welcomeMessage ->
                             row []
                                 [ Input.button []
-                                    { onPress = Just <| NavigateGame game self welcomeMessage
-                                    , label = text <| self.screenName ++ " in " ++ game.gameName
+                                    { onPress = Just <| NavigateGame gameStatus welcomeMessage
+                                    , label = text <| gameStatus.self.screenName ++ " in " ++ gameStatus.game.gameName
                                     }
                                 ]
 
@@ -227,8 +221,29 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
         ]
 
 
-currentGame : Model -> Game -> Self -> WelcomeMessage -> Element Msg
-currentGame model game self welcomeMessage =
+currentGame : Model -> GameStatusMessage -> WelcomeMessage -> Element Msg
+currentGame model gameStatus welcomeMessage =
+    let
+        roundInfo =
+            case gameStatus.game.round of
+                Just (InitialDiscs initialDiscs) ->
+                    1
+
+                Just (Placing placing) ->
+                    1
+
+                Just (Bidding bidding) ->
+                    1
+
+                Just (Flipping flipping) ->
+                    1
+
+                Just (Finished finished) ->
+                    1
+
+                Nothing ->
+                    1
+    in
     el
         []
         (text "showing game")
