@@ -5,7 +5,7 @@ import Dict
 import Json.Decode
 import List.Extra
 import Model exposing (..)
-import Ports exposing (sendMessage)
+import Ports exposing (reportError, sendMessage)
 import Task
 import Time
 import Utils exposing (flip)
@@ -51,13 +51,13 @@ update msg model =
                     Json.Decode.decodeValue messageDecoder json
             in
             case messageResult of
-                Err _ ->
+                Err err ->
                     ( displayFailure model
                         { friendlyMessage = "Error communicating with server"
                         , statusCode = 500
                         , context = Nothing
                         }
-                    , Cmd.none
+                    , reportError <| Json.Decode.errorToString err
                     )
 
                 Ok (FailedAttempt failures) ->
@@ -116,6 +116,9 @@ update msg model =
 
                                         Just (Waiting _ playerOrder) ->
                                             Just <| Waiting welcomeMessage playerOrder
+
+                                        Just (NotPlaying game self) ->
+                                            Just <| Playing game self welcomeMessage
                                 )
                                 model.library
                     in
@@ -173,6 +176,9 @@ update msg model =
                                 Just (Playing _ _ welcomeMessage) ->
                                     Just welcomeMessage
 
+                                Just (NotPlaying _ _) ->
+                                    Nothing
+
                                 Nothing ->
                                     Nothing
                     in
@@ -225,10 +231,18 @@ update msg model =
                                         , Cmd.none
                                         )
 
-                        _ ->
-                            -- TODO: think about error reporting / UX!
+                        Nothing ->
+                            let
+                                newLibrary =
+                                    Dict.insert gid
+                                        (NotPlaying gameStatusMessage.game gameStatusMessage.self)
+                                        model.library
+
+                                modelWithLib =
+                                    { model | library = newLibrary }
+                            in
                             -- received a status message for a game we don't have a welcome for
-                            ( model, Cmd.none )
+                            ( modelWithLib, Cmd.none )
 
         SocketConnect ->
             let
@@ -266,7 +280,7 @@ update msg model =
             , Cmd.none
             )
 
-        InputCreateGame screenName gameName loadingStatus ->
+        InputCreateGame gameName screenName loadingStatus ->
             ( { model
                 | ui = CreateGameScreen gameName screenName loadingStatus
               }
@@ -292,14 +306,14 @@ update msg model =
 
         InputJoinGame gameCode screenName loadingStatus ->
             ( { model
-                | ui = CreateGameScreen gameCode screenName loadingStatus
+                | ui = JoinGameScreen gameCode screenName loadingStatus
               }
             , Cmd.none
             )
 
         SubmitJoinGame gameCode screenName ->
             ( { model
-                | ui = CreateGameScreen gameCode screenName AwaitingMessage
+                | ui = JoinGameScreen gameCode screenName AwaitingMessage
               }
             , sendJoinGame
                 { gameCode = gameCode

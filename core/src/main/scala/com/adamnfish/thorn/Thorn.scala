@@ -60,10 +60,11 @@ object Thorn {
       gameDb = Representations.gameForDb(game)
       // TODO: check clashing gameCode doesn't already exist
       creatorDb = Representations.newPlayerForDb(game, creator)
+      welcome = Welcome(creator.playerKey, creator.playerId, game.gameId)
+      response <- Responses.messageAndStatuses(welcome, game)
       _ <- context.db.writeGame(gameDb)
       _ <- context.db.writePlayer(creatorDb)
-      welcome = Welcome(creator.playerKey, creator.playerId, game.gameId)
-    } yield Responses.justRespond(welcome)
+    } yield response
   }
 
   def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {

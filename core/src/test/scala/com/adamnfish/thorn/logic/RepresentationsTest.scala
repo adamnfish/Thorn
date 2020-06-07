@@ -906,7 +906,7 @@ class RepresentationsTest
           gameStatus(
             game.copy(
               gameId = gid,
-              players = List(player1)
+              players = List(player1),
             ),
             player1.playerId
           ).value().game.gameId shouldEqual gid
@@ -918,7 +918,7 @@ class RepresentationsTest
           gameStatus(
             game.copy(
               gameName = gameName,
-              players = List(player1)
+              players = List(player1),
             ),
             player1.playerId
           ).value().game.gameName shouldEqual gameName
@@ -930,7 +930,7 @@ class RepresentationsTest
           gameStatus(
             game.copy(
               creatorId = PlayerId(creatorId),
-              players = List(player1)
+              players = List(player1),
             ),
             player1.playerId
           ).value().game.creatorId.pid shouldEqual creatorId
@@ -941,7 +941,8 @@ class RepresentationsTest
         forAll { (started: Boolean) =>
           gameStatus(
             game.copy(
-              started = started
+              started = started,
+              players = List(player1),
             ),
             player1.playerId
           ).value().game.started shouldEqual started
@@ -950,9 +951,7 @@ class RepresentationsTest
 
       "player summaries are set correctly" - {
         val gameWithPlayers = game.copy(
-          players = List(
-            player1, player2,
-          )
+          players = List(player1, player2)
         )
 
         "player summaries exist for each player" in {

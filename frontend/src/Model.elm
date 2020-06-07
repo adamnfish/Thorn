@@ -54,6 +54,7 @@ type UI
     | CreateGameScreen String String LoadingStatus
     | JoinGameScreen String String LoadingStatus
     | LobbyScreen (List Player) LoadingStatus WelcomeMessage
+      -- TODO: this will be split into UIs for each round
     | CurrentGameScreen Game Self WelcomeMessage
 
 
@@ -71,6 +72,7 @@ type alias UIError =
 type GameInProgress
     = Waiting WelcomeMessage (List Player)
     | Playing Game Self WelcomeMessage
+    | NotPlaying Game Self
 
 
 type GameId
@@ -287,6 +289,11 @@ getGid (Gid gameId) =
 getPid : PlayerId -> String
 getPid (Pid playerId) =
     playerId
+
+
+gameCode : GameId -> String
+gameCode (Gid gameId) =
+    String.left 4 gameId
 
 
 

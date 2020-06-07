@@ -19,10 +19,11 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
-    "doesn't send any other messages out" in {
+    // TODO: improve this test to check the game details
+    "sends a status message out to the creator" in {
       withTestContext { (context, _) =>
         val response = Fixtures.createGame(context).value()
-        response.messages shouldBe empty
+        response.messages.size shouldEqual 1
       }
     }
 

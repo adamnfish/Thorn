@@ -13,3 +13,6 @@ port socketDisconnect : (Maybe Int -> msg) -> Sub msg
 
 
 port sendMessage : Json.Encode.Value -> Cmd msg
+
+
+port reportError : String -> Cmd msg

@@ -8,6 +8,10 @@ const app = Elm.Main.init({
   node: document.getElementById('root')
 });
 
+app.ports.reportError.subscribe(function (errorDetails) {
+  console.log('[Error]', errorDetails);
+});
+
 
 // Server communication
 
@@ -29,8 +33,9 @@ socket.addEventListener('error', function (event) {
 });
 
 socket.addEventListener('message', function (event) {
-  console.log('Message from server ', event.data);
-  app.ports.receiveMessage.send(event.data);
+  const eventJson = JSON.parse(event.data);
+  console.log('Message from server ', eventJson);
+  app.ports.receiveMessage.send(eventJson);
 });
 
 app.ports.sendMessage.subscribe(function (messageData) {

@@ -9,6 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Model exposing (..)
+import Views.GameLogic exposing (isCreator)
 
 
 type alias Page =
@@ -43,8 +44,29 @@ view model =
                     }
 
                 LobbyScreen playerOrder loadingStatus welcomeMessage ->
+                    let
+                        maybeGameStatus =
+                            case Dict.get (getGid welcomeMessage.gameId) model.library of
+                                Just (Playing game self _) ->
+                                    Just
+                                        { game = game
+                                        , self = self
+                                        }
+
+                                Just (NotPlaying game self) ->
+                                    Just
+                                        { game = game
+                                        , self = self
+                                        }
+
+                                Just (Waiting _ _) ->
+                                    Nothing
+
+                                Nothing ->
+                                    Nothing
+                    in
                     { title = "Waiting | Thorn"
-                    , body = lobby model playerOrder loadingStatus welcomeMessage
+                    , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
                     , nav = Element.none
                     }
 
@@ -96,23 +118,93 @@ home model =
 
 createGame : Model -> String -> String -> LoadingStatus -> Element Msg
 createGame model gameName screenName loadingStatus =
-    el
+    column
         []
-        (text "Create game")
+        [ Input.text []
+            { onChange = \newGameName -> InputCreateGame newGameName screenName loadingStatus
+            , text = gameName
+            , placeholder = Nothing
+            , label = Input.labelAbove [] <| text "Game name"
+            }
+        , Input.text []
+            { onChange = \newScreenName -> InputCreateGame gameName newScreenName loadingStatus
+            , text = screenName
+            , placeholder = Nothing
+            , label = Input.labelAbove [] <| text "Screen name"
+            }
+        , Input.button []
+            { onPress = Just <| SubmitCreateGame gameName screenName
+            , label = text "Create game"
+            }
+        ]
 
 
 joinGame : Model -> String -> String -> LoadingStatus -> Element Msg
 joinGame model gameCode screenName loadingStatus =
-    el
+    column
         []
-        (text "Join game")
+        [ Input.text []
+            { onChange = \newGameName -> InputJoinGame newGameName screenName loadingStatus
+            , text = gameCode
+            , placeholder = Nothing
+            , label = Input.labelAbove [] <| text "Game code"
+            }
+        , Input.text []
+            { onChange = \newScreenName -> InputJoinGame gameCode newScreenName loadingStatus
+            , text = screenName
+            , placeholder = Nothing
+            , label = Input.labelAbove [] <| text "Screen name"
+            }
+        , Input.button []
+            { onPress = Just <| SubmitJoinGame gameCode screenName
+            , label = text "Join game"
+            }
+        ]
 
 
-lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Element Msg
-lobby model playerOrder loadingStatus welcomeMessage =
-    el
+lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Maybe GameStatusMessage -> Element Msg
+lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
+    let
+        playersEl =
+            if List.isEmpty playerOrder then
+                text "Waiting for other players"
+
+            else
+                column [] <|
+                    List.map
+                        (\player ->
+                            text player.screenName
+                        )
+                        playerOrder
+
+        startGameEl =
+            case maybeGameStatus of
+                Just gameStatus ->
+                    if isCreator gameStatus.game gameStatus.self then
+                        if List.length playerOrder >= 3 then
+                            Input.button []
+                                { onPress = Just SubmitStartGame
+                                , label = text "Start game"
+                                }
+
+                        else
+                            paragraph []
+                                [ text "There must be at least 3 players to start the game" ]
+
+                    else
+                        none
+
+                Nothing ->
+                    none
+    in
+    column
         []
-        (text "Lobby")
+        [ text "Lobby"
+        , text "Game code"
+        , text <| gameCode welcomeMessage.gameId
+        , playersEl
+        , startGameEl
+        ]
 
 
 currentGame : Model -> Game -> Self -> WelcomeMessage -> Element Msg
