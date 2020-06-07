@@ -67,13 +67,13 @@ view model =
                     in
                     { title = "Waiting | Thorn"
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
-                    , nav = Element.none
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
                 CurrentGameScreen game self welcomeMessage ->
                     { title = game.gameName ++ " | Thorn"
                     , body = currentGame model game self welcomeMessage
-                    , nav = Element.none
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
     in
     { title = page.title
@@ -102,6 +102,25 @@ nav navEntries =
 
 home : Model -> Element Msg
 home model =
+    let
+        availableGames =
+            List.map
+                (\gameInProgress ->
+                    case gameInProgress of
+                        Playing game self welcomeMessage ->
+                            row []
+                                [ Input.button []
+                                    { onPress = Just <| NavigateGame game self welcomeMessage
+                                    , label = text <| self.screenName ++ " in " ++ game.gameName
+                                    }
+                                ]
+
+                        _ ->
+                            Element.none
+                )
+            <|
+                Dict.values model.library
+    in
     el [] <|
         column
             []
@@ -113,6 +132,7 @@ home model =
                 { onPress = Just NavigateJoinGame
                 , label = text "Join game"
                 }
+            , column [] availableGames
             ]
 
 
@@ -192,10 +212,10 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                 [ text "There must be at least 3 players to start the game" ]
 
                     else
-                        none
+                        Element.none
 
                 Nothing ->
-                    none
+                    Element.none
     in
     column
         []

@@ -18,6 +18,7 @@ type Msg
     | SocketConnect
     | SocketDisconnect
     | NavigateHome
+    | NavigateGame Game Self WelcomeMessage
       -- create game
     | NavigateCreateGame
     | InputCreateGame String String LoadingStatus

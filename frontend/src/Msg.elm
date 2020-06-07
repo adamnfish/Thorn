@@ -273,6 +273,11 @@ update msg model =
             , Cmd.none
             )
 
+        NavigateGame game self welcome ->
+            ( { model | ui = CurrentGameScreen game self welcome }
+            , Cmd.none
+            )
+
         NavigateCreateGame ->
             ( { model
                 | ui = CreateGameScreen "" "" NotLoading
