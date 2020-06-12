@@ -30,14 +30,23 @@ type Msg
       -- lobby
     | InputReorderPlayers (List Player)
     | SubmitStartGame
+      -- in-game messages
+    | InputPlaceDisc Disc
+    | InputRemovePlaceDisc
+    | SubmitPlaceDisc Disc
 
 
 
--- in-game messages
---| SubmitPlaceDisc Disc
+--| InputBid Int
+--| InputRemoveBid
 --| SubmitBid Int
+--| InputPass
+--| InputRemovePass
 --| SubmitPass
+--| InputFlip PlayerId
+--| InputRemoveFlip
 --| SubmitFlip PlayerId
+--| SubmitNewRound
 
 
 type alias Model =
@@ -54,9 +63,15 @@ type UI
     = HomeScreen
     | CreateGameScreen String String LoadingStatus
     | JoinGameScreen String String LoadingStatus
-    | LobbyScreen (List Player) LoadingStatus WelcomeMessage
+    | LobbyScreen (List Player) WelcomeMessage LoadingStatus
       -- TODO: this will be split into UIs for each round
-    | CurrentGameScreen GameStatusMessage WelcomeMessage
+      -- Round-based UIs for when it is the player's turn
+      -- Generic "display current game" otherwise?
+    | PlaceDiscScreen (Maybe Disc) GameStatusMessage WelcomeMessage LoadingStatus
+    | DiscOrBidScreen (Maybe DiscOrBid) GameStatusMessage WelcomeMessage LoadingStatus
+    | BidScreen (Maybe Int) GameStatusMessage WelcomeMessage LoadingStatus
+    | FlipScreen (Maybe PlayerId) GameStatusMessage WelcomeMessage LoadingStatus
+    | DisplayGameScreen GameStatusMessage WelcomeMessage
 
 
 type LoadingStatus
@@ -74,6 +89,11 @@ type GameInProgress
     = Waiting WelcomeMessage (List Player)
     | Playing GameStatusMessage WelcomeMessage
     | NotPlaying GameStatusMessage
+
+
+type DiscOrBid
+    = DiscSelected Disc
+    | BidSelected Int
 
 
 type GameId

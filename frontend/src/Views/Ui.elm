@@ -8,8 +8,9 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import Maybe.Extra
 import Model exposing (..)
-import Views.GameLogic exposing (isCreator)
+import Views.GameLogic exposing (isActive, isCreator)
 
 
 type alias Page =
@@ -43,7 +44,7 @@ view model =
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                LobbyScreen playerOrder loadingStatus welcomeMessage ->
+                LobbyScreen playerOrder welcomeMessage loadingStatus ->
                     let
                         maybeGameStatus =
                             case Dict.get (getGid welcomeMessage.gameId) model.library of
@@ -64,7 +65,31 @@ view model =
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                CurrentGameScreen gameStatus welcomeMessage ->
+                DisplayGameScreen gameStatus welcomeMessage ->
+                    { title = gameStatus.game.gameName ++ " | Thorn"
+                    , body = currentGame model gameStatus welcomeMessage
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
+                    }
+
+                PlaceDiscScreen maybeDisc gameStatus welcomeMessage loadingStatus ->
+                    { title = gameStatus.game.gameName ++ " | Thorn"
+                    , body = placeDisc model gameStatus welcomeMessage maybeDisc
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
+                    }
+
+                DiscOrBidScreen maybeDiscOrBid gameStatus welcomeMessage loadingStatus ->
+                    { title = gameStatus.game.gameName ++ " | Thorn"
+                    , body = currentGame model gameStatus welcomeMessage
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
+                    }
+
+                BidScreen maybeInt gameStatus welcomeMessage loadingStatus ->
+                    { title = gameStatus.game.gameName ++ " | Thorn"
+                    , body = currentGame model gameStatus welcomeMessage
+                    , nav = nav [ ( NavigateHome, "Home" ) ]
+                    }
+
+                FlipScreen maybePlayerId gameStatus welcomeMessage loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = currentGame model gameStatus welcomeMessage
                     , nav = nav [ ( NavigateHome, "Home" ) ]
@@ -218,6 +243,52 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
         , text <| gameCode welcomeMessage.gameId
         , playersEl
         , startGameEl
+        ]
+
+
+placeDisc : Model -> GameStatusMessage -> WelcomeMessage -> Maybe Disc -> Element Msg
+placeDisc model gameStatus welcomeMessage maybeDisc =
+    let
+        roseButton =
+            if gameStatus.self.roseCount > 0 then
+                Input.button []
+                    { onPress = Just <| InputPlaceDisc Rose
+                    , label = text "Rose"
+                    }
+
+            else
+                Element.none
+
+        thornButton =
+            if gameStatus.self.hasThorn then
+                Input.button []
+                    { onPress = Just <| InputPlaceDisc Thorn
+                    , label = text "Thorn"
+                    }
+
+            else
+                Element.none
+
+        buttons =
+            case maybeDisc of
+                Just disc ->
+                    [ Input.button []
+                        { onPress = Just <| InputRemovePlaceDisc
+                        , label = text "Clear"
+                        }
+                    , Input.button []
+                        { onPress = Just <| SubmitPlaceDisc disc
+                        , label = text "Submit"
+                        }
+                    ]
+
+                Nothing ->
+                    [ roseButton, thornButton ]
+    in
+    column []
+        [ paragraph []
+            [ text "Place initial disc" ]
+        , column [] buttons
         ]
 
 
