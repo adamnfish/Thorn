@@ -77,15 +77,15 @@ view model =
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                DiscOrBidScreen maybeDiscOrBid gameStatus welcomeMessage loadingStatus ->
+                DiscOrBidScreen maybeSelection gameStatus welcomeMessage loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = currentGame model gameStatus welcomeMessage
+                    , body = discOrBid model gameStatus welcomeMessage maybeSelection
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
                 BidScreen maybeInt gameStatus welcomeMessage loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = currentGame model gameStatus welcomeMessage
+                    , body = bidUi model gameStatus welcomeMessage maybeInt
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
@@ -288,6 +288,125 @@ placeDisc model gameStatus welcomeMessage maybeDisc =
     column []
         [ paragraph []
             [ text "Place initial disc" ]
+        , column [] buttons
+        ]
+
+
+discOrBid : Model -> GameStatusMessage -> WelcomeMessage -> Maybe DiscOrBid -> Element Msg
+discOrBid model gameStatus welcomeMessage maybeSelection =
+    let
+        -- TODO: calculate from model
+        numberOfPlacedDiscs =
+            3
+
+        roseButton =
+            if gameStatus.self.roseCount > 0 then
+                Input.button []
+                    { onPress = Just <| InputPlaceDisc Rose
+                    , label = text "Rose"
+                    }
+
+            else
+                Element.none
+
+        thornButton =
+            if gameStatus.self.hasThorn then
+                Input.button []
+                    { onPress = Just <| InputPlaceDisc Thorn
+                    , label = text "Thorn"
+                    }
+
+            else
+                Element.none
+
+        bidButtons =
+            List.map
+                (\count ->
+                    Input.button []
+                        { onPress = Just <| InputBid count
+                        , label = text <| String.fromInt count
+                        }
+                )
+            <|
+                List.range 1 numberOfPlacedDiscs
+
+        bidButtonContainer =
+            row [] bidButtons
+
+        buttons =
+            case maybeSelection of
+                Just (DiscSelected disc) ->
+                    [ Input.button []
+                        { onPress = Just <| InputRemovePlaceDisc
+                        , label = text "Clear"
+                        }
+                    , Input.button []
+                        { onPress = Just <| SubmitPlaceDisc disc
+                        , label = text "Submit"
+                        }
+                    ]
+
+                Just (BidSelected bid) ->
+                    [ Input.button []
+                        { onPress = Just <| InputRemoveBid
+                        , label = text "Clear"
+                        }
+                    , Input.button []
+                        { onPress = Just <| SubmitBid bid
+                        , label = text "Submit"
+                        }
+                    ]
+
+                Nothing ->
+                    [ roseButton, thornButton, bidButtonContainer ]
+    in
+    column []
+        [ paragraph []
+            [ text "Place disc or open the bidding" ]
+        , column [] buttons
+        ]
+
+
+bidUi : Model -> GameStatusMessage -> WelcomeMessage -> Maybe Int -> Element Msg
+bidUi model gameStatus welcomeMessage maybeSelection =
+    let
+        -- TODO: calculate from model
+        numberOfPlacedDiscs =
+            3
+
+        bidButtons =
+            List.map
+                (\count ->
+                    Input.button []
+                        { onPress = Just <| InputBid count
+                        , label = text <| String.fromInt count
+                        }
+                )
+            <|
+                List.range 1 numberOfPlacedDiscs
+
+        bidButtonContainer =
+            row [] bidButtons
+
+        buttons =
+            case maybeSelection of
+                Just bid ->
+                    [ Input.button []
+                        { onPress = Just <| InputRemoveBid
+                        , label = text "Clear"
+                        }
+                    , Input.button []
+                        { onPress = Just <| SubmitBid bid
+                        , label = text "Submit"
+                        }
+                    ]
+
+                Nothing ->
+                    [ bidButtonContainer ]
+    in
+    column []
+        [ paragraph []
+            [ text "Bid or pass (pass is not implemented yet)" ]
         , column [] buttons
         ]
 

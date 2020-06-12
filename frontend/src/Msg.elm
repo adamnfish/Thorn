@@ -258,6 +258,11 @@ update msg model =
                     , Cmd.none
                     )
 
+                DiscOrBidScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen (Just <| DiscSelected disc) gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
                 _ ->
                     ( displayFailure model
                         { friendlyMessage = "You can only place discs when it is your turn"
@@ -273,6 +278,15 @@ update msg model =
                     ( { model | ui = PlaceDiscScreen Nothing gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
+
+                DiscOrBidScreen (Just (DiscSelected _)) gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                DiscOrBidScreen _ _ _ _ ->
+                    -- don't remove bid selection from "remove place disc" message
+                    ( model, Cmd.none )
 
                 _ ->
                     ( displayFailure model
@@ -292,6 +306,93 @@ update msg model =
                         , playerId = welcomeMessage.playerId
                         , playerKey = welcomeMessage.playerKey
                         , disc = disc
+                        }
+                    )
+
+                DiscOrBidScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = DiscOrBidScreen (Just <| DiscSelected disc) gameStatus welcomeMessage AwaitingMessage }
+                    , sendPlaceDisc
+                        { gameId = welcomeMessage.gameId
+                        , playerId = welcomeMessage.playerId
+                        , playerKey = welcomeMessage.playerKey
+                        , disc = disc
+                        }
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only place discs when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputBid bid ->
+            case model.ui of
+                DiscOrBidScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen (Just <| BidSelected bid) gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                BidScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = BidScreen (Just bid) gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only bid when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputRemoveBid ->
+            case model.ui of
+                DiscOrBidScreen (Just (BidSelected _)) gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                DiscOrBidScreen _ _ _ _ ->
+                    -- don't remove disc selection from "remove bid" message
+                    ( model, Cmd.none )
+
+                BidScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = BidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only place discs when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        SubmitBid bid ->
+            case model.ui of
+                DiscOrBidScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = DiscOrBidScreen (Just <| BidSelected bid) gameStatus welcomeMessage AwaitingMessage }
+                    , sendBid
+                        { gameId = welcomeMessage.gameId
+                        , playerId = welcomeMessage.playerId
+                        , playerKey = welcomeMessage.playerKey
+                        , count = bid
+                        }
+                    )
+
+                BidScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = BidScreen (Just bid) gameStatus welcomeMessage AwaitingMessage }
+                    , sendBid
+                        { gameId = welcomeMessage.gameId
+                        , playerId = welcomeMessage.playerId
+                        , playerKey = welcomeMessage.playerKey
+                        , count = bid
                         }
                     )
 

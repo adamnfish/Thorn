@@ -34,12 +34,12 @@ type Msg
     | InputPlaceDisc Disc
     | InputRemovePlaceDisc
     | SubmitPlaceDisc Disc
+    | InputBid Int
+    | InputRemoveBid
+    | SubmitBid Int
 
 
 
---| InputBid Int
---| InputRemoveBid
---| SubmitBid Int
 --| InputPass
 --| InputRemovePass
 --| SubmitPass
