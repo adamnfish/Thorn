@@ -161,9 +161,13 @@ update msg model =
             , Cmd.none
             )
 
-        NavigateGame gameStatus welcome ->
-            ( { model | ui = DisplayGameScreen gameStatus welcome }
-            , Cmd.none
+        NavigateGame gameStatus welcomeMessage ->
+            ( { model | ui = uiForGameState gameStatus welcomeMessage }
+            , sendPing
+                { gameId = welcomeMessage.gameId
+                , playerId = welcomeMessage.playerId
+                , playerKey = welcomeMessage.playerKey
+                }
             )
 
         NavigateCreateGame ->
@@ -826,28 +830,40 @@ gameStatusMessageUpdate model gameStatusMessage =
 
 uiForGameState : GameStatusMessage -> WelcomeMessage -> UI
 uiForGameState gameStatusMessage welcomeMessage =
-    if isActive gameStatusMessage then
-        case gameStatusMessage.game.round of
-            Just (InitialDiscs _) ->
+    case gameStatusMessage.game.round of
+        Just (InitialDiscs _) ->
+            if isActive gameStatusMessage then
                 PlaceDiscScreen Nothing gameStatusMessage welcomeMessage NotLoading
 
-            Just (Placing _) ->
+            else
+                DisplayGameScreen gameStatusMessage welcomeMessage
+
+        Just (Placing _) ->
+            if isActive gameStatusMessage then
                 DiscOrBidScreen DiscOrBidNoSelection gameStatusMessage welcomeMessage NotLoading
 
-            Just (Bidding _) ->
+            else
+                DisplayGameScreen gameStatusMessage welcomeMessage
+
+        Just (Bidding _) ->
+            if isActive gameStatusMessage then
                 BidOrPassScreen BidOrPassNoSelection gameStatusMessage welcomeMessage NotLoading
 
-            Just (Flipping _) ->
+            else
+                DisplayGameScreen gameStatusMessage welcomeMessage
+
+        Just (Flipping _) ->
+            if isActive gameStatusMessage then
                 FlipScreen Nothing gameStatusMessage welcomeMessage NotLoading
 
-            Just (Finished _) ->
+            else
                 DisplayGameScreen gameStatusMessage welcomeMessage
 
-            Nothing ->
-                DisplayGameScreen gameStatusMessage welcomeMessage
+        Just (Finished _) ->
+            DisplayGameScreen gameStatusMessage welcomeMessage
 
-    else
-        DisplayGameScreen gameStatusMessage welcomeMessage
+        Nothing ->
+            LobbyScreen gameStatusMessage.game.players welcomeMessage NotLoading
 
 
 displayFailure : Model -> Failure -> Model

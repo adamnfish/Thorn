@@ -151,6 +151,8 @@ object Representations {
       orderedPlayerIds <-
         if (playerDBs.map(_.playerId).toSet == gameDB.playerIds.toSet) {
           Attempt.Right(gameDB.playerIds)
+        } else if (gameDB.roundState == "none") {
+          Attempt.Right(playerDBs.map(_.playerId))
         } else {
           Attempt.Left(playerOrderingError)
         }
