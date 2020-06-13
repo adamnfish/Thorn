@@ -13,6 +13,7 @@ import GameLogic exposing (isActive, isCreator, minBid, numberOfPlacedDiscs)
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
+import Utils exposing (reorderToBy)
 import Views.Styles exposing (buttonStyles, colourError, size3, textColourLight)
 
 
@@ -572,6 +573,13 @@ currentGame model gameStatus =
 
 playersList : GameStatusMessage -> Bool -> Element Msg
 playersList gameStatus showStackSelector =
+    let
+        otherPlayers =
+            List.filter
+                (\player -> player.playerId /= gameStatus.self.playerId)
+            <|
+                reorderToBy .playerId gameStatus.self.playerId gameStatus.game.players
+    in
     column []
         [ column []
             [ text gameStatus.self.screenName
@@ -591,10 +599,8 @@ playersList gameStatus showStackSelector =
                 else
                     String.fromInt gameStatus.self.roseCount ++ " Roses"
             ]
-
-        -- TODO: exclude self, order from self
         , column [] <|
-            List.map (playerDisplay gameStatus showStackSelector) gameStatus.game.players
+            List.map (playerDisplay gameStatus showStackSelector) otherPlayers
         ]
 
 
