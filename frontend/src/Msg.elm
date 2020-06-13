@@ -92,13 +92,17 @@ update msg model =
                             ( updatedModel, Cmd.none )
 
                 Ok (Status statusMessage) ->
-                    ( displayFailure model
-                        { friendlyMessage = statusMessage.message
-                        , statusCode = 200
-                        , context = Nothing
-                        }
-                    , Cmd.none
-                    )
+                    if statusMessage.message == "ok" then
+                        ( model, Cmd.none )
+
+                    else
+                        ( displayFailure model
+                            { friendlyMessage = statusMessage.message
+                            , statusCode = 200
+                            , context = Nothing
+                            }
+                        , Cmd.none
+                        )
 
                 Ok (Welcome welcomeMessage) ->
                     welcomeMessageUpdate model welcomeMessage
@@ -790,7 +794,7 @@ gameStatusMessageUpdate model gameStatusMessage =
                         Just (Flipping _) ->
                             -- server state matches client, update data and keep same screen
                             ( { model
-                                | ui = FlipScreen maybeStackId gameStatusMessage welcomeMessage loadingStatus
+                                | ui = FlipScreen Nothing gameStatusMessage welcomeMessage NotLoading
                                 , library = newLibrary
                               }
                             , Cmd.none

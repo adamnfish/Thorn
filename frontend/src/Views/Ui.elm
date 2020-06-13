@@ -9,7 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import GameLogic exposing (isActive, isCreator, numberOfPlacedDiscs)
+import GameLogic exposing (isActive, isCreator, minBid, numberOfPlacedDiscs)
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
@@ -364,7 +364,7 @@ discOrBid model gameStatus maybeSelection =
                         }
                 )
             <|
-                List.range 1 maxBid
+                List.range (minBid gameStatus) maxBid
 
         bidButtonContainer =
             row [] bidButtons
@@ -419,7 +419,7 @@ bidOrPass model gameStatus maybeSelection =
                         }
                 )
             <|
-                List.range 1 maxBid
+                List.range (minBid gameStatus) maxBid
 
         bidButtonContainer =
             row [] bidButtons

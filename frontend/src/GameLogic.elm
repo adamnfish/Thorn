@@ -58,3 +58,25 @@ numberOfPlacedDiscs gameStatus =
 
         Nothing ->
             0
+
+
+minBid : GameStatusMessage -> Int
+minBid gameStatus =
+    case gameStatus.game.round of
+        Just (InitialDiscs _) ->
+            1
+
+        Just (Placing _) ->
+            1
+
+        Just (Bidding biddingData) ->
+            Maybe.withDefault 1 <| List.maximum <| List.map (\b -> b + 1) <| Dict.values biddingData.bids
+
+        Just (Flipping flippingData) ->
+            Maybe.withDefault 1 <| List.maximum <| List.map (\b -> b + 1) <| Dict.values flippingData.bids
+
+        Just (Finished _) ->
+            1
+
+        Nothing ->
+            1
