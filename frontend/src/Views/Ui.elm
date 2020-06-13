@@ -10,9 +10,10 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
 import GameLogic exposing (isActive, isCreator, numberOfPlacedDiscs)
+import List.Extra
 import Maybe.Extra
 import Model exposing (..)
-import Views.Styles exposing (buttonStyles, size3)
+import Views.Styles exposing (buttonStyles, colourError, size3, textColourLight)
 
 
 type alias Page =
@@ -109,6 +110,21 @@ view model =
                     , width fill
                     ]
                     page.nav
+                , column
+                    [ width fill ]
+                  <|
+                    List.map
+                        (\uiErr ->
+                            paragraph
+                                [ width fill
+                                , Background.color colourError
+                                , Font.color textColourLight
+                                , padding size3
+                                ]
+                                [ text uiErr.failure.friendlyMessage ]
+                        )
+                    <|
+                        List.Extra.uniqueBy (\uiErr -> uiErr.failure.friendlyMessage) model.errors
                 , el
                     [ Region.mainContent
                     , width fill

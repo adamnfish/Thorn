@@ -23,7 +23,7 @@ update msg model =
                 filteredErrors =
                     List.filter
                         (\uiErr ->
-                            Time.posixToMillis uiErr.time + 6000 < Time.posixToMillis time
+                            Time.posixToMillis uiErr.time + 6000 > Time.posixToMillis time
                         )
                         model.errors
             in
@@ -854,7 +854,7 @@ displayFailure : Model -> Failure -> Model
 displayFailure model failure =
     let
         error =
-            { message = failure
+            { failure = failure
             , time = model.now
             }
     in

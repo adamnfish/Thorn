@@ -74,7 +74,7 @@ type LoadingStatus
 
 
 type alias UIError =
-    { message : Failure
+    { failure : Failure
     , time : Time.Posix
     }
 

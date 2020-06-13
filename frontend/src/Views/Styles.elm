@@ -96,6 +96,11 @@ colourCta =
     rgb255 20 80 80
 
 
+colourError : Color
+colourError =
+    rgb255 150 60 50
+
+
 textColourDark : Color
 textColourDark =
     rgba255 10 10 10 0.8
