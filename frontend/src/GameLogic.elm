@@ -1,7 +1,7 @@
 module GameLogic exposing (..)
 
 import Dict
-import Model exposing (Game, GameStatusMessage, Round(..), Self)
+import Model exposing (Game, GameStatusMessage, Player, PlayerId, Round(..), Self, getPid)
 
 
 isCreator : Game -> Self -> Bool
@@ -80,3 +80,33 @@ minBid gameStatus =
 
         Nothing ->
             1
+
+
+allFlipped : GameStatusMessage -> PlayerId -> Bool
+allFlipped gameStatus playerId =
+    case gameStatus.game.round of
+        Just (InitialDiscs _) ->
+            False
+
+        Just (Placing _) ->
+            False
+
+        Just (Bidding _) ->
+            False
+
+        Just (Flipping flippingData) ->
+            let
+                maybePlayerDiscCount =
+                    Dict.get (getPid playerId) flippingData.discs
+
+                maybePlayerRevealedCount =
+                    Maybe.map List.length <|
+                        Dict.get (getPid playerId) flippingData.revealed
+            in
+            Maybe.withDefault False <| Maybe.map2 (>=) maybePlayerRevealedCount maybePlayerDiscCount
+
+        Just (Finished _) ->
+            False
+
+        Nothing ->
+            False

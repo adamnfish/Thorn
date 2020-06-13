@@ -9,7 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import GameLogic exposing (isActive, isCreator, minBid, numberOfPlacedDiscs)
+import GameLogic exposing (allFlipped, isActive, isCreator, minBid, numberOfPlacedDiscs)
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
@@ -468,6 +468,9 @@ bidOrPass model gameStatus maybeSelection =
 flip : Model -> GameStatusMessage -> Maybe PlayerId -> Element Msg
 flip model gameStatus maybeStack =
     let
+        allOwnFlipped =
+            allFlipped gameStatus gameStatus.self.playerId
+
         buttons =
             case maybeStack of
                 Just stackId ->
@@ -482,13 +485,21 @@ flip model gameStatus maybeStack =
                     ]
 
                 Nothing ->
-                    [ Element.none ]
+                    if allOwnFlipped then
+                        [ Element.none ]
+
+                    else
+                        [ Input.button buttonStyles
+                            { onPress = Just <| InputFlip gameStatus.self.playerId
+                            , label = text "Flip"
+                            }
+                        ]
     in
     column []
         [ paragraph []
             [ text "Flipping" ]
         , row [] buttons
-        , playersList gameStatus True
+        , playersList gameStatus allOwnFlipped
         ]
 
 
@@ -606,10 +617,14 @@ playersList gameStatus showStackSelector =
 
 playerDisplay : GameStatusMessage -> Bool -> Player -> Element Msg
 playerDisplay gameStatus showStackSelector player =
+    let
+        hasDiscsUnflipped =
+            not <| allFlipped gameStatus player.playerId
+    in
     row [ spacing size3 ]
         [ text player.screenName
         , text <| String.fromInt player.discCount
-        , if showStackSelector then
+        , if showStackSelector && hasDiscsUnflipped then
             Input.button buttonStyles
                 { onPress = Just <| InputFlip player.playerId
                 , label = text "Flip"
