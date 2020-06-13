@@ -2,6 +2,7 @@ module Msg exposing (..)
 
 import Browser.Dom
 import Dict exposing (Dict)
+import GameLogic exposing (isActive, isCreator)
 import Json.Decode
 import List.Extra
 import Model exposing (..)
@@ -9,7 +10,6 @@ import Ports exposing (reportError, sendMessage)
 import Task
 import Time
 import Utils exposing (flip)
-import Views.GameLogic exposing (isActive)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -132,7 +132,7 @@ update msg model =
                     , sendReconnect welcome
                     )
 
-                BidScreen _ _ welcome _ ->
+                BidOrPassScreen _ _ welcome _ ->
                     ( newModel
                     , sendReconnect welcome
                     )
@@ -259,7 +259,7 @@ update msg model =
                     )
 
                 DiscOrBidScreen _ gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = DiscOrBidScreen (Just <| DiscSelected disc) gameStatus welcomeMessage loadingStatus }
+                    ( { model | ui = DiscOrBidScreen (DiscOrBidDisc disc) gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
@@ -279,8 +279,8 @@ update msg model =
                     , Cmd.none
                     )
 
-                DiscOrBidScreen (Just (DiscSelected _)) gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = DiscOrBidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                DiscOrBidScreen (DiscOrBidDisc _) gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen DiscOrBidNoSelection gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
@@ -310,7 +310,7 @@ update msg model =
                     )
 
                 DiscOrBidScreen _ gameStatus welcomeMessage _ ->
-                    ( { model | ui = DiscOrBidScreen (Just <| DiscSelected disc) gameStatus welcomeMessage AwaitingMessage }
+                    ( { model | ui = DiscOrBidScreen (DiscOrBidDisc disc) gameStatus welcomeMessage AwaitingMessage }
                     , sendPlaceDisc
                         { gameId = welcomeMessage.gameId
                         , playerId = welcomeMessage.playerId
@@ -331,12 +331,12 @@ update msg model =
         InputBid bid ->
             case model.ui of
                 DiscOrBidScreen _ gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = DiscOrBidScreen (Just <| BidSelected bid) gameStatus welcomeMessage loadingStatus }
+                    ( { model | ui = DiscOrBidScreen (DiscOrBidBid bid) gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
-                BidScreen _ gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = BidScreen (Just bid) gameStatus welcomeMessage loadingStatus }
+                BidOrPassScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = BidOrPassScreen (BidOrPassBid bid) gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
@@ -351,8 +351,8 @@ update msg model =
 
         InputRemoveBid ->
             case model.ui of
-                DiscOrBidScreen (Just (BidSelected _)) gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = DiscOrBidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                DiscOrBidScreen (DiscOrBidBid _) gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = DiscOrBidScreen DiscOrBidNoSelection gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
@@ -360,8 +360,8 @@ update msg model =
                     -- don't remove disc selection from "remove bid" message
                     ( model, Cmd.none )
 
-                BidScreen _ gameStatus welcomeMessage loadingStatus ->
-                    ( { model | ui = BidScreen Nothing gameStatus welcomeMessage loadingStatus }
+                BidOrPassScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = BidOrPassScreen BidOrPassNoSelection gameStatus welcomeMessage loadingStatus }
                     , Cmd.none
                     )
 
@@ -377,7 +377,7 @@ update msg model =
         SubmitBid bid ->
             case model.ui of
                 DiscOrBidScreen _ gameStatus welcomeMessage _ ->
-                    ( { model | ui = DiscOrBidScreen (Just <| BidSelected bid) gameStatus welcomeMessage AwaitingMessage }
+                    ( { model | ui = DiscOrBidScreen (DiscOrBidBid bid) gameStatus welcomeMessage AwaitingMessage }
                     , sendBid
                         { gameId = welcomeMessage.gameId
                         , playerId = welcomeMessage.playerId
@@ -386,8 +386,8 @@ update msg model =
                         }
                     )
 
-                BidScreen _ gameStatus welcomeMessage _ ->
-                    ( { model | ui = BidScreen (Just bid) gameStatus welcomeMessage AwaitingMessage }
+                BidOrPassScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = BidOrPassScreen (BidOrPassBid bid) gameStatus welcomeMessage AwaitingMessage }
                     , sendBid
                         { gameId = welcomeMessage.gameId
                         , playerId = welcomeMessage.playerId
@@ -399,6 +399,151 @@ update msg model =
                 _ ->
                     ( displayFailure model
                         { friendlyMessage = "You can only place discs when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputPass ->
+            case model.ui of
+                BidOrPassScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = BidOrPassScreen BidOrPassPass gameStatus welcomeMessage AwaitingMessage }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only bid when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputRemovePass ->
+            case model.ui of
+                BidOrPassScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = BidOrPassScreen BidOrPassNoSelection gameStatus welcomeMessage AwaitingMessage }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only bid when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        SubmitPass ->
+            case model.ui of
+                BidOrPassScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = BidOrPassScreen BidOrPassPass gameStatus welcomeMessage AwaitingMessage }
+                    , sendPass
+                        { gameId = welcomeMessage.gameId
+                        , playerId = welcomeMessage.playerId
+                        , playerKey = welcomeMessage.playerKey
+                        }
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only bid when it is your turn"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputFlip stackId ->
+            case model.ui of
+                FlipScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = FlipScreen (Just stackId) gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only flip discs when it is your turn to do so"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        InputRemoveFlip ->
+            case model.ui of
+                FlipScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = FlipScreen Nothing gameStatus welcomeMessage loadingStatus }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only flip discs when it is your turn to do so"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        SubmitFlip stackId ->
+            case model.ui of
+                FlipScreen _ gameStatus welcomeMessage _ ->
+                    ( { model | ui = FlipScreen (Just stackId) gameStatus welcomeMessage AwaitingMessage }
+                    , sendFlip
+                        { gameId = welcomeMessage.gameId
+                        , playerId = welcomeMessage.playerId
+                        , playerKey = welcomeMessage.playerKey
+                        , stack = stackId
+                        }
+                    )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only flip discs when it is your turn to do so"
+                        , statusCode = 400
+                        , context = Nothing
+                        }
+                    , Cmd.none
+                    )
+
+        SubmitNewRound ->
+            case model.ui of
+                DisplayGameScreen gameStatus welcomeMessage ->
+                    case ( gameStatus.game.round, isCreator gameStatus.game gameStatus.self ) of
+                        ( Just (Finished _), True ) ->
+                            ( { model | ui = DisplayGameScreen gameStatus welcomeMessage }
+                            , sendNewRound
+                                { gameId = welcomeMessage.gameId
+                                , playerId = welcomeMessage.playerId
+                                , playerKey = welcomeMessage.playerKey
+                                }
+                            )
+
+                        ( _, True ) ->
+                            ( displayFailure model
+                                { friendlyMessage = "You can only start a new round after the current one is finished"
+                                , statusCode = 400
+                                , context = Nothing
+                                }
+                            , Cmd.none
+                            )
+
+                        ( _, False ) ->
+                            ( displayFailure model
+                                { friendlyMessage = "Only the game's creator can start a new round"
+                                , statusCode = 400
+                                , context = Nothing
+                                }
+                            , Cmd.none
+                            )
+
+                _ ->
+                    ( displayFailure model
+                        { friendlyMessage = "You can only flip discs when it is your turn to do so"
                         , statusCode = 400
                         , context = Nothing
                         }
@@ -598,14 +743,14 @@ gameStatusMessageUpdate model gameStatusMessage =
                 , Cmd.none
                 )
 
-        BidScreen maybeBid _ welcomeMessage loadingStatus ->
+        BidOrPassScreen maybeBid _ welcomeMessage loadingStatus ->
             if welcomeMessage.gameId == gameStatusMessage.game.gameId then
                 if nowActive then
                     case gameStatusMessage.game.round of
                         Just (Bidding _) ->
                             -- server state matches client, update data and keep same screen
                             ( { model
-                                | ui = BidScreen maybeBid gameStatusMessage welcomeMessage loadingStatus
+                                | ui = BidOrPassScreen maybeBid gameStatusMessage welcomeMessage loadingStatus
                                 , library = newLibrary
                               }
                             , Cmd.none
@@ -687,10 +832,10 @@ uiForGameState gameStatusMessage welcomeMessage =
                 PlaceDiscScreen Nothing gameStatusMessage welcomeMessage NotLoading
 
             Just (Placing _) ->
-                DiscOrBidScreen Nothing gameStatusMessage welcomeMessage NotLoading
+                DiscOrBidScreen DiscOrBidNoSelection gameStatusMessage welcomeMessage NotLoading
 
             Just (Bidding _) ->
-                BidScreen Nothing gameStatusMessage welcomeMessage NotLoading
+                BidOrPassScreen BidOrPassNoSelection gameStatusMessage welcomeMessage NotLoading
 
             Just (Flipping _) ->
                 FlipScreen Nothing gameStatusMessage welcomeMessage NotLoading

@@ -468,6 +468,27 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
             activePlayer shouldEqual player1.playerId
           }
 
+          "if the bid is equal to the number of discs" - {
+            "advances to flipping" in {
+              val result = bidOnRound(6, creator.playerId, testGame).value()
+              result.round.value.asInstanceOf[Flipping]
+            }
+
+            "sets up new round correctly" in {
+              val result = bidOnRound(6, creator.playerId, testGame).value()
+              val flipping = result.round.value.asInstanceOf[Flipping]
+              flipping should have(
+                "activePlayer" as creator.playerId.pid,
+                "target" as 6,
+                "discs" as Map(
+                  creator.playerId -> List(Rose, Rose),
+                  player1.playerId -> List(Rose, Rose),
+                  player2.playerId -> List(Thorn, Rose),
+                )
+              )
+            }
+          }
+
           "fails if the bid exceeds the number of discs" in {
             bidOnRound(8, creator.playerId, testGame).isFailedAttempt()
           }
@@ -1409,24 +1430,24 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
         )
 
         "sets up the new game round correctly" - {
-          "new round is 'placing'" in {
+          "new round is 'initial discs'" in {
             val nextRound = newRound(finishedGame).value().round.value
-            nextRound shouldBe a[Placing]
+            nextRound shouldBe a[InitialDiscs]
           }
 
           "no discs are placed" in {
             val nextRound = newRound(finishedGame).value().round.value
-            nextRound shouldBe a[Placing]
-            nextRound.asInstanceOf[Placing].discs shouldBe empty
+            nextRound shouldBe a[InitialDiscs]
+            nextRound.asInstanceOf[InitialDiscs].initialDiscs shouldBe empty
           }
 
-          "active player is the round winner if they succeeded" in {
+          "first player is the round winner if they succeeded" in {
             val nextRound = newRound(finishedGame).value().round.value
-            nextRound shouldBe a[Placing]
-            nextRound.asInstanceOf[Placing].activePlayer shouldBe creator.playerId
+            nextRound shouldBe a[InitialDiscs]
+            nextRound.asInstanceOf[InitialDiscs].firstPlayer shouldBe creator.playerId
           }
 
-          "active player is the player with a revealed Thorn if round failed" in {
+          "first player is the player with a revealed Thorn if round failed" in {
             val nextRound = newRound(
               finishedGame.copy(
                 round = Some(finishedRound.copy(
@@ -1439,8 +1460,8 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
                 ))
               )
             ).value().round.value
-            nextRound shouldBe a[Placing]
-            nextRound.asInstanceOf[Placing].activePlayer shouldBe player2.playerId
+            nextRound shouldBe a[InitialDiscs]
+            nextRound.asInstanceOf[InitialDiscs].firstPlayer shouldBe player2.playerId
           }
         }
 

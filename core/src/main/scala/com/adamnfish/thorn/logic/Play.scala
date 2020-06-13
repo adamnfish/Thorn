@@ -205,6 +205,18 @@ object Play {
               400
             )
           }
+        } else if (count == numberOfDiscs) {
+          Attempt.Right(
+            game.copy(
+              round = Some(Flipping(
+                activePlayer = placing.activePlayer,
+                target = count,
+                bids = Map(playerId -> count),
+                discs = placing.discs,
+                revealed = Map.empty
+              ))
+            )
+          )
         } else {
           Attempt.Right {
             game.copy(
@@ -482,7 +494,7 @@ object Play {
           case Some(winner) =>
             Attempt.Left {
               Failure(
-                s"Cannot start a new round after a player has won s:${winner.score}, d:${winner.roseCount}-${winner.hasThorn}",
+                s"Cannot start a new round after a player has won, score:${winner.score}, discs:${winner.roseCount}-${winner.hasThorn}",
                 s"Can't start a new round because ${winner.screenName} has won this game",
                 400
               )
@@ -507,9 +519,9 @@ object Play {
                   )
                 }
             } yield game.copy(
-              round = Some(Placing(
-                activePlayer = activePlayer,
-                discs = Map.empty,
+              round = Some(InitialDiscs(
+                firstPlayer = activePlayer,
+                initialDiscs = Map.empty,
               ))
             )
         }

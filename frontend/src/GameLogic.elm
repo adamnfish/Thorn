@@ -1,5 +1,6 @@
-module Views.GameLogic exposing (..)
+module GameLogic exposing (..)
 
+import Dict
 import Model exposing (Game, GameStatusMessage, Round(..), Self)
 
 
@@ -35,3 +36,25 @@ isActive gameStatus =
 
         Nothing ->
             False
+
+
+numberOfPlacedDiscs : GameStatusMessage -> Int
+numberOfPlacedDiscs gameStatus =
+    case gameStatus.game.round of
+        Just (InitialDiscs initialDiscsData) ->
+            List.sum <| Dict.values initialDiscsData.initialDiscs
+
+        Just (Placing placingData) ->
+            List.sum <| Dict.values placingData.discs
+
+        Just (Bidding biddingData) ->
+            List.sum <| Dict.values biddingData.discs
+
+        Just (Flipping flippingData) ->
+            List.sum <| Dict.values flippingData.discs
+
+        Just (Finished finishedData) ->
+            List.sum <| Dict.values finishedData.discs
+
+        Nothing ->
+            0

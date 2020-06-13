@@ -8,9 +8,11 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import Element.Region as Region
+import GameLogic exposing (isActive, isCreator, numberOfPlacedDiscs)
 import Maybe.Extra
 import Model exposing (..)
-import Views.GameLogic exposing (isActive, isCreator)
+import Views.Styles exposing (buttonStyles, size3)
 
 
 type alias Page =
@@ -65,42 +67,61 @@ view model =
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                DisplayGameScreen gameStatus welcomeMessage ->
+                DisplayGameScreen gameStatus _ ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = currentGame model gameStatus welcomeMessage
+                    , body = currentGame model gameStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                PlaceDiscScreen maybeDisc gameStatus welcomeMessage loadingStatus ->
+                PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = placeDisc model gameStatus welcomeMessage maybeDisc
+                    , body = placeDisc model gameStatus maybeDisc
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                DiscOrBidScreen maybeSelection gameStatus welcomeMessage loadingStatus ->
+                DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = discOrBid model gameStatus welcomeMessage maybeSelection
+                    , body = discOrBid model gameStatus maybeSelection
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                BidScreen maybeInt gameStatus welcomeMessage loadingStatus ->
+                BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = bidUi model gameStatus welcomeMessage maybeInt
+                    , body = bidOrPass model gameStatus maybeInt
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
 
-                FlipScreen maybePlayerId gameStatus welcomeMessage loadingStatus ->
+                FlipScreen maybeStack gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
-                    , body = currentGame model gameStatus welcomeMessage
+                    , body = flip model gameStatus maybeStack
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     }
     in
     { title = page.title
     , body =
         [ layout [] <|
-            Element.column []
-                [ page.nav
-                , page.body
+            Element.column
+                [ height fill
+                , width fill
+                ]
+                [ el
+                    [ Region.navigation
+                    , width fill
+                    ]
+                    page.nav
+                , el
+                    [ Region.mainContent
+                    , width fill
+                    , height fill
+                    ]
+                    page.body
+                , el
+                    [ Region.footer
+                    , width fill
+                    ]
+                  <|
+                    row []
+                        [ text "Thorn" ]
                 ]
         ]
     }
@@ -111,7 +132,7 @@ nav navEntries =
     Element.row [] <|
         List.map
             (\( msg, label ) ->
-                Input.button []
+                Input.button buttonStyles
                     { onPress = Just msg
                     , label = text label
                     }
@@ -128,7 +149,7 @@ home model =
                     case gameInProgress of
                         Playing gameStatus welcomeMessage ->
                             row []
-                                [ Input.button []
+                                [ Input.button buttonStyles
                                     { onPress = Just <| NavigateGame gameStatus welcomeMessage
                                     , label = text <| gameStatus.self.screenName ++ " in " ++ gameStatus.game.gameName
                                     }
@@ -140,19 +161,18 @@ home model =
             <|
                 Dict.values model.library
     in
-    el [] <|
-        column
-            []
-            [ Input.button []
-                { onPress = Just NavigateCreateGame
-                , label = text "Create game"
-                }
-            , Input.button []
-                { onPress = Just NavigateJoinGame
-                , label = text "Join game"
-                }
-            , column [] availableGames
-            ]
+    column
+        []
+        [ Input.button buttonStyles
+            { onPress = Just NavigateCreateGame
+            , label = text "Create game"
+            }
+        , Input.button buttonStyles
+            { onPress = Just NavigateJoinGame
+            , label = text "Join game"
+            }
+        , column [] availableGames
+        ]
 
 
 createGame : Model -> String -> String -> LoadingStatus -> Element Msg
@@ -171,7 +191,7 @@ createGame model gameName screenName loadingStatus =
             , placeholder = Nothing
             , label = Input.labelAbove [] <| text "Screen name"
             }
-        , Input.button []
+        , Input.button buttonStyles
             { onPress = Just <| SubmitCreateGame gameName screenName
             , label = text "Create game"
             }
@@ -194,7 +214,7 @@ joinGame model gameCode screenName loadingStatus =
             , placeholder = Nothing
             , label = Input.labelAbove [] <| text "Screen name"
             }
-        , Input.button []
+        , Input.button buttonStyles
             { onPress = Just <| SubmitJoinGame gameCode screenName
             , label = text "Join game"
             }
@@ -221,7 +241,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 Just gameStatus ->
                     if isCreator gameStatus.game gameStatus.self then
                         if List.length playerOrder >= 3 then
-                            Input.button []
+                            Input.button buttonStyles
                                 { onPress = Just SubmitStartGame
                                 , label = text "Start game"
                                 }
@@ -246,12 +266,12 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
         ]
 
 
-placeDisc : Model -> GameStatusMessage -> WelcomeMessage -> Maybe Disc -> Element Msg
-placeDisc model gameStatus welcomeMessage maybeDisc =
+placeDisc : Model -> GameStatusMessage -> Maybe Disc -> Element Msg
+placeDisc model gameStatus maybeDisc =
     let
         roseButton =
             if gameStatus.self.roseCount > 0 then
-                Input.button []
+                Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Rose
                     , label = text "Rose"
                     }
@@ -261,7 +281,7 @@ placeDisc model gameStatus welcomeMessage maybeDisc =
 
         thornButton =
             if gameStatus.self.hasThorn then
-                Input.button []
+                Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Thorn
                     , label = text "Thorn"
                     }
@@ -272,11 +292,11 @@ placeDisc model gameStatus welcomeMessage maybeDisc =
         buttons =
             case maybeDisc of
                 Just disc ->
-                    [ Input.button []
+                    [ Input.button buttonStyles
                         { onPress = Just <| InputRemovePlaceDisc
                         , label = text "Clear"
                         }
-                    , Input.button []
+                    , Input.button buttonStyles
                         { onPress = Just <| SubmitPlaceDisc disc
                         , label = text "Submit"
                         }
@@ -288,20 +308,20 @@ placeDisc model gameStatus welcomeMessage maybeDisc =
     column []
         [ paragraph []
             [ text "Place initial disc" ]
-        , column [] buttons
+        , row [] buttons
+        , playersList gameStatus False
         ]
 
 
-discOrBid : Model -> GameStatusMessage -> WelcomeMessage -> Maybe DiscOrBid -> Element Msg
-discOrBid model gameStatus welcomeMessage maybeSelection =
+discOrBid : Model -> GameStatusMessage -> DiscOrBid -> Element Msg
+discOrBid model gameStatus maybeSelection =
     let
-        -- TODO: calculate from model
-        numberOfPlacedDiscs =
-            3
+        maxBid =
+            numberOfPlacedDiscs gameStatus
 
         roseButton =
             if gameStatus.self.roseCount > 0 then
-                Input.button []
+                Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Rose
                     , label = text "Rose"
                     }
@@ -311,7 +331,7 @@ discOrBid model gameStatus welcomeMessage maybeSelection =
 
         thornButton =
             if gameStatus.self.hasThorn then
-                Input.button []
+                Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Thorn
                     , label = text "Thorn"
                     }
@@ -322,118 +342,257 @@ discOrBid model gameStatus welcomeMessage maybeSelection =
         bidButtons =
             List.map
                 (\count ->
-                    Input.button []
+                    Input.button buttonStyles
                         { onPress = Just <| InputBid count
                         , label = text <| String.fromInt count
                         }
                 )
             <|
-                List.range 1 numberOfPlacedDiscs
+                List.range 1 maxBid
 
         bidButtonContainer =
             row [] bidButtons
 
         buttons =
             case maybeSelection of
-                Just (DiscSelected disc) ->
-                    [ Input.button []
-                        { onPress = Just <| InputRemovePlaceDisc
+                DiscOrBidDisc disc ->
+                    [ Input.button buttonStyles
+                        { onPress = Just InputRemovePlaceDisc
                         , label = text "Clear"
                         }
-                    , Input.button []
+                    , Input.button buttonStyles
                         { onPress = Just <| SubmitPlaceDisc disc
                         , label = text "Submit"
                         }
                     ]
 
-                Just (BidSelected bid) ->
-                    [ Input.button []
-                        { onPress = Just <| InputRemoveBid
+                DiscOrBidBid bid ->
+                    [ Input.button buttonStyles
+                        { onPress = Just InputRemoveBid
                         , label = text "Clear"
                         }
-                    , Input.button []
+                    , Input.button buttonStyles
                         { onPress = Just <| SubmitBid bid
                         , label = text "Submit"
                         }
                     ]
 
-                Nothing ->
+                DiscOrBidNoSelection ->
                     [ roseButton, thornButton, bidButtonContainer ]
     in
     column []
         [ paragraph []
             [ text "Place disc or open the bidding" ]
-        , column [] buttons
+        , row [] buttons
+        , playersList gameStatus False
         ]
 
 
-bidUi : Model -> GameStatusMessage -> WelcomeMessage -> Maybe Int -> Element Msg
-bidUi model gameStatus welcomeMessage maybeSelection =
+bidOrPass : Model -> GameStatusMessage -> BidOrPass -> Element Msg
+bidOrPass model gameStatus maybeSelection =
     let
-        -- TODO: calculate from model
-        numberOfPlacedDiscs =
-            3
+        maxBid =
+            numberOfPlacedDiscs gameStatus
 
         bidButtons =
             List.map
                 (\count ->
-                    Input.button []
+                    Input.button buttonStyles
                         { onPress = Just <| InputBid count
                         , label = text <| String.fromInt count
                         }
                 )
             <|
-                List.range 1 numberOfPlacedDiscs
+                List.range 1 maxBid
 
         bidButtonContainer =
             row [] bidButtons
 
         buttons =
             case maybeSelection of
-                Just bid ->
-                    [ Input.button []
-                        { onPress = Just <| InputRemoveBid
+                BidOrPassBid bid ->
+                    [ Input.button buttonStyles
+                        { onPress = Just InputRemoveBid
                         , label = text "Clear"
                         }
-                    , Input.button []
+                    , Input.button buttonStyles
                         { onPress = Just <| SubmitBid bid
                         , label = text "Submit"
                         }
                     ]
 
-                Nothing ->
-                    [ bidButtonContainer ]
+                BidOrPassPass ->
+                    [ Input.button buttonStyles
+                        { onPress = Just InputRemovePass
+                        , label = text "Clear"
+                        }
+                    , Input.button buttonStyles
+                        { onPress = Just SubmitPass
+                        , label = text "Submit"
+                        }
+                    ]
+
+                BidOrPassNoSelection ->
+                    [ bidButtonContainer
+                    , Input.button buttonStyles
+                        { onPress = Just InputPass
+                        , label = text "Pass"
+                        }
+                    ]
     in
     column []
         [ paragraph []
-            [ text "Bid or pass (pass is not implemented yet)" ]
-        , column [] buttons
+            [ text "Bid or pass" ]
+        , row [] buttons
+        , playersList gameStatus False
         ]
 
 
-currentGame : Model -> GameStatusMessage -> WelcomeMessage -> Element Msg
-currentGame model gameStatus welcomeMessage =
+flip : Model -> GameStatusMessage -> Maybe PlayerId -> Element Msg
+flip model gameStatus maybeStack =
+    let
+        buttons =
+            case maybeStack of
+                Just stackId ->
+                    [ Input.button buttonStyles
+                        { onPress = Just InputRemoveFlip
+                        , label = text "Clear"
+                        }
+                    , Input.button buttonStyles
+                        { onPress = Just <| SubmitFlip stackId
+                        , label = text "Submit"
+                        }
+                    ]
+
+                Nothing ->
+                    [ Element.none ]
+    in
+    column []
+        [ paragraph []
+            [ text "Flipping" ]
+        , row [] buttons
+        , playersList gameStatus True
+        ]
+
+
+currentGame : Model -> GameStatusMessage -> Element Msg
+currentGame model gameStatus =
     let
         roundInfo =
             case gameStatus.game.round of
                 Just (InitialDiscs initialDiscs) ->
-                    1
+                    paragraph []
+                        [ text "Waiting for other players to place a disc" ]
 
                 Just (Placing placing) ->
-                    1
+                    paragraph []
+                        [ text "Waiting for other players to place a disc or start the bidding" ]
 
                 Just (Bidding bidding) ->
-                    1
+                    paragraph []
+                        [ text "Waiting for other players to bid or pass" ]
 
                 Just (Flipping flipping) ->
-                    1
+                    paragraph []
+                        [ text "Another player is trying to win the round" ]
 
                 Just (Finished finished) ->
-                    1
+                    let
+                        newRoundButton =
+                            if isCreator gameStatus.game gameStatus.self then
+                                Input.button buttonStyles
+                                    { onPress = Just SubmitNewRound
+                                    , label = text "Next round"
+                                    }
+
+                            else
+                                Element.none
+
+                        finishedMessage =
+                            if finished.successful then
+                                if finished.activePlayer == gameStatus.self.playerId then
+                                    paragraph []
+                                        [ text "You have won the round" ]
+
+                                else
+                                    paragraph []
+                                        [ text "Another player has won the round" ]
+
+                            else if finished.activePlayer == gameStatus.self.playerId then
+                                paragraph []
+                                    [ text "You have hit a skull and failed to win the round" ]
+
+                            else
+                                paragraph []
+                                    [ text "Another player failed to win the round" ]
+                    in
+                    column []
+                        [ finishedMessage, newRoundButton ]
 
                 Nothing ->
-                    1
+                    Element.none
     in
-    el
+    column
         []
-        (text "showing game")
+        [ roundInfo
+        , text <|
+            if gameStatus.self.hasThorn then
+                "Thorn"
+
+            else
+                "No Thorn"
+        , text <|
+            if gameStatus.self.roseCount == 0 then
+                "No Roses"
+
+            else if gameStatus.self.roseCount == 1 then
+                "1 Rose"
+
+            else
+                String.fromInt gameStatus.self.roseCount ++ " Roses"
+        , playersList gameStatus False
+        ]
+
+
+playersList : GameStatusMessage -> Bool -> Element Msg
+playersList gameStatus showStackSelector =
+    column []
+        [ column []
+            [ text gameStatus.self.screenName
+            , text <|
+                if gameStatus.self.hasThorn then
+                    "Thorn"
+
+                else
+                    "No Thorn"
+            , text <|
+                if gameStatus.self.roseCount == 0 then
+                    "No Roses"
+
+                else if gameStatus.self.roseCount == 1 then
+                    "1 Rose"
+
+                else
+                    String.fromInt gameStatus.self.roseCount ++ " Roses"
+            ]
+
+        -- TODO: exclude self, order from self
+        , column [] <|
+            List.map (playerDisplay gameStatus showStackSelector) gameStatus.game.players
+        ]
+
+
+playerDisplay : GameStatusMessage -> Bool -> Player -> Element Msg
+playerDisplay gameStatus showStackSelector player =
+    row [ spacing size3 ]
+        [ text player.screenName
+        , text <| String.fromInt player.discCount
+        , if showStackSelector then
+            Input.button buttonStyles
+                { onPress = Just <| InputFlip player.playerId
+                , label = text "Flip"
+                }
+
+          else
+            Element.none
+        ]

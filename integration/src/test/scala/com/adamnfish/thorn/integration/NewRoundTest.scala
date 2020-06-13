@@ -78,10 +78,10 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
         ).isSuccessfulAttempt()
 
         val gameStatus = Fixtures.newRound(testGame.creator, context(Fixtures.creatorAddress)).value().messages.head._2
-        gameStatus.game.round.value shouldBe a[PlacingSummary]
-        gameStatus.game.round.value.asInstanceOf[PlacingSummary] should have(
+        gameStatus.game.round.value shouldBe a[InitialDiscsSummary]
+        gameStatus.game.round.value.asInstanceOf[InitialDiscsSummary] should have(
           "activePlayer" as testGame.creator.playerId.pid,
-          "discs" as Map.empty,
+          "initialDiscs" as Map.empty,
         )
       }
     }
@@ -122,7 +122,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
 
         val gameDb = db.getGame(testGame.gameId).value().value
         gameDb should have(
-          "roundState" as "placing",
+          "roundState" as "initial-discs",
           "currentPlayer" as Some(testGame.creator.playerId.pid),
           "revealedDiscs" as Map.empty,
         )
@@ -197,10 +197,10 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
         ).isSuccessfulAttempt()
 
         val gameStatus = Fixtures.newRound(testGame.creator, context(Fixtures.creatorAddress)).value().messages.head._2
-        gameStatus.game.round.value shouldBe a[PlacingSummary]
-        gameStatus.game.round.value.asInstanceOf[PlacingSummary] should have(
+        gameStatus.game.round.value shouldBe a[InitialDiscsSummary]
+        gameStatus.game.round.value.asInstanceOf[InitialDiscsSummary] should have(
           "activePlayer" as testGame.player1.playerId.pid,
-          "discs" as Map.empty,
+          "initialDiscs" as Map.empty,
         )
       }
     }
@@ -235,7 +235,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
 
         val gameDb = db.getGame(testGame.gameId).value().value
         gameDb should have(
-          "roundState" as "placing",
+          "roundState" as "initial-discs",
           "currentPlayer" as Some(testGame.player1.playerId.pid),
           "revealedDiscs" as Map.empty,
         )

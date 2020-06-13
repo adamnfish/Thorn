@@ -37,16 +37,13 @@ type Msg
     | InputBid Int
     | InputRemoveBid
     | SubmitBid Int
-
-
-
---| InputPass
---| InputRemovePass
---| SubmitPass
---| InputFlip PlayerId
---| InputRemoveFlip
---| SubmitFlip PlayerId
---| SubmitNewRound
+    | InputPass
+    | InputRemovePass
+    | SubmitPass
+    | InputFlip PlayerId
+    | InputRemoveFlip
+    | SubmitFlip PlayerId
+    | SubmitNewRound
 
 
 type alias Model =
@@ -64,12 +61,9 @@ type UI
     | CreateGameScreen String String LoadingStatus
     | JoinGameScreen String String LoadingStatus
     | LobbyScreen (List Player) WelcomeMessage LoadingStatus
-      -- TODO: this will be split into UIs for each round
-      -- Round-based UIs for when it is the player's turn
-      -- Generic "display current game" otherwise?
     | PlaceDiscScreen (Maybe Disc) GameStatusMessage WelcomeMessage LoadingStatus
-    | DiscOrBidScreen (Maybe DiscOrBid) GameStatusMessage WelcomeMessage LoadingStatus
-    | BidScreen (Maybe Int) GameStatusMessage WelcomeMessage LoadingStatus
+    | DiscOrBidScreen DiscOrBid GameStatusMessage WelcomeMessage LoadingStatus
+    | BidOrPassScreen BidOrPass GameStatusMessage WelcomeMessage LoadingStatus
     | FlipScreen (Maybe PlayerId) GameStatusMessage WelcomeMessage LoadingStatus
     | DisplayGameScreen GameStatusMessage WelcomeMessage
 
@@ -92,8 +86,15 @@ type GameInProgress
 
 
 type DiscOrBid
-    = DiscSelected Disc
-    | BidSelected Int
+    = DiscOrBidDisc Disc
+    | DiscOrBidBid Int
+    | DiscOrBidNoSelection
+
+
+type BidOrPass
+    = BidOrPassBid Int
+    | BidOrPassPass
+    | BidOrPassNoSelection
 
 
 type GameId
