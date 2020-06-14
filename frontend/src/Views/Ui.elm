@@ -9,7 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import GameLogic exposing (allFlipped, isActive, isCreator, minBid, numberOfPlacedDiscs)
+import GameLogic exposing (allFlipped, hasPlacedThorn, isActive, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount)
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
@@ -287,7 +287,7 @@ placeDisc : Model -> GameStatusMessage -> Maybe Disc -> Element Msg
 placeDisc model gameStatus maybeDisc =
     let
         roseButton =
-            if gameStatus.self.roseCount > 0 then
+            if gameStatus.self.roseCount > placedRoseCount gameStatus then
                 Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Rose
                     , label = text "Rose"
@@ -297,7 +297,7 @@ placeDisc model gameStatus maybeDisc =
                 Element.none
 
         thornButton =
-            if gameStatus.self.hasThorn then
+            if gameStatus.self.hasThorn && (not <| hasPlacedThorn gameStatus) then
                 Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Thorn
                     , label = text "Thorn"
@@ -337,7 +337,7 @@ discOrBid model gameStatus maybeSelection =
             numberOfPlacedDiscs gameStatus
 
         roseButton =
-            if gameStatus.self.roseCount > 0 then
+            if gameStatus.self.roseCount > placedRoseCount gameStatus then
                 Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Rose
                     , label = text "Rose"
@@ -347,7 +347,7 @@ discOrBid model gameStatus maybeSelection =
                 Element.none
 
         thornButton =
-            if gameStatus.self.hasThorn then
+            if gameStatus.self.hasThorn && (not <| hasPlacedThorn gameStatus) then
                 Input.button buttonStyles
                     { onPress = Just <| InputPlaceDisc Thorn
                     , label = text "Thorn"

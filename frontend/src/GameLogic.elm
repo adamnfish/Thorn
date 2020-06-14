@@ -1,7 +1,8 @@
 module GameLogic exposing (..)
 
 import Dict
-import Model exposing (Game, GameStatusMessage, Player, PlayerId, Round(..), Self, getPid)
+import List.Extra
+import Model exposing (Disc(..), Game, GameStatusMessage, Player, PlayerId, Round(..), Self, getPid)
 
 
 isCreator : Game -> Self -> Bool
@@ -58,6 +59,22 @@ numberOfPlacedDiscs gameStatus =
 
         Nothing ->
             0
+
+
+hasPlacedThorn : GameStatusMessage -> Bool
+hasPlacedThorn gameStatus =
+    Maybe.withDefault False <|
+        Maybe.map
+            (List.member Thorn)
+            gameStatus.self.placedDiscs
+
+
+placedRoseCount : GameStatusMessage -> Int
+placedRoseCount gameStatus =
+    Maybe.withDefault 0 <|
+        Maybe.map
+            (List.Extra.count (\d -> d == Rose))
+            gameStatus.self.placedDiscs
 
 
 minBid : GameStatusMessage -> Int
