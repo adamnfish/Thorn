@@ -224,8 +224,13 @@ update msg model =
 
         InputReorderPlayers playerOrder ->
             case model.ui of
-                LobbyScreen _ loadingStatus welcomeMessage ->
-                    ( { model | ui = LobbyScreen playerOrder loadingStatus welcomeMessage }
+                LobbyScreen currentOrder loadingStatus welcomeMessage ->
+                    let
+                        -- deal with edge case of new players arriving after ordering
+                        newOrder =
+                            includeAllPlayers playerOrder currentOrder
+                    in
+                    ( { model | ui = LobbyScreen newOrder loadingStatus welcomeMessage }
                     , Cmd.none
                     )
 

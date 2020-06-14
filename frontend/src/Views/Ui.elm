@@ -13,7 +13,7 @@ import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isActive, isC
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
-import Utils exposing (reorderToBy)
+import Utils exposing (reorderToBy, swapDown, swapUp)
 import Views.Styles exposing (buttonStyles, colourError, size3, textColourLight)
 
 
@@ -264,7 +264,40 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 column [] <|
                     List.map
                         (\player ->
-                            text player.screenName
+                            let
+                                last =
+                                    Maybe.withDefault False <|
+                                        Maybe.map
+                                            (\p -> p == player)
+                                        <|
+                                            List.Extra.last playerOrder
+
+                                first =
+                                    Maybe.withDefault False <|
+                                        Maybe.map
+                                            (\p -> p == player)
+                                        <|
+                                            List.head playerOrder
+                            in
+                            row []
+                                [ text player.screenName
+                                , if first then
+                                    Element.none
+
+                                  else
+                                    Input.button buttonStyles
+                                        { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
+                                        , label = text "Up"
+                                        }
+                                , if last then
+                                    Element.none
+
+                                  else
+                                    Input.button buttonStyles
+                                        { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
+                                        , label = text "Down"
+                                        }
+                                ]
                         )
                         playerOrder
 
