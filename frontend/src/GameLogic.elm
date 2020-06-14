@@ -127,3 +127,10 @@ allFlipped gameStatus playerId =
 
         Nothing ->
             False
+
+
+gameWinner : GameStatusMessage -> Maybe Player
+gameWinner gameStatus =
+    List.Extra.find
+        (\player -> player.score == 2)
+        gameStatus.game.players

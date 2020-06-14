@@ -9,7 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import GameLogic exposing (allFlipped, hasPlacedThorn, isActive, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount)
+import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isActive, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount)
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
@@ -526,8 +526,25 @@ currentGame model gameStatus =
 
                 Just (Finished finished) ->
                     let
+                        maybeWinner =
+                            gameWinner gameStatus
+
+                        winnerInfo =
+                            case maybeWinner of
+                                Just winner ->
+                                    if winner.playerId == gameStatus.self.playerId then
+                                        paragraph []
+                                            [ text "You have won the game, congratulations!" ]
+
+                                    else
+                                        paragraph []
+                                            [ text <| winner.screenName ++ " has won!" ]
+
+                                Nothing ->
+                                    Element.none
+
                         newRoundButton =
-                            if isCreator gameStatus.game gameStatus.self then
+                            if Maybe.Extra.isNothing maybeWinner && isCreator gameStatus.game gameStatus.self then
                                 Input.button buttonStyles
                                     { onPress = Just SubmitNewRound
                                     , label = text "Next round"
@@ -555,7 +572,7 @@ currentGame model gameStatus =
                                     [ text "Another player failed to win the round" ]
                     in
                     column []
-                        [ finishedMessage, newRoundButton ]
+                        [ winnerInfo, finishedMessage, newRoundButton ]
 
                 Nothing ->
                     Element.none
