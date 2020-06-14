@@ -651,7 +651,10 @@ class RepresentationsTest
 
     "generates round correctly" - {
       "if roundState is 'none'" - {
-        val gameDbWithRound = gameDb.copy(roundState = "none")
+        val gameDbWithRound = gameDb.copy(
+          roundState = "none",
+          playerIds = List(player1.playerId),
+        )
 
         "round is None" in {
           dbToGame(gameDbWithRound, playerDBs).value().round shouldEqual None
