@@ -21,6 +21,7 @@ type alias Page =
     { title : String
     , body : Element Msg
     , nav : Element Msg
+    , loading : LoadingStatus
     }
 
 
@@ -34,18 +35,21 @@ view model =
                     { title = "Thorn"
                     , body = home model
                     , nav = Element.none
+                    , loading = NotLoading
                     }
 
                 CreateGameScreen gameName screenName loadingStatus ->
                     { title = "Create game | Thorn"
                     , body = createGame model gameName screenName loadingStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 JoinGameScreen gameCode screenName loadingStatus ->
                     { title = "Join game | Thorn"
                     , body = joinGame model gameCode screenName loadingStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 LobbyScreen playerOrder welcomeMessage loadingStatus ->
@@ -67,36 +71,42 @@ view model =
                     { title = "Waiting | Thorn"
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 DisplayGameScreen gameStatus _ ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = currentGame model gameStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = NotLoading
                     }
 
                 PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = placeDisc model gameStatus maybeDisc
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = discOrBid model gameStatus maybeSelection
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = bidOrPass model gameStatus maybeInt
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
 
                 FlipScreen maybeStack gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = flip model gameStatus maybeStack
                     , nav = nav [ ( NavigateHome, "Home" ) ]
+                    , loading = loadingStatus
                     }
     in
     { title = page.title
@@ -126,6 +136,11 @@ view model =
                         )
                     <|
                         List.Extra.uniqueBy (\uiErr -> uiErr.failure.friendlyMessage) model.errors
+                , if page.loading == AwaitingMessage then
+                    text "loading..."
+
+                  else
+                    Element.none
                 , el
                     [ Region.mainContent
                     , width fill
