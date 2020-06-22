@@ -15,7 +15,7 @@ import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourPrimary, colourSecondary, size1, size2, size3, size4, textColourFeature, textColourLight)
+import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, size1, size2, size3, size4, textColourFeature, textColourLight)
 
 
 type alias Page =
@@ -280,7 +280,9 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 text "Waiting for other players"
 
             else
-                column [] <|
+                column
+                    [ width fill ]
+                <|
                     List.map
                         (\player ->
                             let
@@ -298,25 +300,50 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                         <|
                                             List.head playerOrder
                             in
-                            row []
-                                [ text player.screenName
-                                , if first then
-                                    Element.none
-
-                                  else
-                                    Input.button buttonStyles
-                                        { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
-                                        , label = text "Up"
-                                        }
-                                , if last then
-                                    Element.none
-
-                                  else
-                                    Input.button buttonStyles
-                                        { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
-                                        , label = text "Down"
-                                        }
+                            el
+                                [ width fill
+                                , Border.widthEach
+                                    { bottom = 0
+                                    , left = 0
+                                    , right = 0
+                                    , top = size1
+                                    }
+                                , Border.color colourSecondaryLight
                                 ]
+                            <|
+                                row
+                                    [ width fill
+                                    , padding size4
+                                    , Border.widthEach
+                                        { bottom = size1
+                                        , left = size4
+                                        , right = 0
+                                        , top = 0
+                                        }
+                                    , Border.color colourPrimary
+                                    , Background.gradient
+                                        { angle = 0
+                                        , steps = [ colourSecondary, colourSecondary2 ]
+                                        }
+                                    ]
+                                    [ text player.screenName
+                                    , if first then
+                                        Element.none
+
+                                      else
+                                        Input.button buttonStyles
+                                            { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
+                                            , label = text "Up"
+                                            }
+                                    , if last then
+                                        Element.none
+
+                                      else
+                                        Input.button buttonStyles
+                                            { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
+                                            , label = text "Down"
+                                            }
+                                    ]
                         )
                         playerOrder
 
@@ -341,7 +368,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                     Element.none
     in
     column
-        []
+        [ width fill ]
         [ text "Lobby"
         , text "Game code"
         , el
@@ -714,9 +741,7 @@ playersList gameStatus showStackSelector =
                 reorderToBy .playerId gameStatus.self.playerId gameStatus.game.players
     in
     column
-        [ width fill
-        , spacing <| size1
-        ]
+        [ width fill ]
     <|
         List.map (playerPublicInformation gameStatus showStackSelector) otherPlayers
 
@@ -779,7 +804,10 @@ playerPublicInformation gameStatus showStackSelector player =
         info =
             row
                 [ width fill ]
-                [ text player.screenName
+                [ el
+                    [ Font.color textColourLight ]
+                  <|
+                    text player.screenName
                 , if hasDiscsUnflipped && showStackSelector then
                     Input.button buttonStyles
                         { onPress = Just <| InputFlip player.playerId
@@ -790,30 +818,44 @@ playerPublicInformation gameStatus showStackSelector player =
                     Element.none
                 ]
     in
-    column
+    el
         [ width fill
-        , padding size4
         , Border.widthEach
-            { bottom = size1
-            , left = size4
+            { bottom = 0
+            , left = 0
             , right = 0
-            , top = 0
+            , top = size1
             }
-        , Border.color colourPrimary
-        , Background.color colourSecondary
+        , Border.color colourSecondaryLight
         ]
-        [ info
-        , row
-            [ width fill ]
-          <|
-            List.repeat player.discCount unknownDiscDisplay
-        , row
-            [ width fill ]
-          <|
-            List.append
-                (List.map discDisplay revealedDiscs)
-                (List.repeat unrevealedDiscCount unknownDiscDisplay)
-        ]
+    <|
+        column
+            [ width fill
+            , padding size4
+            , Border.widthEach
+                { bottom = size1
+                , left = size4
+                , right = 0
+                , top = 0
+                }
+            , Border.color colourPrimary
+            , Background.gradient
+                { angle = 0
+                , steps = [ colourSecondary, colourSecondary2 ]
+                }
+            ]
+            [ info
+            , row
+                [ width fill ]
+              <|
+                List.repeat player.discCount unknownDiscDisplay
+            , row
+                [ width fill ]
+              <|
+                List.append
+                    (List.map discDisplay revealedDiscs)
+                    (List.repeat unrevealedDiscCount unknownDiscDisplay)
+            ]
 
 
 discDisplay : Disc -> Element Msg

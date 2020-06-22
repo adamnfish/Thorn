@@ -76,6 +76,16 @@ colourSecondary =
     rgb255 80 90 100
 
 
+colourSecondary2 : Color
+colourSecondary2 =
+    rgb255 90 100 110
+
+
+colourSecondaryLight : Color
+colourSecondaryLight =
+    rgb255 160 170 180
+
+
 colourWhite : Color
 colourWhite =
     rgb255 240 240 240
