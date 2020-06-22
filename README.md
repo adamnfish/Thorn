@@ -62,5 +62,5 @@ With the frontend and dev-server running, you can run web automated
 tests against Thorn.
 
     cd wat
-    npm init
+    npm install
     npm run wat
