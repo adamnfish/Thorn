@@ -10,11 +10,12 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
 import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isActive, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount)
+import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, colourError, size3, textColourLight)
+import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourPrimary, colourSecondary, size1, size2, size3, size4, textColourFeature, textColourLight)
 
 
 type alias Page =
@@ -22,6 +23,7 @@ type alias Page =
     , body : Element Msg
     , nav : Element Msg
     , loading : LoadingStatus
+    , ui : String
     }
 
 
@@ -36,6 +38,7 @@ view model =
                     , body = home model
                     , nav = Element.none
                     , loading = NotLoading
+                    , ui = "welcome"
                     }
 
                 CreateGameScreen gameName screenName loadingStatus ->
@@ -43,6 +46,7 @@ view model =
                     , body = createGame model gameName screenName loadingStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "create-game"
                     }
 
                 JoinGameScreen gameCode screenName loadingStatus ->
@@ -50,6 +54,7 @@ view model =
                     , body = joinGame model gameCode screenName loadingStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "join-game"
                     }
 
                 LobbyScreen playerOrder welcomeMessage loadingStatus ->
@@ -72,6 +77,7 @@ view model =
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "lobby"
                     }
 
                 DisplayGameScreen gameStatus _ ->
@@ -79,6 +85,7 @@ view model =
                     , body = currentGame model gameStatus
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = NotLoading
+                    , ui = "display-game"
                     }
 
                 PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
@@ -86,6 +93,7 @@ view model =
                     , body = placeDisc model gameStatus maybeDisc
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "place-disc"
                     }
 
                 DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
@@ -93,6 +101,7 @@ view model =
                     , body = discOrBid model gameStatus maybeSelection
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "disc-or-bid"
                     }
 
                 BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
@@ -100,6 +109,7 @@ view model =
                     , body = bidOrPass model gameStatus maybeInt
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "bid-or-pass"
                     }
 
                 FlipScreen maybeStack gameStatus _ loadingStatus ->
@@ -107,14 +117,22 @@ view model =
                     , body = flip model gameStatus maybeStack
                     , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
+                    , ui = "flip"
                     }
     in
     { title = page.title
     , body =
-        [ layout [] <|
+        [ layout
+            [ Font.family
+                [ Font.typeface "Nunito"
+                , Font.sansSerif
+                ]
+            ]
+          <|
             Element.column
                 [ height fill
                 , width fill
+                , Element.htmlAttribute <| Html.Attributes.class <| "ui--" ++ page.ui
                 ]
                 [ el
                     [ Region.navigation
@@ -256,6 +274,7 @@ joinGame model gameCode screenName loadingStatus =
 lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Maybe GameStatusMessage -> Element Msg
 lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
     let
+        -- TODO: only show reoder controls to creator
         playersEl =
             if List.isEmpty playerOrder then
                 text "Waiting for other players"
@@ -325,7 +344,11 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
         []
         [ text "Lobby"
         , text "Game code"
-        , text <| gameCode welcomeMessage.gameId
+        , el
+            [ uiHook "game-code" ]
+          <|
+            text <|
+                gameCode welcomeMessage.gameId
         , playersEl
         , startGameEl
         ]
@@ -370,8 +393,10 @@ placeDisc model gameStatus maybeDisc =
                 Nothing ->
                     [ roseButton, thornButton ]
     in
-    column []
-        [ paragraph []
+    column
+        [ width fill ]
+        [ selfSecretInformation gameStatus
+        , paragraph []
             [ text "Place initial disc" ]
         , row [] buttons
         , playersList gameStatus False
@@ -445,8 +470,10 @@ discOrBid model gameStatus maybeSelection =
                 DiscOrBidNoSelection ->
                     [ roseButton, thornButton, bidButtonContainer ]
     in
-    column []
-        [ paragraph []
+    column
+        [ width fill ]
+        [ selfSecretInformation gameStatus
+        , paragraph []
             [ text "Place disc or open the bidding" ]
         , row [] buttons
         , playersList gameStatus False
@@ -505,8 +532,10 @@ bidOrPass model gameStatus maybeSelection =
                         }
                     ]
     in
-    column []
-        [ paragraph []
+    column
+        [ width fill ]
+        [ selfSecretInformation gameStatus
+        , paragraph []
             [ text "Bid or pass" ]
         , row [] buttons
         , playersList gameStatus False
@@ -543,8 +572,10 @@ flip model gameStatus maybeStack =
                             }
                         ]
     in
-    column []
-        [ paragraph []
+    column
+        [ width fill ]
+        [ selfSecretInformation gameStatus
+        , paragraph []
             [ text "Flipping" ]
         , row [] buttons
         , playersList gameStatus allOwnFlipped
@@ -626,24 +657,50 @@ currentGame model gameStatus =
                     Element.none
     in
     column
-        []
-        [ roundInfo
-        , text <|
-            if gameStatus.self.hasThorn then
-                "Thorn"
-
-            else
-                "No Thorn"
-        , text <|
-            if gameStatus.self.roseCount == 0 then
-                "No Roses"
-
-            else if gameStatus.self.roseCount == 1 then
-                "1 Rose"
-
-            else
-                String.fromInt gameStatus.self.roseCount ++ " Roses"
+        [ width fill ]
+        [ selfSecretInformation gameStatus
+        , roundInfo
         , playersList gameStatus False
+        ]
+
+
+selfSecretInformation : GameStatusMessage -> Element Msg
+selfSecretInformation gameStatus =
+    let
+        placed =
+            Maybe.withDefault [] gameStatus.self.placedDiscs
+
+        thornEl =
+            if gameStatus.self.hasThorn then
+                discDisplay Thorn
+
+            else
+                Element.none
+
+        roseEls =
+            List.map discDisplay <|
+                List.repeat gameStatus.self.roseCount Rose
+
+        poolEls =
+            List.reverse <| thornEl :: roseEls
+    in
+    column
+        [ width fill ]
+        [ column
+            [ width fill ]
+            [ text "pool"
+            , row
+                [ spacing size3 ]
+                poolEls
+            ]
+        , column
+            [ width fill ]
+            [ text "placed"
+            , row
+                [ spacing size3 ]
+              <|
+                List.map discDisplay placed
+            ]
         ]
 
 
@@ -656,45 +713,153 @@ playersList gameStatus showStackSelector =
             <|
                 reorderToBy .playerId gameStatus.self.playerId gameStatus.game.players
     in
-    column []
-        [ column []
-            [ text gameStatus.self.screenName
-            , text <|
-                if gameStatus.self.hasThorn then
-                    "Thorn"
-
-                else
-                    "No Thorn"
-            , text <|
-                if gameStatus.self.roseCount == 0 then
-                    "No Roses"
-
-                else if gameStatus.self.roseCount == 1 then
-                    "1 Rose"
-
-                else
-                    String.fromInt gameStatus.self.roseCount ++ " Roses"
-            ]
-        , column [] <|
-            List.map (playerDisplay gameStatus showStackSelector) otherPlayers
+    column
+        [ width fill
+        , spacing <| size1
         ]
+    <|
+        List.map (playerPublicInformation gameStatus showStackSelector) otherPlayers
 
 
-playerDisplay : GameStatusMessage -> Bool -> Player -> Element Msg
-playerDisplay gameStatus showStackSelector player =
+playerPublicInformation : GameStatusMessage -> Bool -> Player -> Element Msg
+playerPublicInformation gameStatus showStackSelector player =
     let
+        pid =
+            getPid player.playerId
+
+        revealedDiscs =
+            case gameStatus.game.round of
+                Just (InitialDiscs _) ->
+                    []
+
+                Just (Placing _) ->
+                    []
+
+                Just (Bidding _) ->
+                    []
+
+                Just (Flipping flippingData) ->
+                    Maybe.withDefault [] <|
+                        Dict.get pid flippingData.revealed
+
+                Just (Finished finishedData) ->
+                    Maybe.withDefault [] <|
+                        Dict.get pid finishedData.revealed
+
+                Nothing ->
+                    []
+
+        placedDiscCount =
+            Maybe.withDefault 0 <|
+                case gameStatus.game.round of
+                    Just (InitialDiscs initialDiscsData) ->
+                        Dict.get pid initialDiscsData.initialDiscs
+
+                    Just (Placing placingData) ->
+                        Dict.get pid placingData.discs
+
+                    Just (Bidding biddingData) ->
+                        Dict.get pid biddingData.discs
+
+                    Just (Flipping flippingData) ->
+                        Dict.get pid flippingData.discs
+
+                    Just (Finished finishedData) ->
+                        Dict.get pid finishedData.discs
+
+                    Nothing ->
+                        Just 0
+
+        unrevealedDiscCount =
+            placedDiscCount - List.length revealedDiscs
+
         hasDiscsUnflipped =
             not <| allFlipped gameStatus player.playerId
-    in
-    row [ spacing size3 ]
-        [ text player.screenName
-        , text <| String.fromInt player.discCount
-        , if showStackSelector && hasDiscsUnflipped then
-            Input.button buttonStyles
-                { onPress = Just <| InputFlip player.playerId
-                , label = text "Flip"
-                }
 
-          else
-            Element.none
+        info =
+            row
+                [ width fill ]
+                [ text player.screenName
+                , if hasDiscsUnflipped && showStackSelector then
+                    Input.button buttonStyles
+                        { onPress = Just <| InputFlip player.playerId
+                        , label = text "Flip"
+                        }
+
+                  else
+                    Element.none
+                ]
+    in
+    column
+        [ width fill
+        , padding size4
+        , Border.widthEach
+            { bottom = size1
+            , left = size4
+            , right = 0
+            , top = 0
+            }
+        , Border.color colourPrimary
+        , Background.color colourSecondary
         ]
+        [ info
+        , row
+            [ width fill ]
+          <|
+            List.repeat player.discCount unknownDiscDisplay
+        , row
+            [ width fill ]
+          <|
+            List.append
+                (List.map discDisplay revealedDiscs)
+                (List.repeat unrevealedDiscCount unknownDiscDisplay)
+        ]
+
+
+discDisplay : Disc -> Element Msg
+discDisplay disc =
+    let
+        discTypeEl =
+            case disc of
+                Thorn ->
+                    text "T"
+
+                Rose ->
+                    text "R"
+    in
+    el
+        [ width <| px 40
+        , height <| px 40
+        , Border.rounded 20
+        , Background.color colourAlt
+        , Border.solid
+        , Border.color textColourFeature
+        , Font.color textColourLight
+        , centerY
+        ]
+    <|
+        el [ centerY, centerX ] <|
+            discTypeEl
+
+
+unknownDiscDisplay : Element Msg
+unknownDiscDisplay =
+    el
+        [ width <| px 40
+        , height <| px 40
+        , Border.rounded 20
+        , Background.color colourAlt
+        , Border.solid
+        , Border.color textColourFeature
+        , Font.color textColourLight
+        , centerY
+        ]
+    <|
+        el [ centerY, centerX ] <|
+            text "?"
+
+
+uiHook : String -> Attribute Msg
+uiHook name =
+    -- Allows automated testing to target the element
+    Element.htmlAttribute <| Html.Attributes.class <| "ui-hook--" ++ name

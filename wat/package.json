@@ -1,0 +1,26 @@
+{
+  "name": "wat",
+  "version": "0.0.1",
+  "description": "Web Automation Tests for Thorn",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "wat": "node ./src/wat.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamnfish/thorn.git"
+  },
+  "keywords": [
+    "game"
+  ],
+  "author": "adamnfish",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adamnfish/thorn/issues"
+  },
+  "homepage": "https://github.com/adamnfish/thorn#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "playwright": "^1.1.1"
+  }
+}
