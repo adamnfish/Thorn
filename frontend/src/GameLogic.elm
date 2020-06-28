@@ -10,8 +10,8 @@ isCreator game self =
     self.playerId == game.creatorId
 
 
-isActive : GameStatusMessage -> Bool
-isActive gameStatus =
+selfIsActive : GameStatusMessage -> Bool
+selfIsActive gameStatus =
     case gameStatus.game.round of
         Just (InitialDiscs _) ->
             let
@@ -31,6 +31,36 @@ isActive gameStatus =
 
         Just (Flipping flippingData) ->
             flippingData.activePlayer == gameStatus.self.playerId
+
+        Just (Finished _) ->
+            False
+
+        Nothing ->
+            False
+
+
+playerIsActive : GameStatusMessage -> Player -> Bool
+playerIsActive gameStatus player =
+    case gameStatus.game.round of
+        Just (InitialDiscs initialDiscsData) ->
+            let
+                pid =
+                    getPid player.playerId
+
+                placedCount =
+                    Maybe.withDefault 0 <|
+                        Dict.get pid initialDiscsData.initialDiscs
+            in
+            placedCount == 0
+
+        Just (Placing placingData) ->
+            placingData.activePlayer == player.playerId
+
+        Just (Bidding biddingData) ->
+            biddingData.activePlayer == player.playerId
+
+        Just (Flipping flippingData) ->
+            flippingData.activePlayer == player.playerId
 
         Just (Finished _) ->
             False

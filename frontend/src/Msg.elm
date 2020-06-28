@@ -2,7 +2,7 @@ module Msg exposing (..)
 
 import Browser.Dom
 import Dict exposing (Dict)
-import GameLogic exposing (isActive, isCreator)
+import GameLogic exposing (isCreator, selfIsActive)
 import Json.Decode
 import List.Extra
 import Model exposing (..)
@@ -615,7 +615,7 @@ gameStatusMessageUpdate : Model -> GameStatusMessage -> ( Model, Cmd Msg )
 gameStatusMessageUpdate model gameStatusMessage =
     let
         nowActive =
-            isActive gameStatusMessage
+            selfIsActive gameStatusMessage
 
         newLibrary =
             Dict.update (getGid gameStatusMessage.game.gameId)
@@ -841,28 +841,28 @@ uiForGameState : GameStatusMessage -> WelcomeMessage -> UI
 uiForGameState gameStatusMessage welcomeMessage =
     case gameStatusMessage.game.round of
         Just (InitialDiscs _) ->
-            if isActive gameStatusMessage then
+            if selfIsActive gameStatusMessage then
                 PlaceDiscScreen Nothing gameStatusMessage welcomeMessage NotLoading
 
             else
                 DisplayGameScreen gameStatusMessage welcomeMessage
 
         Just (Placing _) ->
-            if isActive gameStatusMessage then
+            if selfIsActive gameStatusMessage then
                 DiscOrBidScreen DiscOrBidNoSelection gameStatusMessage welcomeMessage NotLoading
 
             else
                 DisplayGameScreen gameStatusMessage welcomeMessage
 
         Just (Bidding _) ->
-            if isActive gameStatusMessage then
+            if selfIsActive gameStatusMessage then
                 BidOrPassScreen BidOrPassNoSelection gameStatusMessage welcomeMessage NotLoading
 
             else
                 DisplayGameScreen gameStatusMessage welcomeMessage
 
         Just (Flipping _) ->
-            if isActive gameStatusMessage then
+            if selfIsActive gameStatusMessage then
                 FlipScreen Nothing gameStatusMessage welcomeMessage NotLoading
 
             else

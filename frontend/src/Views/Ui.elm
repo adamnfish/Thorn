@@ -9,13 +9,13 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isActive, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount)
+import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount, playerIsActive, selfIsActive)
 import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, size1, size2, size3, size4, textColourFeature, textColourLight)
+import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourHighlight, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, size1, size2, size3, size4, textColourFeature, textColourLight)
 
 
 type alias Page =
@@ -752,6 +752,9 @@ playerPublicInformation gameStatus showStackSelector player =
         pid =
             getPid player.playerId
 
+        active =
+            playerIsActive gameStatus player
+
         revealedDiscs =
             case gameStatus.game.round of
                 Just (InitialDiscs _) ->
@@ -829,33 +832,49 @@ playerPublicInformation gameStatus showStackSelector player =
         , Border.color colourSecondaryLight
         ]
     <|
-        column
+        el
             [ width fill
-            , padding size4
             , Border.widthEach
-                { bottom = size1
+                { bottom = 0
                 , left = size4
                 , right = 0
                 , top = 0
                 }
-            , Border.color colourPrimary
-            , Background.gradient
-                { angle = 0
-                , steps = [ colourSecondary, colourSecondary2 ]
-                }
+            , Border.color <|
+                if active then
+                    colourHighlight
+
+                else
+                    colourPrimary
             ]
-            [ info
-            , row
-                [ width fill ]
-              <|
-                List.repeat player.discCount unknownDiscDisplay
-            , row
-                [ width fill ]
-              <|
-                List.append
-                    (List.map discDisplay revealedDiscs)
-                    (List.repeat unrevealedDiscCount unknownDiscDisplay)
-            ]
+        <|
+            column
+                [ width fill
+                , padding size4
+                , Border.widthEach
+                    { bottom = size1
+                    , left = 0
+                    , right = 0
+                    , top = 0
+                    }
+                , Border.color colourPrimary
+                , Background.gradient
+                    { angle = 0
+                    , steps = [ colourSecondary, colourSecondary2 ]
+                    }
+                ]
+                [ info
+                , row
+                    [ width fill ]
+                  <|
+                    List.repeat player.discCount unknownDiscDisplay
+                , row
+                    [ width fill ]
+                  <|
+                    List.append
+                        (List.map discDisplay revealedDiscs)
+                        (List.repeat unrevealedDiscCount unknownDiscDisplay)
+                ]
 
 
 discDisplay : Disc -> Element Msg

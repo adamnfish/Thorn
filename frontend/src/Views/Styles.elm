@@ -106,6 +106,11 @@ colourCta =
     rgb255 20 80 80
 
 
+colourHighlight : Color
+colourHighlight =
+    rgb255 200 10 60
+
+
 colourError : Color
 colourError =
     rgb255 150 60 50
