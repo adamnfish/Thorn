@@ -15,13 +15,12 @@ import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, colourAlt, colourError, colourHighlight, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, size1, size2, size3, size4, textColourFeature, textColourLight)
+import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourBlack, colourBlack2, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, each0, featureButtonStyles, length4, size1, size2, size3, size4, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
 
 
 type alias Page =
     { title : String
     , body : Element Msg
-    , nav : Element Msg
     , loading : LoadingStatus
     , ui : String
     }
@@ -36,7 +35,6 @@ view model =
                 HomeScreen ->
                     { title = "Thorn"
                     , body = home model
-                    , nav = Element.none
                     , loading = NotLoading
                     , ui = "welcome"
                     }
@@ -44,7 +42,6 @@ view model =
                 CreateGameScreen gameName screenName loadingStatus ->
                     { title = "Create game | Thorn"
                     , body = createGame model gameName screenName loadingStatus
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "create-game"
                     }
@@ -52,7 +49,6 @@ view model =
                 JoinGameScreen gameCode screenName loadingStatus ->
                     { title = "Join game | Thorn"
                     , body = joinGame model gameCode screenName loadingStatus
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "join-game"
                     }
@@ -75,7 +71,6 @@ view model =
                     in
                     { title = "Waiting | Thorn"
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "lobby"
                     }
@@ -83,7 +78,6 @@ view model =
                 DisplayGameScreen gameStatus _ ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = currentGame model gameStatus
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = NotLoading
                     , ui = "display-game"
                     }
@@ -91,7 +85,6 @@ view model =
                 PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = placeDisc model gameStatus maybeDisc
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "place-disc"
                     }
@@ -99,7 +92,6 @@ view model =
                 DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = discOrBid model gameStatus maybeSelection
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "disc-or-bid"
                     }
@@ -107,7 +99,6 @@ view model =
                 BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = bidOrPass model gameStatus maybeInt
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "bid-or-pass"
                     }
@@ -115,7 +106,6 @@ view model =
                 FlipScreen maybeStack gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , body = flip model gameStatus maybeStack
-                    , nav = nav [ ( NavigateHome, "Home" ) ]
                     , loading = loadingStatus
                     , ui = "flip"
                     }
@@ -127,6 +117,7 @@ view model =
                 [ Font.typeface "Nunito"
                 , Font.sansSerif
                 ]
+            , Background.color <| rgb255 191 189 193
             ]
           <|
             Element.column
@@ -134,11 +125,19 @@ view model =
                 , width fill
                 , Element.htmlAttribute <| Html.Attributes.class <| "ui--" ++ page.ui
                 ]
-                [ el
-                    [ Region.navigation
-                    , width fill
+                [ row
+                    [ width fill
+                    , padding size4
+                    , Background.gradient
+                        { angle = 0
+                        , steps = [ colourHighlight, colourHighlight2 ]
+                        }
                     ]
-                    page.nav
+                    [ Input.button []
+                        { onPress = Just NavigateHome
+                        , label = text "Thorn"
+                        }
+                    ]
                 , column
                     [ width fill ]
                   <|
@@ -159,6 +158,7 @@ view model =
 
                   else
                     Element.none
+                , spacer 1
                 , el
                     [ Region.mainContent
                     , width fill
@@ -166,12 +166,25 @@ view model =
                     ]
                     page.body
                 , el
+                    [ width fill
+                    , height length4
+                    ]
+                    Element.none
+                , row
                     [ Region.footer
                     , width fill
+                    , height <| px 60
+                    , padding size4
+                    , Border.widthEach
+                        { each0 | top = size2 }
+                    , Border.color colourHighlight
+                    , Background.gradient
+                        { angle = 0
+                        , steps = [ colourBlack, colourBlack2 ]
+                        }
+                    , Font.color textColourLight
                     ]
-                  <|
-                    row []
-                        [ text "Thorn" ]
+                    [ text "Thorn" ]
                 ]
         ]
     }
@@ -211,64 +224,88 @@ home model =
             <|
                 Dict.values model.library
     in
-    column
-        []
-        [ Input.button buttonStyles
-            { onPress = Just NavigateCreateGame
-            , label = text "Create game"
-            }
-        , Input.button buttonStyles
-            { onPress = Just NavigateJoinGame
-            , label = text "Join game"
-            }
-        , column [] availableGames
-        ]
+    centerBlock <|
+        column
+            [ width fill
+            , padding size4
+            , spacing size4
+            ]
+            [ Input.button featureButtonStyles
+                { onPress = Just NavigateCreateGame
+                , label = text "Create game"
+                }
+            , Input.button featureButtonStyles
+                { onPress = Just NavigateJoinGame
+                , label = text "Join game"
+                }
+            , if List.isEmpty availableGames then
+                Element.none
+
+              else
+                column
+                    [ width fill
+                    ]
+                    [ spacer 2
+                    , text "Rejoin existing game"
+                    , column [] availableGames
+                    ]
+            ]
 
 
 createGame : Model -> String -> String -> LoadingStatus -> Element Msg
 createGame model gameName screenName loadingStatus =
-    column
-        []
-        [ Input.text []
-            { onChange = \newGameName -> InputCreateGame newGameName screenName loadingStatus
-            , text = gameName
-            , placeholder = Nothing
-            , label = Input.labelAbove [] <| text "Game name"
-            }
-        , Input.text []
-            { onChange = \newScreenName -> InputCreateGame gameName newScreenName loadingStatus
-            , text = screenName
-            , placeholder = Nothing
-            , label = Input.labelAbove [] <| text "Screen name"
-            }
-        , Input.button buttonStyles
-            { onPress = Just <| SubmitCreateGame gameName screenName
-            , label = text "Create game"
-            }
-        ]
+    centerBlock <|
+        column
+            [ width fill
+            , padding size4
+            , spacing size4
+            ]
+            [ Input.text textInputStyles
+                { onChange = \newGameName -> InputCreateGame newGameName screenName loadingStatus
+                , text = gameName
+                , placeholder = Nothing
+                , label = Input.labelAbove [] <| text "Game name"
+                }
+            , Input.text textInputStyles
+                { onChange = \newScreenName -> InputCreateGame gameName newScreenName loadingStatus
+                , text = screenName
+                , placeholder = Nothing
+                , label = Input.labelAbove [] <| text "Screen name"
+                }
+            , spacer 2
+            , Input.button featureButtonStyles
+                { onPress = Just <| SubmitCreateGame gameName screenName
+                , label = text "Create game"
+                }
+            ]
 
 
 joinGame : Model -> String -> String -> LoadingStatus -> Element Msg
 joinGame model gameCode screenName loadingStatus =
-    column
-        []
-        [ Input.text []
-            { onChange = \newGameName -> InputJoinGame newGameName screenName loadingStatus
-            , text = gameCode
-            , placeholder = Nothing
-            , label = Input.labelAbove [] <| text "Game code"
-            }
-        , Input.text []
-            { onChange = \newScreenName -> InputJoinGame gameCode newScreenName loadingStatus
-            , text = screenName
-            , placeholder = Nothing
-            , label = Input.labelAbove [] <| text "Screen name"
-            }
-        , Input.button buttonStyles
-            { onPress = Just <| SubmitJoinGame gameCode screenName
-            , label = text "Join game"
-            }
-        ]
+    centerBlock <|
+        column
+            [ width fill
+            , padding size4
+            , spacing size4
+            ]
+            [ Input.text textInputStyles
+                { onChange = \newGameName -> InputJoinGame newGameName screenName loadingStatus
+                , text = gameCode
+                , placeholder = Nothing
+                , label = Input.labelAbove [] <| text "Game code"
+                }
+            , Input.text textInputStyles
+                { onChange = \newScreenName -> InputJoinGame gameCode newScreenName loadingStatus
+                , text = screenName
+                , placeholder = Nothing
+                , label = Input.labelAbove [] <| text "Screen name"
+                }
+            , spacer 2
+            , Input.button featureButtonStyles
+                { onPress = Just <| SubmitJoinGame gameCode screenName
+                , label = text "Join game"
+                }
+            ]
 
 
 lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Maybe GameStatusMessage -> Element Msg
@@ -303,11 +340,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                             el
                                 [ width fill
                                 , Border.widthEach
-                                    { bottom = 0
-                                    , left = 0
-                                    , right = 0
-                                    , top = size1
-                                    }
+                                    { each0 | top = size1 }
                                 , Border.color colourSecondaryLight
                                 ]
                             <|
@@ -315,34 +348,46 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                     [ width fill
                                     , padding size4
                                     , Border.widthEach
-                                        { bottom = size1
-                                        , left = size4
-                                        , right = 0
-                                        , top = 0
+                                        { each0
+                                            | bottom = size1
+                                            , left = size4
                                         }
-                                    , Border.color colourPrimary
+                                    , Border.color colourBlack
                                     , Background.gradient
                                         { angle = 0
                                         , steps = [ colourSecondary, colourSecondary2 ]
                                         }
+                                    , Font.color textColourLight
                                     ]
                                     [ text player.screenName
-                                    , if first then
-                                        Element.none
+                                    , row
+                                        [ spacing size2
+                                        , width fill
+                                        , alignRight
+                                        ]
+                                        [ if first then
+                                            Element.none
 
-                                      else
-                                        Input.button buttonStyles
-                                            { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
-                                            , label = text "Up"
-                                            }
-                                    , if last then
-                                        Element.none
+                                          else
+                                            el
+                                                [ alignRight ]
+                                            <|
+                                                Input.button buttonStyles
+                                                    { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
+                                                    , label = text "Up"
+                                                    }
+                                        , if last then
+                                            Element.none
 
-                                      else
-                                        Input.button buttonStyles
-                                            { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
-                                            , label = text "Down"
-                                            }
+                                          else
+                                            el
+                                                [ alignRight ]
+                                            <|
+                                                Input.button buttonStyles
+                                                    { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
+                                                    , label = text "Down"
+                                                    }
+                                        ]
                                     ]
                         )
                         playerOrder
@@ -352,10 +397,14 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 Just gameStatus ->
                     if isCreator gameStatus.game gameStatus.self then
                         if List.length playerOrder >= 3 then
-                            Input.button buttonStyles
-                                { onPress = Just SubmitStartGame
-                                , label = text "Start game"
-                                }
+                            column
+                                [ width fill ]
+                                [ spacer 1
+                                , Input.button featureButtonStyles
+                                    { onPress = Just SubmitStartGame
+                                    , label = text "Start game"
+                                    }
+                                ]
 
                         else
                             paragraph []
@@ -367,18 +416,19 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 Nothing ->
                     Element.none
     in
-    column
-        [ width fill ]
-        [ text "Lobby"
-        , text "Game code"
-        , el
-            [ uiHook "game-code" ]
-          <|
-            text <|
-                gameCode welcomeMessage.gameId
-        , playersEl
-        , startGameEl
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ text "Lobby"
+            , text "Game code"
+            , el
+                [ uiHook "game-code" ]
+              <|
+                text <|
+                    gameCode welcomeMessage.gameId
+            , playersEl
+            , startGameEl
+            ]
 
 
 placeDisc : Model -> GameStatusMessage -> Maybe Disc -> Element Msg
@@ -420,14 +470,17 @@ placeDisc model gameStatus maybeDisc =
                 Nothing ->
                     [ roseButton, thornButton ]
     in
-    column
-        [ width fill ]
-        [ selfSecretInformation gameStatus
-        , paragraph []
-            [ text "Place initial disc" ]
-        , row [] buttons
-        , playersList gameStatus False
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ selfSecretInformation gameStatus
+            , playersList gameStatus False
+            , paragraph []
+                [ text "Place initial disc" ]
+            , row
+                [ spacing size2 ]
+                buttons
+            ]
 
 
 discOrBid : Model -> GameStatusMessage -> DiscOrBid -> Element Msg
@@ -468,7 +521,9 @@ discOrBid model gameStatus maybeSelection =
                 List.range (minBid gameStatus) maxBid
 
         bidButtonContainer =
-            row [] bidButtons
+            row
+                [ spacing size2 ]
+                bidButtons
 
         buttons =
             case maybeSelection of
@@ -497,14 +552,17 @@ discOrBid model gameStatus maybeSelection =
                 DiscOrBidNoSelection ->
                     [ roseButton, thornButton, bidButtonContainer ]
     in
-    column
-        [ width fill ]
-        [ selfSecretInformation gameStatus
-        , paragraph []
-            [ text "Place disc or open the bidding" ]
-        , row [] buttons
-        , playersList gameStatus False
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ selfSecretInformation gameStatus
+            , playersList gameStatus False
+            , paragraph []
+                [ text "Place disc or open the bidding" ]
+            , row
+                [ spacing size2 ]
+                buttons
+            ]
 
 
 bidOrPass : Model -> GameStatusMessage -> BidOrPass -> Element Msg
@@ -559,14 +617,17 @@ bidOrPass model gameStatus maybeSelection =
                         }
                     ]
     in
-    column
-        [ width fill ]
-        [ selfSecretInformation gameStatus
-        , paragraph []
-            [ text "Bid or pass" ]
-        , row [] buttons
-        , playersList gameStatus False
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ selfSecretInformation gameStatus
+            , playersList gameStatus False
+            , paragraph []
+                [ text "Bid or pass" ]
+            , row
+                [ spacing size2 ]
+                buttons
+            ]
 
 
 flip : Model -> GameStatusMessage -> Maybe PlayerId -> Element Msg
@@ -599,14 +660,17 @@ flip model gameStatus maybeStack =
                             }
                         ]
     in
-    column
-        [ width fill ]
-        [ selfSecretInformation gameStatus
-        , paragraph []
-            [ text "Flipping" ]
-        , row [] buttons
-        , playersList gameStatus allOwnFlipped
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ selfSecretInformation gameStatus
+            , playersList gameStatus allOwnFlipped
+            , paragraph []
+                [ text "Flipping" ]
+            , row
+                [ spacing size2 ]
+                buttons
+            ]
 
 
 currentGame : Model -> GameStatusMessage -> Element Msg
@@ -683,12 +747,13 @@ currentGame model gameStatus =
                 Nothing ->
                     Element.none
     in
-    column
-        [ width fill ]
-        [ selfSecretInformation gameStatus
-        , roundInfo
-        , playersList gameStatus False
-        ]
+    centerBlock <|
+        column
+            [ width fill ]
+            [ selfSecretInformation gameStatus
+            , playersList gameStatus False
+            , roundInfo
+            ]
 
 
 selfSecretInformation : GameStatusMessage -> Element Msg
@@ -697,34 +762,34 @@ selfSecretInformation gameStatus =
         placed =
             Maybe.withDefault [] gameStatus.self.placedDiscs
 
-        thornEl =
-            if gameStatus.self.hasThorn then
+        placedRoseCount =
+            List.Extra.count (\d -> d == Rose) placed
+
+        thornPoolEl =
+            if gameStatus.self.hasThorn && not (List.member Thorn placed) then
                 discDisplay Thorn
 
             else
                 Element.none
 
-        roseEls =
+        rosePoolEls =
             List.map discDisplay <|
-                List.repeat gameStatus.self.roseCount Rose
+                List.repeat (gameStatus.self.roseCount - placedRoseCount) Rose
 
         poolEls =
-            List.reverse <| thornEl :: roseEls
+            List.reverse <| thornPoolEl :: rosePoolEls
     in
     column
         [ width fill ]
-        [ column
+        [ row
             [ width fill ]
-            [ text "pool"
-            , row
+            [ row
                 [ spacing size3 ]
                 poolEls
-            ]
-        , column
-            [ width fill ]
-            [ text "placed"
             , row
-                [ spacing size3 ]
+                [ spacing size3
+                , alignRight
+                ]
               <|
                 List.map discDisplay placed
             ]
@@ -812,10 +877,13 @@ playerPublicInformation gameStatus showStackSelector player =
                   <|
                     text player.screenName
                 , if hasDiscsUnflipped && showStackSelector then
-                    Input.button buttonStyles
-                        { onPress = Just <| InputFlip player.playerId
-                        , label = text "Flip"
-                        }
+                    el
+                        [ alignRight ]
+                    <|
+                        Input.button buttonStyles
+                            { onPress = Just <| InputFlip player.playerId
+                            , label = text "Flip"
+                            }
 
                   else
                     Element.none
@@ -824,56 +892,52 @@ playerPublicInformation gameStatus showStackSelector player =
     el
         [ width fill
         , Border.widthEach
-            { bottom = 0
-            , left = 0
-            , right = 0
-            , top = size1
-            }
+            { each0 | top = size1 }
         , Border.color colourSecondaryLight
         ]
     <|
         el
             [ width fill
             , Border.widthEach
-                { bottom = 0
-                , left = size4
-                , right = 0
-                , top = 0
-                }
+                { each0 | left = size4 }
             , Border.color <|
                 if active then
                     colourHighlight
 
                 else
-                    colourPrimary
+                    colourBlack
             ]
         <|
             column
                 [ width fill
                 , padding size4
                 , Border.widthEach
-                    { bottom = size1
-                    , left = 0
-                    , right = 0
-                    , top = 0
-                    }
-                , Border.color colourPrimary
+                    { each0 | bottom = size1 }
+                , Border.color colourBlack
                 , Background.gradient
                     { angle = 0
                     , steps = [ colourSecondary, colourSecondary2 ]
                     }
+                , spacing size2
                 ]
                 [ info
                 , row
                     [ width fill ]
-                  <|
-                    List.repeat player.discCount unknownDiscDisplay
-                , row
-                    [ width fill ]
-                  <|
-                    List.append
-                        (List.map discDisplay revealedDiscs)
-                        (List.repeat unrevealedDiscCount unknownDiscDisplay)
+                    [ row
+                        [ alignLeft
+                        , spacing size2
+                        ]
+                      <|
+                        List.repeat (player.discCount - placedDiscCount) unknownDiscDisplay
+                    , row
+                        [ alignRight
+                        , spacing size2
+                        ]
+                      <|
+                        List.append
+                            (List.map discDisplay revealedDiscs)
+                            (List.repeat unrevealedDiscCount unknownDiscDisplay)
+                    ]
                 ]
 
 
@@ -895,7 +959,7 @@ discDisplay disc =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
-        , Font.color textColourLight
+        , Font.color textColourDark
         , centerY
         ]
     <|
@@ -912,7 +976,7 @@ unknownDiscDisplay =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
-        , Font.color textColourLight
+        , Font.color textColourDark
         , centerY
         ]
     <|
