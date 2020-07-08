@@ -64,3 +64,6 @@ tests against Thorn.
     cd wat
     npm install
     npm run wat
+
+As well as checking the game is playable this will produce screenshots
+in the `wat/screenshots` directory.
