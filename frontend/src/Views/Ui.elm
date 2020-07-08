@@ -5,21 +5,25 @@ import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
+import FontAwesome.Attributes as Icon
+import FontAwesome.Icon as Icon exposing (Icon)
+import FontAwesome.Solid as Icon
+import FontAwesome.Styles
 import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount, playerIsActive, selfIsActive)
 import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourBlack, colourBlack2, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryLight, colourWhite, each0, featureButtonStyles, length4, size1, size2, size3, size4, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
+import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, length4, size1, size2, size3, size4, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
 
 
 type alias Page =
     { title : String
+    , status : String
     , body : Element Msg
     , loading : LoadingStatus
     , ui : String
@@ -34,6 +38,7 @@ view model =
             case model.ui of
                 HomeScreen ->
                     { title = "Thorn"
+                    , status = "Welcome"
                     , body = home model
                     , loading = NotLoading
                     , ui = "welcome"
@@ -41,6 +46,7 @@ view model =
 
                 CreateGameScreen gameName screenName loadingStatus ->
                     { title = "Create game | Thorn"
+                    , status = "Create game"
                     , body = createGame model gameName screenName loadingStatus
                     , loading = loadingStatus
                     , ui = "create-game"
@@ -48,6 +54,7 @@ view model =
 
                 JoinGameScreen gameCode screenName loadingStatus ->
                     { title = "Join game | Thorn"
+                    , status = "Join game"
                     , body = joinGame model gameCode screenName loadingStatus
                     , loading = loadingStatus
                     , ui = "join-game"
@@ -70,6 +77,7 @@ view model =
                                     Nothing
                     in
                     { title = "Waiting | Thorn"
+                    , status = "Waiting for game to start"
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
                     , loading = loadingStatus
                     , ui = "lobby"
@@ -77,6 +85,7 @@ view model =
 
                 DisplayGameScreen gameStatus _ ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
+                    , status = "Waiting"
                     , body = currentGame model gameStatus
                     , loading = NotLoading
                     , ui = "display-game"
@@ -84,6 +93,7 @@ view model =
 
                 PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
+                    , status = "Place disc"
                     , body = placeDisc model gameStatus maybeDisc
                     , loading = loadingStatus
                     , ui = "place-disc"
@@ -91,6 +101,7 @@ view model =
 
                 DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
+                    , status = "Place disc or bid"
                     , body = discOrBid model gameStatus maybeSelection
                     , loading = loadingStatus
                     , ui = "disc-or-bid"
@@ -98,6 +109,7 @@ view model =
 
                 BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
+                    , status = "Bid or pass"
                     , body = bidOrPass model gameStatus maybeInt
                     , loading = loadingStatus
                     , ui = "bid-or-pass"
@@ -105,6 +117,7 @@ view model =
 
                 FlipScreen maybeStack gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
+                    , status = "Choose disc to flip"
                     , body = flip model gameStatus maybeStack
                     , loading = loadingStatus
                     , ui = "flip"
@@ -125,7 +138,8 @@ view model =
                 , width fill
                 , Element.htmlAttribute <| Html.Attributes.class <| "ui--" ++ page.ui
                 ]
-                [ row
+                [ Element.html FontAwesome.Styles.css
+                , row
                     [ width fill
                     , padding size4
                     , Background.gradient
@@ -137,6 +151,37 @@ view model =
                         { onPress = Just NavigateHome
                         , label = text "Thorn"
                         }
+                    ]
+                , row
+                    [ width fill
+                    , padding size4
+                    , Background.gradient
+                        { angle = 0
+                        , steps = [ colourBlack, colourBlack2 ]
+                        }
+                    , Font.color textColourLight
+                    , fontSizeSmall
+                    ]
+                    [ text page.status
+                    , el
+                        [ alignRight ]
+                      <|
+                        case page.loading of
+                            AwaitingMessage ->
+                                row
+                                    [ spacing size3 ]
+                                    [ text "loading"
+                                    , text ""
+                                    , Element.html
+                                        (Icon.circleNotch
+                                            |> Icon.present
+                                            |> Icon.styled [ Icon.spin ]
+                                            |> Icon.view
+                                        )
+                                    ]
+
+                            NotLoading ->
+                                text ""
                     ]
                 , column
                     [ width fill ]
@@ -153,11 +198,6 @@ view model =
                         )
                     <|
                         List.Extra.uniqueBy (\uiErr -> uiErr.failure.friendlyMessage) model.errors
-                , if page.loading == AwaitingMessage then
-                    text "loading..."
-
-                  else
-                    Element.none
                 , spacer 1
                 , el
                     [ Region.mainContent
@@ -341,7 +381,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                 [ width fill
                                 , Border.widthEach
                                     { each0 | top = size1 }
-                                , Border.color colourSecondaryLight
+                                , Border.color colourSecondaryHighlight
                                 ]
                             <|
                                 row
@@ -374,7 +414,15 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                             <|
                                                 Input.button buttonStyles
                                                     { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
-                                                    , label = text "Up"
+                                                    , label =
+                                                        row
+                                                            [ spacing size4 ]
+                                                            [ Element.html
+                                                                (Icon.chevronUp
+                                                                    |> Icon.present
+                                                                    |> Icon.view
+                                                                )
+                                                            ]
                                                     }
                                         , if last then
                                             Element.none
@@ -385,7 +433,15 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                             <|
                                                 Input.button buttonStyles
                                                     { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
-                                                    , label = text "Down"
+                                                    , label =
+                                                        row
+                                                            [ spacing size4 ]
+                                                            [ Element.html
+                                                                (Icon.chevronDown
+                                                                    |> Icon.present
+                                                                    |> Icon.view
+                                                                )
+                                                            ]
                                                     }
                                         ]
                                     ]
@@ -418,14 +474,19 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
     in
     centerBlock <|
         column
-            [ width fill ]
-            [ text "Lobby"
-            , text "Game code"
+            [ width fill
+            , spacing size3
+            ]
+            [ text "Game code"
             , el
-                [ uiHook "game-code" ]
+                (List.append
+                    [ uiHook "game-code" ]
+                    textInputStyles
+                )
               <|
                 text <|
                     gameCode welcomeMessage.gameId
+            , spacer 2
             , playersEl
             , startGameEl
             ]
@@ -459,11 +520,37 @@ placeDisc model gameStatus maybeDisc =
                 Just disc ->
                     [ Input.button buttonStyles
                         { onPress = Just <| InputRemovePlaceDisc
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just <| SubmitPlaceDisc disc
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
@@ -475,8 +562,6 @@ placeDisc model gameStatus maybeDisc =
             [ width fill ]
             [ selfSecretInformation gameStatus
             , playersList gameStatus False
-            , paragraph []
-                [ text "Place initial disc" ]
             , row
                 [ spacing size2 ]
                 buttons
@@ -530,22 +615,74 @@ discOrBid model gameStatus maybeSelection =
                 DiscOrBidDisc disc ->
                     [ Input.button buttonStyles
                         { onPress = Just InputRemovePlaceDisc
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just <| SubmitPlaceDisc disc
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
                 DiscOrBidBid bid ->
                     [ Input.button buttonStyles
                         { onPress = Just InputRemoveBid
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just <| SubmitBid bid
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
@@ -557,8 +694,6 @@ discOrBid model gameStatus maybeSelection =
             [ width fill ]
             [ selfSecretInformation gameStatus
             , playersList gameStatus False
-            , paragraph []
-                [ text "Place disc or open the bidding" ]
             , row
                 [ spacing size2 ]
                 buttons
@@ -590,22 +725,74 @@ bidOrPass model gameStatus maybeSelection =
                 BidOrPassBid bid ->
                     [ Input.button buttonStyles
                         { onPress = Just InputRemoveBid
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just <| SubmitBid bid
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
                 BidOrPassPass ->
                     [ Input.button buttonStyles
                         { onPress = Just InputRemovePass
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just SubmitPass
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
@@ -622,8 +809,6 @@ bidOrPass model gameStatus maybeSelection =
             [ width fill ]
             [ selfSecretInformation gameStatus
             , playersList gameStatus False
-            , paragraph []
-                [ text "Bid or pass" ]
             , row
                 [ spacing size2 ]
                 buttons
@@ -641,11 +826,37 @@ flip model gameStatus maybeStack =
                 Just stackId ->
                     [ Input.button buttonStyles
                         { onPress = Just InputRemoveFlip
-                        , label = text "Clear"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Clear"
+                                , text ""
+                                , Element.html
+                                    (Icon.times
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     , Input.button buttonStyles
                         { onPress = Just <| SubmitFlip stackId
-                        , label = text "Submit"
+                        , label =
+                            row
+                                [ spacing size4 ]
+                                [ el
+                                    []
+                                  <|
+                                    text "Confirm"
+                                , text ""
+                                , Element.html
+                                    (Icon.check
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                                ]
                         }
                     ]
 
@@ -656,7 +867,20 @@ flip model gameStatus maybeStack =
                     else
                         [ Input.button buttonStyles
                             { onPress = Just <| InputFlip gameStatus.self.playerId
-                            , label = text "Flip"
+                            , label =
+                                row
+                                    [ spacing size4 ]
+                                    [ el
+                                        []
+                                      <|
+                                        text "Flip"
+                                    , text ""
+                                    , Element.html
+                                        (Icon.sync
+                                            |> Icon.present
+                                            |> Icon.view
+                                        )
+                                    ]
                             }
                         ]
     in
@@ -665,8 +889,6 @@ flip model gameStatus maybeStack =
             [ width fill ]
             [ selfSecretInformation gameStatus
             , playersList gameStatus allOwnFlipped
-            , paragraph []
-                [ text "Flipping" ]
             , row
                 [ spacing size2 ]
                 buttons
@@ -741,7 +963,8 @@ currentGame model gameStatus =
                                 paragraph []
                                     [ text "Another player failed to win the round" ]
                     in
-                    column []
+                    column
+                        [ width fill ]
                         [ winnerInfo, finishedMessage, newRoundButton ]
 
                 Nothing ->
@@ -784,10 +1007,10 @@ selfSecretInformation gameStatus =
         [ row
             [ width fill ]
             [ row
-                [ spacing size3 ]
+                [ spacing size4 ]
                 poolEls
             , row
-                [ spacing size3
+                [ spacing size4
                 , alignRight
                 ]
               <|
@@ -882,7 +1105,20 @@ playerPublicInformation gameStatus showStackSelector player =
                     <|
                         Input.button buttonStyles
                             { onPress = Just <| InputFlip player.playerId
-                            , label = text "Flip"
+                            , label =
+                                row
+                                    [ spacing size4 ]
+                                    [ el
+                                        []
+                                      <|
+                                        text "Flip"
+                                    , text ""
+                                    , Element.html
+                                        (Icon.sync
+                                            |> Icon.present
+                                            |> Icon.view
+                                        )
+                                    ]
                             }
 
                   else
@@ -893,7 +1129,7 @@ playerPublicInformation gameStatus showStackSelector player =
         [ width fill
         , Border.widthEach
             { each0 | top = size1 }
-        , Border.color colourSecondaryLight
+        , Border.color colourSecondaryHighlight
         ]
     <|
         el
@@ -918,20 +1154,20 @@ playerPublicInformation gameStatus showStackSelector player =
                     { angle = 0
                     , steps = [ colourSecondary, colourSecondary2 ]
                     }
-                , spacing size2
+                , spacing size4
                 ]
                 [ info
                 , row
                     [ width fill ]
                     [ row
                         [ alignLeft
-                        , spacing size2
+                        , spacing size4
                         ]
                       <|
                         List.repeat (player.discCount - placedDiscCount) unknownDiscDisplay
                     , row
                         [ alignRight
-                        , spacing size2
+                        , spacing size4
                         ]
                       <|
                         List.append
@@ -947,10 +1183,18 @@ discDisplay disc =
         discTypeEl =
             case disc of
                 Thorn ->
-                    text "T"
+                    Element.html
+                        (Icon.fire
+                            |> Icon.present
+                            |> Icon.view
+                        )
 
                 Rose ->
-                    text "R"
+                    Element.html
+                        (Icon.spa
+                            |> Icon.present
+                            |> Icon.view
+                        )
     in
     el
         [ width <| px 40
@@ -959,6 +1203,7 @@ discDisplay disc =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
+        , Border.glow colourAltSecondary 1
         , Font.color textColourDark
         , centerY
         ]
@@ -976,12 +1221,17 @@ unknownDiscDisplay =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
+        , Border.glow colourAltSecondary 1
         , Font.color textColourDark
         , centerY
         ]
     <|
         el [ centerY, centerX ] <|
-            text "?"
+            Element.html
+                (Icon.question
+                    |> Icon.present
+                    |> Icon.view
+                )
 
 
 uiHook : String -> Attribute Msg

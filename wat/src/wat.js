@@ -94,15 +94,15 @@ const {webkit} = require('playwright');
 
   // now in-game, initial discs round
   await creator.click(buttonWithText('Rose'));
-  await creator.click(buttonWithText('Submit'));
+  await creator.click(buttonWithText('Confirm'));
   await creator.waitForSelector(ui('display-game'));
 
   await creator.screenshot({path: screenshotPath('creator', '04-2-waiting-for-others.png')});
 
   await player1.click(buttonWithText('Rose'));
-  await player1.click(buttonWithText('Submit'));
+  await player1.click(buttonWithText('Confirm'));
   await player2.click(buttonWithText('Rose'));
-  await player2.click(buttonWithText('Submit'));
+  await player2.click(buttonWithText('Confirm'));
 
   // place discs round
   await creator.waitForSelector(ui('disc-or-bid'));
@@ -115,7 +115,7 @@ const {webkit} = require('playwright');
   await player2.screenshot({path: screenshotPath('player2', '05-1-display-game.png')});
 
   await creator.click(buttonWithText('Rose'));
-  await creator.click(buttonWithText('Submit'));
+  await creator.click(buttonWithText('Confirm'));
   await creator.waitForSelector(ui('display-game'));
   await creator.screenshot({path: screenshotPath('creator', '05-2-player-1-placing.png')});
 
@@ -124,7 +124,7 @@ const {webkit} = require('playwright');
 
   // player 1 opens the bidding with the maximum bid
   await player1.click(buttonWithText('4'));
-  await player1.click(buttonWithText('Submit'));
+  await player1.click(buttonWithText('Confirm'));
   await player1.waitForSelector(ui('flip'));
 
   await creator.screenshot({path: screenshotPath('creator', '06-1-player-1-flipping.png')});
@@ -134,15 +134,15 @@ const {webkit} = require('playwright');
   // think about how to handle loading / messages lifecycle in WATs
 //  await player1.click(buttonWithText('Flip'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-2-player-1-flipping.png')});
-//  await player1.click(buttonWithText('Submit'));
+//  await player1.click(buttonWithText('Confirm'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-3-player-1-flipping.png')});
 //  await player1.click(buttonWithText('Flip'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-4-player-1-flipping.png')});
-//  await player1.click(buttonWithText('Submit'));
+//  await player1.click(buttonWithText('Confirm'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-5-player-1-flipping.png')});
 //  await player1.click(buttonWithText('Flip'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-6-player-1-flipping.png')});
-//  await player1.click(buttonWithText('Submit'));
+//  await player1.click(buttonWithText('Confirm'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-7-player-1-flipping.png')});
 //  await player1.click(buttonWithText('Flip'));
 //  await player1.screenshot({path: screenshotPath('player1', '06-8-player-1-flipping.png')});

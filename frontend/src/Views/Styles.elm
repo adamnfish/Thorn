@@ -91,6 +91,11 @@ colourSecondary2 =
     rgb255 65 60 72
 
 
+colourSecondaryHighlight : Color
+colourSecondaryHighlight =
+    rgb255 95 90 102
+
+
 colourSecondaryLight : Color
 colourSecondaryLight =
     rgb255 191 189 193
@@ -118,7 +123,7 @@ colourAlt =
 
 colourAltSecondary : Color
 colourAltSecondary =
-    rgb255 222 184 65
+    rgb255 192 144 45
 
 
 colourCta : Color
@@ -154,6 +159,11 @@ textColourFeature =
 textColourLight : Color
 textColourLight =
     rgba255 250 250 250 0.8
+
+
+fontSizeSmall : Attr decorative msg
+fontSizeSmall =
+    Font.size 14
 
 
 buttonStyles : List (Attribute msg)
