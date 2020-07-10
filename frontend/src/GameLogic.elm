@@ -164,3 +164,23 @@ gameWinner gameStatus =
     List.Extra.find
         (\player -> player.score == 2)
         gameStatus.game.players
+
+
+selfAsPlayer : Self -> Player
+selfAsPlayer self =
+    let
+        thornCount =
+            if self.hasThorn then
+                1
+
+            else
+                0
+
+        discCount =
+            thornCount + self.roseCount
+    in
+    { screenName = self.screenName ++ " (you)"
+    , playerId = self.playerId
+    , score = self.score
+    , discCount = discCount
+    }

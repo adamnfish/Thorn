@@ -12,13 +12,13 @@ import FontAwesome.Attributes as Icon
 import FontAwesome.Icon as Icon exposing (Icon)
 import FontAwesome.Solid as Icon
 import FontAwesome.Styles
-import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount, playerIsActive, selfIsActive)
+import GameLogic exposing (allFlipped, gameWinner, hasPlacedThorn, isCreator, minBid, numberOfPlacedDiscs, placedRoseCount, playerIsActive, selfAsPlayer, selfIsActive)
 import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, length4, size1, size2, size3, size4, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
+import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourCta, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, length4, size1, size2, size3, size4, size5, size6, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
 
 
 type alias Page =
@@ -155,6 +155,7 @@ view model =
                 , row
                     [ width fill
                     , padding size4
+                    , spacing size4
                     , Background.gradient
                         { angle = 0
                         , steps = [ colourBlack, colourBlack2 ]
@@ -163,23 +164,6 @@ view model =
                     , fontSizeSmall
                     ]
                     [ text page.status
-                    , el
-                        [ alignRight ]
-                      <|
-                        if model.connected then
-                            Element.html
-                                (Icon.link
-                                    |> Icon.present
-                                    |> Icon.view
-                                )
-
-                        else
-                            Element.html
-                                (Icon.unlink
-                                    |> Icon.present
-                                    |> Icon.view
-                                )
-                    , el [] <| text ""
                     , el
                         [ alignRight ]
                       <|
@@ -199,6 +183,23 @@ view model =
 
                             NotLoading ->
                                 text ""
+                    , el [] <| text ""
+                    , el
+                        [ alignRight ]
+                      <|
+                        if model.connected then
+                            Element.html
+                                (Icon.link
+                                    |> Icon.present
+                                    |> Icon.view
+                                )
+
+                        else
+                            Element.html
+                                (Icon.unlink
+                                    |> Icon.present
+                                    |> Icon.view
+                                )
                     ]
                 , column
                     [ width fill ]
@@ -369,101 +370,88 @@ lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Maybe GameSta
 lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
     let
         -- TODO: only show reoder controls to creator
-        playersEl =
-            if List.isEmpty playerOrder then
-                text "Waiting for other players"
+        playerEls =
+            List.map (lobbyPlayersList playerOrder) playerOrder
 
-            else
-                column
-                    [ width fill ]
+        missingPlayerEl =
+            el
+                [ width fill
+                , Border.widthEach
+                    { each0 | top = size1 }
+                , Border.color colourSecondaryHighlight
+                ]
+            <|
+                el
+                    [ width fill
+                    , Border.widthEach
+                        { each0 | left = size4 }
+                    , Border.color colourCta
+                    ]
                 <|
-                    List.map
-                        (\player ->
-                            let
-                                last =
-                                    Maybe.withDefault False <|
-                                        Maybe.map
-                                            (\p -> p == player)
-                                        <|
-                                            List.Extra.last playerOrder
+                    row
+                        [ width fill
+                        , height <| px 55
+                        , padding size4
+                        , spacing size4
+                        , Border.widthEach
+                            { each0 | bottom = size1 }
+                        , Border.color colourBlack
+                        , Background.gradient
+                            { angle = 0
+                            , steps = [ colourSecondary, colourSecondary2 ]
+                            }
+                        , Font.color textColourLight
+                        ]
+                        [ Element.html
+                            (Icon.userPlus
+                                |> Icon.present
+                                |> Icon.styled [ Html.Attributes.style "color" "rgba(180, 180, 180, 0.8)" ]
+                                |> Icon.view
+                            )
+                        ]
 
-                                first =
-                                    Maybe.withDefault False <|
-                                        Maybe.map
-                                            (\p -> p == player)
-                                        <|
-                                            List.head playerOrder
-                            in
-                            el
-                                [ width fill
-                                , Border.widthEach
-                                    { each0 | top = size1 }
-                                , Border.color colourSecondaryHighlight
-                                ]
-                            <|
-                                row
-                                    [ width fill
-                                    , padding size4
-                                    , Border.widthEach
-                                        { each0
-                                            | bottom = size1
-                                            , left = size4
-                                        }
-                                    , Border.color colourBlack
-                                    , Background.gradient
-                                        { angle = 0
-                                        , steps = [ colourSecondary, colourSecondary2 ]
-                                        }
-                                    , Font.color textColourLight
-                                    ]
-                                    [ text player.screenName
-                                    , row
-                                        [ spacing size2
-                                        , width fill
-                                        , alignRight
-                                        ]
-                                        [ if first then
-                                            Element.none
+        missingPlayerEls =
+            List.repeat
+                (max 0 <| 3 - List.length playerOrder)
+                missingPlayerEl
 
-                                          else
-                                            el
-                                                [ alignRight ]
-                                            <|
-                                                Input.button buttonStyles
-                                                    { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
-                                                    , label =
-                                                        row
-                                                            [ spacing size4 ]
-                                                            [ Element.html
-                                                                (Icon.chevronUp
-                                                                    |> Icon.present
-                                                                    |> Icon.view
-                                                                )
-                                                            ]
-                                                    }
-                                        , if last then
-                                            Element.none
-
-                                          else
-                                            el
-                                                [ alignRight ]
-                                            <|
-                                                Input.button buttonStyles
-                                                    { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
-                                                    , label =
-                                                        row
-                                                            [ spacing size4 ]
-                                                            [ Element.html
-                                                                (Icon.chevronDown
-                                                                    |> Icon.present
-                                                                    |> Icon.view
-                                                                )
-                                                            ]
-                                                    }
-                                        ]
-                                    ]
-                        )
-                        playerOrder
+        additionalPlayerEl =
+            el
+                [ width fill
+                , Border.widthEach
+                    { each0 | top = size1 }
+                , Border.color colourSecondaryHighlight
+                , alpha 0.5
+                ]
+            <|
+                el
+                    [ width fill
+                    , Border.widthEach
+                        { each0 | left = size4 }
+                    , Border.color colourWhite
+                    ]
+                <|
+                    row
+                        [ width fill
+                        , height <| px 55
+                        , padding size4
+                        , spacing size4
+                        , Border.widthEach
+                            { each0 | bottom = size1 }
+                        , Border.color colourBlack
+                        , Background.gradient
+                            { angle = 0
+                            , steps = [ colourSecondary, colourSecondary2 ]
+                            }
+                        , Font.color textColourLight
+                        ]
+                        [ Element.html
+                            (Icon.userPlus
+                                |> Icon.present
+                                |> Icon.styled [ Html.Attributes.style "color" "rgba(180, 180, 180, 0.8)" ]
+                                |> Icon.view
+                            )
+                        ]
 
         startGameEl =
             case maybeGameStatus of
@@ -494,17 +482,41 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
             [ width fill
             , spacing size3
             ]
-            [ text "Game code"
-            , el
-                (List.append
-                    [ uiHook "game-code" ]
-                    textInputStyles
-                )
-              <|
-                text <|
-                    gameCode welcomeMessage.gameId
+            [ row
+                [ width fill
+                , spacing size6
+                ]
+                [ el
+                    [ uiHook "game-code"
+                    , Font.bold
+                    , Font.size 45
+                    , padding size5
+                    , Background.color colourWhite
+                    , Font.color textColourDark
+                    , Font.alignLeft
+                    , Border.solid
+                    , Border.widthEach
+                        { each0 | bottom = size1 }
+                    , Border.color colourSecondary
+                    , Border.rounded 0
+                    ]
+                  <|
+                    text <|
+                        gameCode welcomeMessage.gameId
+                , paragraph
+                    [ width fill
+                    , Font.alignLeft
+                    ]
+                    [ text "Other players can use this code to join your game."
+                    ]
+                ]
             , spacer 2
-            , playersEl
+            , column
+                [ width fill ]
+              <|
+                List.append
+                    (List.append playerEls missingPlayerEls)
+                    (List.singleton additionalPlayerEl)
             , startGameEl
             ]
 
@@ -1036,6 +1048,105 @@ selfSecretInformation gameStatus =
         ]
 
 
+lobbyPlayersList : List Player -> Player -> Element Msg
+lobbyPlayersList playerOrder player =
+    let
+        last =
+            Maybe.withDefault False <|
+                Maybe.map
+                    (\p -> p == player)
+                <|
+                    List.Extra.last playerOrder
+
+        first =
+            Maybe.withDefault False <|
+                Maybe.map
+                    (\p -> p == player)
+                <|
+                    List.head playerOrder
+    in
+    el
+        [ width fill
+        , Border.widthEach
+            { each0 | top = size1 }
+        , Border.color colourSecondaryHighlight
+        ]
+    <|
+        row
+            [ width fill
+            , height <| px 55
+            , padding size4
+            , spacing size4
+            , Border.widthEach
+                { each0
+                    | bottom = size1
+                    , left = size4
+                }
+            , Border.color colourBlack
+            , Background.gradient
+                { angle = 0
+                , steps = [ colourSecondary, colourSecondary2 ]
+                }
+            , Font.color textColourLight
+            ]
+            [ Element.html
+                (Icon.userCircle
+                    |> Icon.present
+                    |> Icon.styled [ Html.Attributes.style "color" "rgba(250, 250, 250, 0.8)" ]
+                    |> Icon.view
+                )
+            , el
+                []
+              <|
+                text ""
+            , text player.screenName
+            , row
+                [ spacing size2
+                , width fill
+                , alignRight
+                ]
+                [ if first then
+                    Element.none
+
+                  else
+                    el
+                        [ alignRight ]
+                    <|
+                        Input.button buttonStyles
+                            { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
+                            , label =
+                                row
+                                    [ spacing size4 ]
+                                    [ Element.html
+                                        (Icon.chevronUp
+                                            |> Icon.present
+                                            |> Icon.view
+                                        )
+                                    ]
+                            }
+                , if last then
+                    Element.none
+
+                  else
+                    el
+                        [ alignRight ]
+                    <|
+                        Input.button buttonStyles
+                            { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
+                            , label =
+                                row
+                                    [ spacing size4 ]
+                                    [ Element.html
+                                        (Icon.chevronDown
+                                            |> Icon.present
+                                            |> Icon.view
+                                        )
+                                    ]
+                            }
+                ]
+            ]
+
+
 playersList : GameStatusMessage -> Bool -> Element Msg
 playersList gameStatus showStackSelector =
     let
@@ -1044,11 +1155,21 @@ playersList gameStatus showStackSelector =
                 (\player -> player.playerId /= gameStatus.self.playerId)
             <|
                 reorderToBy .playerId gameStatus.self.playerId gameStatus.game.players
+
+        otherPlayerEls =
+            List.map (playerPublicInformation gameStatus showStackSelector) otherPlayers
+
+        selfPlayer =
+            selfAsPlayer gameStatus.self
+
+        selfEl =
+            playerPublicInformation gameStatus showStackSelector selfPlayer
     in
     column
         [ width fill ]
     <|
-        List.map (playerPublicInformation gameStatus showStackSelector) otherPlayers
+        selfEl
+            :: otherPlayerEls
 
 
 playerPublicInformation : GameStatusMessage -> Bool -> Player -> Element Msg
@@ -1111,8 +1232,18 @@ playerPublicInformation gameStatus showStackSelector player =
 
         info =
             row
-                [ width fill ]
-                [ el
+                [ width fill
+                , spacing size4
+                , height <| px 35
+                ]
+                [ Element.html
+                    (Icon.userCircle
+                        |> Icon.present
+                        |> Icon.styled [ Html.Attributes.style "color" "rgba(250, 250, 250, 0.8)" ]
+                        |> Icon.view
+                    )
+                , el [] <| text ""
+                , el
                     [ Font.color textColourLight ]
                   <|
                     text player.screenName
