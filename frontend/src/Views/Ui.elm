@@ -30,6 +30,21 @@ type alias Page =
     }
 
 
+type alias ConfirmControl =
+    { confirm : Msg
+    , cancel : Msg
+    , description : Element Msg
+    }
+
+
+type alias Controls =
+    { message : Maybe String
+    , features : List ( Msg, Element Msg )
+    , bids : Maybe ( Int, Int )
+    , confirm : Maybe ConfirmControl
+    }
+
+
 view : Model -> Browser.Document Msg
 view model =
     let
@@ -460,28 +475,25 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                             )
                         ]
 
-        startGameEl =
+        controls =
             case maybeGameStatus of
                 Just gameStatus ->
                     if isCreator gameStatus.game gameStatus.self then
                         if List.length playerOrder >= 3 then
-                            column
-                                [ width fill ]
-                                [ spacer 1
-                                , Input.button featureButtonStyles
-                                    { onPress = Just SubmitStartGame
-                                    , label = text "Start game"
-                                    }
-                                ]
+                            { emptyControls
+                                | features = [ ( SubmitStartGame, text "Start game" ) ]
+                            }
 
                         else
-                            statusMessage "There must be at least 3 players to start the game"
+                            { emptyControls
+                                | message = Just "There must be at least 3 players to start the game"
+                            }
 
                     else
-                        Element.none
+                        emptyControls
 
                 Nothing ->
-                    Element.none
+                    emptyControls
     in
     centerBlock <|
         column
@@ -524,7 +536,8 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 List.append
                     (List.append playerEls missingPlayerEls)
                     (List.singleton additionalPlayerEl)
-            , startGameEl
+            , spacer 2
+            , controlsEl controls
             ]
 
 
@@ -533,65 +546,35 @@ placeDisc model gameStatus maybeDisc =
     let
         roseButton =
             if gameStatus.self.roseCount > placedRoseCount gameStatus then
-                Input.button buttonStyles
-                    { onPress = Just <| InputPlaceDisc Rose
-                    , label = text "Rose"
-                    }
+                [ ( InputPlaceDisc Rose, text "Rose" ) ]
 
             else
-                Element.none
+                []
 
         thornButton =
             if gameStatus.self.hasThorn && (not <| hasPlacedThorn gameStatus) then
-                Input.button buttonStyles
-                    { onPress = Just <| InputPlaceDisc Thorn
-                    , label = text "Thorn"
-                    }
+                [ ( InputPlaceDisc Thorn, text "Thorn" ) ]
 
             else
-                Element.none
+                []
 
-        buttons =
+        controls =
             case maybeDisc of
                 Just disc ->
-                    [ Input.button buttonStyles
-                        { onPress = Just <| InputRemovePlaceDisc
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just <| SubmitPlaceDisc disc
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitPlaceDisc disc
+                                , cancel = InputRemovePlaceDisc
+                                , description = text ""
+                                }
+                    }
 
                 Nothing ->
-                    [ roseButton, thornButton ]
+                    { emptyControls
+                        | features =
+                            List.append roseButton thornButton
+                    }
     in
     centerBlock <|
         column
@@ -599,132 +582,56 @@ placeDisc model gameStatus maybeDisc =
             [ selfSecretInformation gameStatus
             , spacer 3
             , playersList gameStatus False
-            , row
-                [ spacing size2 ]
-                buttons
+            , spacer 2
+            , controlsEl controls
             ]
 
 
 discOrBid : Model -> GameStatusMessage -> DiscOrBid -> Element Msg
 discOrBid model gameStatus maybeSelection =
     let
-        maxBid =
-            numberOfPlacedDiscs gameStatus
-
         roseButton =
             if gameStatus.self.roseCount > placedRoseCount gameStatus then
-                Input.button buttonStyles
-                    { onPress = Just <| InputPlaceDisc Rose
-                    , label = text "Rose"
-                    }
+                [ ( InputPlaceDisc Rose, text "Rose" ) ]
 
             else
-                Element.none
+                []
 
         thornButton =
             if gameStatus.self.hasThorn && (not <| hasPlacedThorn gameStatus) then
-                Input.button buttonStyles
-                    { onPress = Just <| InputPlaceDisc Thorn
-                    , label = text "Thorn"
-                    }
+                [ ( InputPlaceDisc Thorn, text "Thorn" ) ]
 
             else
-                Element.none
+                []
 
-        bidButtons =
-            List.map
-                (\count ->
-                    Input.button buttonStyles
-                        { onPress = Just <| InputBid count
-                        , label = text <| String.fromInt count
-                        }
-                )
-            <|
-                List.range (minBid gameStatus) maxBid
-
-        bidButtonContainer =
-            row
-                [ spacing size2 ]
-                bidButtons
-
-        buttons =
+        controls =
             case maybeSelection of
                 DiscOrBidDisc disc ->
-                    [ Input.button buttonStyles
-                        { onPress = Just InputRemovePlaceDisc
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just <| SubmitPlaceDisc disc
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitPlaceDisc disc
+                                , cancel = InputRemovePlaceDisc
+                                , description = text ""
+                                }
+                    }
 
                 DiscOrBidBid bid ->
-                    [ Input.button buttonStyles
-                        { onPress = Just InputRemoveBid
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just <| SubmitBid bid
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitBid bid
+                                , cancel = InputRemoveBid
+                                , description = text ""
+                                }
+                    }
 
                 DiscOrBidNoSelection ->
-                    [ roseButton, thornButton, bidButtonContainer ]
+                    { emptyControls
+                        | features =
+                            List.append roseButton thornButton
+                        , bids = Just ( minBid gameStatus, numberOfPlacedDiscs gameStatus )
+                    }
     in
     centerBlock <|
         column
@@ -732,115 +639,41 @@ discOrBid model gameStatus maybeSelection =
             [ selfSecretInformation gameStatus
             , spacer 3
             , playersList gameStatus False
-            , row
-                [ spacing size2 ]
-                buttons
+            , spacer 2
+            , controlsEl controls
             ]
 
 
 bidOrPass : Model -> GameStatusMessage -> BidOrPass -> Element Msg
 bidOrPass model gameStatus maybeSelection =
     let
-        maxBid =
-            numberOfPlacedDiscs gameStatus
-
-        bidButtons =
-            List.map
-                (\count ->
-                    Input.button buttonStyles
-                        { onPress = Just <| InputBid count
-                        , label = text <| String.fromInt count
-                        }
-                )
-            <|
-                List.range (minBid gameStatus) maxBid
-
-        bidButtonContainer =
-            row [] bidButtons
-
-        buttons =
+        controls =
             case maybeSelection of
                 BidOrPassBid bid ->
-                    [ Input.button buttonStyles
-                        { onPress = Just InputRemoveBid
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just <| SubmitBid bid
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitBid bid
+                                , cancel = InputRemoveBid
+                                , description = text <| "bid " ++ String.fromInt bid
+                                }
+                    }
 
                 BidOrPassPass ->
-                    [ Input.button buttonStyles
-                        { onPress = Just InputRemovePass
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just SubmitPass
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitPass
+                                , cancel = InputRemovePass
+                                , description = text "pass"
+                                }
+                    }
 
                 BidOrPassNoSelection ->
-                    [ bidButtonContainer
-                    , Input.button buttonStyles
-                        { onPress = Just InputPass
-                        , label = text "Pass"
-                        }
-                    ]
+                    { emptyControls
+                        | features = [ ( InputPass, text "Pass" ) ]
+                        , bids = Just ( minBid gameStatus, numberOfPlacedDiscs gameStatus )
+                    }
     in
     centerBlock <|
         column
@@ -848,9 +681,8 @@ bidOrPass model gameStatus maybeSelection =
             [ selfSecretInformation gameStatus
             , spacer 3
             , playersList gameStatus False
-            , row
-                [ spacing size2 ]
-                buttons
+            , spacer 2
+            , controlsEl controls
             ]
 
 
@@ -860,68 +692,32 @@ flip model gameStatus maybeStack =
         allOwnFlipped =
             allFlipped gameStatus gameStatus.self.playerId
 
-        buttons =
+        controls =
             case maybeStack of
                 Just stackId ->
-                    [ Input.button buttonStyles
-                        { onPress = Just InputRemoveFlip
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Clear"
-                                , text ""
-                                , Element.html
-                                    (Icon.times
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    , Input.button buttonStyles
-                        { onPress = Just <| SubmitFlip stackId
-                        , label =
-                            row
-                                [ spacing size4 ]
-                                [ el
-                                    []
-                                  <|
-                                    text "Confirm"
-                                , text ""
-                                , Element.html
-                                    (Icon.check
-                                        |> Icon.present
-                                        |> Icon.view
-                                    )
-                                ]
-                        }
-                    ]
+                    { emptyControls
+                        | confirm =
+                            Just
+                                { confirm = SubmitFlip stackId
+                                , cancel = InputRemoveFlip
+                                , description = text "flip"
+                                }
+                    }
 
                 Nothing ->
                     if allOwnFlipped then
-                        [ Element.none ]
+                        { emptyControls
+                            | message = Just "Choose disc to flip"
+                        }
 
                     else
-                        [ Input.button buttonStyles
-                            { onPress = Just <| InputFlip gameStatus.self.playerId
-                            , label =
-                                row
-                                    [ spacing size4 ]
-                                    [ el
-                                        []
-                                      <|
-                                        text "Flip"
-                                    , text ""
-                                    , Element.html
-                                        (Icon.sync
-                                            |> Icon.present
-                                            |> Icon.view
-                                        )
-                                    ]
-                            }
-                        ]
+                        { emptyControls
+                            | features =
+                                [ ( InputFlip gameStatus.self.playerId
+                                  , text "Flip own disc"
+                                  )
+                                ]
+                        }
     in
     centerBlock <|
         column
@@ -929,9 +725,8 @@ flip model gameStatus maybeStack =
             [ selfSecretInformation gameStatus
             , spacer 3
             , playersList gameStatus allOwnFlipped
-            , row
-                [ spacing size2 ]
-                buttons
+            , spacer 2
+            , controlsEl controls
             ]
 
 
@@ -1058,14 +853,14 @@ selfSecretInformation gameStatus =
                     ]
                     [ row
                         [ spacing size4
-                        , paddingEach { each0 | right = size4 }
-                        , Border.solid
-                        , Border.widthEach { each0 | right = 1 }
-                        , Border.color textColourGrey
                         ]
                         poolEls
                     , row
                         [ spacing size4
+                        , paddingEach { each0 | left = size4 }
+                        , Border.solid
+                        , Border.color textColourGrey
+                        , Border.widthEach { each0 | left = 1 }
                         , alignRight
                         ]
                       <|
@@ -1357,16 +1152,16 @@ playerPublicInformation gameStatus showStackSelector player =
                     [ row
                         [ alignLeft
                         , spacing size4
-                        , paddingEach { each0 | right = size4 }
-                        , Border.solid
-                        , Border.widthEach { each0 | right = 1 }
-                        , Border.color textColourGrey
                         ]
                       <|
                         List.repeat (player.discCount - placedDiscCount) unknownDiscDisplay
                     , row
                         [ alignRight
                         , spacing size4
+                        , paddingEach { each0 | left = size4 }
+                        , Border.solid
+                        , Border.color textColourGrey
+                        , Border.widthEach { each0 | left = 1 }
                         ]
                       <|
                         List.append
@@ -1454,6 +1249,143 @@ unknownDiscDisplay =
                     |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourFeature ]
                     |> Icon.view
                 )
+
+
+emptyControls : Controls
+emptyControls =
+    { message = Nothing
+    , features = []
+    , bids = Nothing
+    , confirm = Nothing
+    }
+
+
+controlsEl : Controls -> Element Msg
+controlsEl controls =
+    column
+        [ width fill
+        , padding size4
+        , spacing size4
+        , Background.color colourWhite
+        , Border.widthEach
+            { each0 | left = size4 }
+        , Border.color colourCta
+        ]
+        [ case controls.message of
+            Just message ->
+                paragraph
+                    [ Font.alignLeft
+                    , width fill
+                    ]
+                    [ text message ]
+
+            Nothing ->
+                Element.none
+        , column
+            [ width fill
+            , spacing size3
+            ]
+          <|
+            List.map
+                (\( msg, label ) ->
+                    Input.button featureButtonStyles
+                        { onPress = Just msg
+                        , label = label
+                        }
+                )
+                controls.features
+        , case controls.bids of
+            Just ( min, max ) ->
+                row
+                    [ width fill
+                    , spacing size2
+                    ]
+                <|
+                    List.map
+                        (\bid ->
+                            Input.button
+                                (List.append
+                                    buttonStyles
+                                    [ width fill ]
+                                )
+                                { onPress = Just <| InputBid bid
+                                , label = text <| String.fromInt bid
+                                }
+                        )
+                    <|
+                        List.range min max
+
+            Nothing ->
+                Element.none
+        , case controls.confirm of
+            Just confirmControl ->
+                column
+                    [ width fill
+                    , spacing size3
+                    ]
+                    [ confirmControl.description
+                    , row
+                        [ width fill
+                        , spacing size3
+                        ]
+                        [ Input.button
+                            (List.append
+                                buttonStyles
+                                [ width <| fillPortion 2 ]
+                            )
+                            { onPress = Just confirmControl.cancel
+                            , label =
+                                row
+                                    [ width fill
+                                    , spacing size4
+                                    , padding size4
+                                    ]
+                                    [ el
+                                        [ centerX ]
+                                      <|
+                                        text "Clear"
+                                    , el
+                                        [ centerX ]
+                                      <|
+                                        Element.html
+                                            (Icon.times
+                                                |> Icon.present
+                                                |> Icon.view
+                                            )
+                                    ]
+                            }
+                        , Input.button
+                            (List.append
+                                buttonStyles
+                                [ width <| fillPortion 3 ]
+                            )
+                            { onPress = Just confirmControl.confirm
+                            , label =
+                                row
+                                    [ width fill
+                                    , spacing size4
+                                    , padding size4
+                                    ]
+                                    [ el
+                                        [ centerX ]
+                                      <|
+                                        text "Confirm"
+                                    , el
+                                        [ centerX ]
+                                      <|
+                                        Element.html
+                                            (Icon.check
+                                                |> Icon.present
+                                                |> Icon.view
+                                            )
+                                    ]
+                            }
+                        ]
+                    ]
+
+            Nothing ->
+                Element.none
+        ]
 
 
 uiHook : String -> Attribute Msg
