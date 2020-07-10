@@ -76,6 +76,19 @@ length6 =
     px size6
 
 
+formatColor : Color -> String
+formatColor colour =
+    let
+        rgba =
+            toRgb colour
+    in
+    "rgba("
+        ++ String.fromInt (round (rgba.red * 255))
+        ++ ("," ++ String.fromInt (round (rgba.green * 255)))
+        ++ ("," ++ String.fromInt (round (rgba.blue * 255)))
+        ++ ("," ++ String.fromFloat rgba.alpha ++ ")")
+
+
 colourPrimary : Color
 colourPrimary =
     rgb255 222 184 65
@@ -161,6 +174,11 @@ textColourLight =
     rgba255 250 250 250 0.8
 
 
+textColourGrey : Color
+textColourGrey =
+    rgba255 180 180 180 0.8
+
+
 fontSizeSmall : Attr decorative msg
 fontSizeSmall =
     Font.size 14
@@ -223,10 +241,15 @@ each0 =
 centerBlock : Element msg -> Element msg
 centerBlock block =
     el
-        [ width <| maximum 500 fill
-        , centerX
+        [ width fill
+        , paddingXY 10 0
         ]
-        block
+    <|
+        el
+            [ width <| maximum 500 fill
+            , centerX
+            ]
+            block
 
 
 spacer : Int -> Element msg

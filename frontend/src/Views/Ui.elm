@@ -18,7 +18,7 @@ import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourCta, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, length4, size1, size2, size3, size4, size5, size6, spacer, textColourDark, textColourFeature, textColourLight, textInputStyles)
+import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourCta, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, formatColor, length4, size1, size2, size3, size4, size5, size6, spacer, textColourDark, textColourFeature, textColourGrey, textColourLight, textInputStyles)
 
 
 type alias Page =
@@ -369,9 +369,16 @@ joinGame model gameCode screenName loadingStatus =
 lobby : Model -> List Player -> LoadingStatus -> WelcomeMessage -> Maybe GameStatusMessage -> Element Msg
 lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
     let
-        -- TODO: only show reoder controls to creator
+        showReorderControls =
+            case maybeGameStatus of
+                Just gameStatus ->
+                    isCreator gameStatus.game gameStatus.self
+
+                _ ->
+                    False
+
         playerEls =
-            List.map (lobbyPlayersList playerOrder) playerOrder
+            List.map (lobbyPlayersList showReorderControls playerOrder) playerOrder
 
         missingPlayerEl =
             el
@@ -405,7 +412,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                         [ Element.html
                             (Icon.userPlus
                                 |> Icon.present
-                                |> Icon.styled [ Html.Attributes.style "color" "rgba(180, 180, 180, 0.8)" ]
+                                |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourGrey ]
                                 |> Icon.view
                             )
                         ]
@@ -468,8 +475,7 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                                 ]
 
                         else
-                            paragraph []
-                                [ text "There must be at least 3 players to start the game" ]
+                            statusMessage "There must be at least 3 players to start the game"
 
                     else
                         Element.none
@@ -488,12 +494,13 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 ]
                 [ el
                     [ uiHook "game-code"
+                    , padding size5
+                    , alignTop
                     , Font.bold
                     , Font.size 45
-                    , padding size5
-                    , Background.color colourWhite
                     , Font.color textColourDark
                     , Font.alignLeft
+                    , Background.color colourWhite
                     , Border.solid
                     , Border.widthEach
                         { each0 | bottom = size1 }
@@ -590,6 +597,7 @@ placeDisc model gameStatus maybeDisc =
         column
             [ width fill ]
             [ selfSecretInformation gameStatus
+            , spacer 3
             , playersList gameStatus False
             , row
                 [ spacing size2 ]
@@ -722,6 +730,7 @@ discOrBid model gameStatus maybeSelection =
         column
             [ width fill ]
             [ selfSecretInformation gameStatus
+            , spacer 3
             , playersList gameStatus False
             , row
                 [ spacing size2 ]
@@ -837,6 +846,7 @@ bidOrPass model gameStatus maybeSelection =
         column
             [ width fill ]
             [ selfSecretInformation gameStatus
+            , spacer 3
             , playersList gameStatus False
             , row
                 [ spacing size2 ]
@@ -917,6 +927,7 @@ flip model gameStatus maybeStack =
         column
             [ width fill ]
             [ selfSecretInformation gameStatus
+            , spacer 3
             , playersList gameStatus allOwnFlipped
             , row
                 [ spacing size2 ]
@@ -930,20 +941,16 @@ currentGame model gameStatus =
         roundInfo =
             case gameStatus.game.round of
                 Just (InitialDiscs initialDiscs) ->
-                    paragraph []
-                        [ text "Waiting for other players to place a disc" ]
+                    statusMessage "Waiting for other players"
 
                 Just (Placing placing) ->
-                    paragraph []
-                        [ text "Waiting for other players to place a disc or start the bidding" ]
+                    statusMessage "Waiting for other players"
 
                 Just (Bidding bidding) ->
-                    paragraph []
-                        [ text "Waiting for other players to bid or pass" ]
+                    statusMessage "Waiting for other players"
 
                 Just (Flipping flipping) ->
-                    paragraph []
-                        [ text "Another player is trying to win the round" ]
+                    statusMessage "Another player is flipping"
 
                 Just (Finished finished) ->
                     let
@@ -954,18 +961,16 @@ currentGame model gameStatus =
                             case maybeWinner of
                                 Just winner ->
                                     if winner.playerId == gameStatus.self.playerId then
-                                        paragraph []
-                                            [ text "You have won the game, congratulations!" ]
+                                        statusMessage "You have won the game, congratulations!"
 
                                     else
-                                        paragraph []
-                                            [ text <| winner.screenName ++ " has won!" ]
+                                        statusMessage <| winner.screenName ++ " has won!"
 
                                 Nothing ->
                                     Element.none
 
                         newRoundButton =
-                            if Maybe.Extra.isNothing maybeWinner && isCreator gameStatus.game gameStatus.self then
+                            if isCreator gameStatus.game gameStatus.self && Maybe.Extra.isNothing maybeWinner then
                                 Input.button buttonStyles
                                     { onPress = Just SubmitNewRound
                                     , label = text "Next round"
@@ -975,22 +980,22 @@ currentGame model gameStatus =
                                 Element.none
 
                         finishedMessage =
-                            if finished.successful then
-                                if finished.activePlayer == gameStatus.self.playerId then
-                                    paragraph []
-                                        [ text "You have won the round" ]
+                            if Maybe.Extra.isNothing maybeWinner then
+                                if finished.successful then
+                                    if finished.activePlayer == gameStatus.self.playerId then
+                                        statusMessage "You have won the round"
+
+                                    else
+                                        statusMessage "Another player has won the round"
+
+                                else if finished.activePlayer == gameStatus.self.playerId then
+                                    statusMessage "You have hit a skull and failed to win the round"
 
                                 else
-                                    paragraph []
-                                        [ text "Another player has won the round" ]
-
-                            else if finished.activePlayer == gameStatus.self.playerId then
-                                paragraph []
-                                    [ text "You have hit a skull and failed to win the round" ]
+                                    statusMessage "Another player failed to win the round"
 
                             else
-                                paragraph []
-                                    [ text "Another player failed to win the round" ]
+                                Element.none
                     in
                     column
                         [ width fill ]
@@ -1003,6 +1008,7 @@ currentGame model gameStatus =
         column
             [ width fill ]
             [ selfSecretInformation gameStatus
+            , spacer 3
             , playersList gameStatus False
             , roundInfo
             ]
@@ -1031,25 +1037,62 @@ selfSecretInformation gameStatus =
         poolEls =
             List.reverse <| thornPoolEl :: rosePoolEls
     in
-    column
-        [ width fill ]
-        [ row
-            [ width fill ]
-            [ row
-                [ spacing size4 ]
-                poolEls
-            , row
-                [ spacing size4
-                , alignRight
-                ]
-              <|
-                List.map discDisplay placed
-            ]
+    el
+        [ width fill
+        , Background.color colourWhite
         ]
+    <|
+        el
+            [ width fill
+            , Border.widthEach
+                { each0 | left = size4 }
+            , Border.color colourAlt
+            ]
+        <|
+            column
+                [ width fill ]
+                [ row
+                    [ width fill
+                    , spacing size4
+                    , padding size4
+                    ]
+                    [ row
+                        [ spacing size4
+                        , paddingEach { each0 | right = size4 }
+                        , Border.solid
+                        , Border.widthEach { each0 | right = 1 }
+                        , Border.color textColourGrey
+                        ]
+                        poolEls
+                    , row
+                        [ spacing size4
+                        , alignRight
+                        ]
+                      <|
+                        List.map discDisplay placed
+                    ]
+                , row
+                    [ width fill
+                    , padding size4
+                    , fontSizeSmall
+                    ]
+                    [ text "Keep this secret"
+                    , el
+                        [ alignRight
+                        , paddingXY size5 0
+                        ]
+                      <|
+                        Element.html
+                            (Icon.eye
+                                |> Icon.present
+                                |> Icon.view
+                            )
+                    ]
+                ]
 
 
-lobbyPlayersList : List Player -> Player -> Element Msg
-lobbyPlayersList playerOrder player =
+lobbyPlayersList : Bool -> List Player -> Player -> Element Msg
+lobbyPlayersList showReorderControls playerOrder player =
     let
         last =
             Maybe.withDefault False <|
@@ -1092,7 +1135,7 @@ lobbyPlayersList playerOrder player =
             [ Element.html
                 (Icon.userCircle
                     |> Icon.present
-                    |> Icon.styled [ Html.Attributes.style "color" "rgba(250, 250, 250, 0.8)" ]
+                    |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourLight ]
                     |> Icon.view
                 )
             , el
@@ -1100,50 +1143,54 @@ lobbyPlayersList playerOrder player =
               <|
                 text ""
             , text player.screenName
-            , row
-                [ spacing size2
-                , width fill
-                , alignRight
-                ]
-                [ if first then
-                    Element.none
+            , if showReorderControls then
+                row
+                    [ spacing size4
+                    , width fill
+                    , alignRight
+                    ]
+                    [ if first then
+                        Element.none
 
-                  else
-                    el
-                        [ alignRight ]
-                    <|
-                        Input.button buttonStyles
-                            { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
-                            , label =
-                                row
-                                    [ spacing size4 ]
-                                    [ Element.html
-                                        (Icon.chevronUp
-                                            |> Icon.present
-                                            |> Icon.view
-                                        )
-                                    ]
-                            }
-                , if last then
-                    Element.none
+                      else
+                        el
+                            [ alignRight ]
+                        <|
+                            Input.button buttonStyles
+                                { onPress = Just <| InputReorderPlayers <| swapUp player playerOrder
+                                , label =
+                                    row
+                                        [ spacing size4 ]
+                                        [ Element.html
+                                            (Icon.chevronUp
+                                                |> Icon.present
+                                                |> Icon.view
+                                            )
+                                        ]
+                                }
+                    , if last then
+                        Element.none
 
-                  else
-                    el
-                        [ alignRight ]
-                    <|
-                        Input.button buttonStyles
-                            { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
-                            , label =
-                                row
-                                    [ spacing size4 ]
-                                    [ Element.html
-                                        (Icon.chevronDown
-                                            |> Icon.present
-                                            |> Icon.view
-                                        )
-                                    ]
-                            }
-                ]
+                      else
+                        el
+                            [ alignRight ]
+                        <|
+                            Input.button buttonStyles
+                                { onPress = Just <| InputReorderPlayers <| swapDown player playerOrder
+                                , label =
+                                    row
+                                        [ spacing size4 ]
+                                        [ Element.html
+                                            (Icon.chevronDown
+                                                |> Icon.present
+                                                |> Icon.view
+                                            )
+                                        ]
+                                }
+                    ]
+
+              else
+                Element.none
             ]
 
 
@@ -1239,7 +1286,7 @@ playerPublicInformation gameStatus showStackSelector player =
                 [ Element.html
                     (Icon.userCircle
                         |> Icon.present
-                        |> Icon.styled [ Html.Attributes.style "color" "rgba(250, 250, 250, 0.8)" ]
+                        |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourLight ]
                         |> Icon.view
                     )
                 , el [] <| text ""
@@ -1310,6 +1357,10 @@ playerPublicInformation gameStatus showStackSelector player =
                     [ row
                         [ alignLeft
                         , spacing size4
+                        , paddingEach { each0 | right = size4 }
+                        , Border.solid
+                        , Border.widthEach { each0 | right = 1 }
+                        , Border.color textColourGrey
                         ]
                       <|
                         List.repeat (player.discCount - placedDiscCount) unknownDiscDisplay
@@ -1325,6 +1376,28 @@ playerPublicInformation gameStatus showStackSelector player =
                 ]
 
 
+statusMessage : String -> Element Msg
+statusMessage message =
+    row
+        [ width fill
+        , padding size4
+        , spacing size4
+        , Background.color colourWhite
+        , Border.widthEach { each0 | left = size4 }
+        , Border.color colourBlack
+        ]
+        [ el [] <|
+            Element.html
+                (Icon.infoCircle
+                    |> Icon.present
+                    |> Icon.view
+                )
+        , paragraph
+            [ Font.alignLeft ]
+            [ text message ]
+        ]
+
+
 discDisplay : Disc -> Element Msg
 discDisplay disc =
     let
@@ -1332,8 +1405,9 @@ discDisplay disc =
             case disc of
                 Thorn ->
                     Element.html
-                        (Icon.fire
+                        (Icon.biohazard
                             |> Icon.present
+                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourBlack2 ]
                             |> Icon.view
                         )
 
@@ -1341,6 +1415,7 @@ discDisplay disc =
                     Element.html
                         (Icon.spa
                             |> Icon.present
+                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourHighlight ]
                             |> Icon.view
                         )
     in
@@ -1351,7 +1426,6 @@ discDisplay disc =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
-        , Border.glow colourAltSecondary 1
         , Font.color textColourDark
         , centerY
         ]
@@ -1369,7 +1443,6 @@ unknownDiscDisplay =
         , Background.color colourAlt
         , Border.solid
         , Border.color textColourFeature
-        , Border.glow colourAltSecondary 1
         , Font.color textColourDark
         , centerY
         ]
@@ -1378,6 +1451,7 @@ unknownDiscDisplay =
             Element.html
                 (Icon.question
                     |> Icon.present
+                    |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourFeature ]
                     |> Icon.view
                 )
 
