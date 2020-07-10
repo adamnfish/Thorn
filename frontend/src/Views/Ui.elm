@@ -166,6 +166,23 @@ view model =
                     , el
                         [ alignRight ]
                       <|
+                        if model.connected then
+                            Element.html
+                                (Icon.link
+                                    |> Icon.present
+                                    |> Icon.view
+                                )
+
+                        else
+                            Element.html
+                                (Icon.unlink
+                                    |> Icon.present
+                                    |> Icon.view
+                                )
+                    , el [] <| text ""
+                    , el
+                        [ alignRight ]
+                      <|
                         case page.loading of
                             AwaitingMessage ->
                                 row
