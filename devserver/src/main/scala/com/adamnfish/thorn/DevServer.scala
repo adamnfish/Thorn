@@ -16,7 +16,7 @@ import scala.util.Random
 object DevServer {
   val messaging = new DevMessaging
   val client = LocalDynamoDB.client()
-  val db = new DynamoDB(client)
+  val db = new DynamoDB(client, "games", "players")
   LocalDynamoDB.createTable(client)("games")("gameCode" -> S, "gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
 

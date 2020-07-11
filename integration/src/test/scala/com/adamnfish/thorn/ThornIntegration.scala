@@ -15,10 +15,12 @@ trait ThornIntegration {
 
   def withTestContext(f: (PlayerAddress => Context, Database) => Any /* Assertion */): Any /* Assertion */ = {
     val randomSuffix = randomUUID().toString
-    val testDb = new DynamoDB(client, Some(randomSuffix))
+    val gameTableName = s"games-$randomSuffix"
+    val playerTableName = s"players-$randomSuffix"
+    val testDb = new DynamoDB(client, gameTableName, playerTableName)
 
-    LocalDynamoDB.withTable(client)(s"games-$randomSuffix")("gameCode" -> S, "gameId" -> S) {
-      LocalDynamoDB.withTable(client)(s"players-$randomSuffix")("gameId" -> S, "playerId" -> S) {
+    LocalDynamoDB.withTable(client)(gameTableName)("gameCode" -> S, "gameId" -> S) {
+      LocalDynamoDB.withTable(client)(playerTableName)("gameId" -> S, "playerId" -> S) {
         val addressToContext = Context(
           _,
           testDb,

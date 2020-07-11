@@ -16,7 +16,7 @@ class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
   val client = LocalDynamoDB.client()
   LocalDynamoDB.createTable(client)("games")("gameCode" -> S, "gameId" -> S)
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
-  val db = new DynamoDB(client)
+  val db = new DynamoDB(client, "games", "players")
 
   val startTime = ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC"))
   val expiry = startTime.plusDays(1).toEpochSecond
