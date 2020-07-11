@@ -10,6 +10,7 @@ import com.adamnfish.thorn.models._
 object Games {
   def newGame(gameName: String, creator: Player): Game = {
     val id = randomUUID().toString
+    val now = ZonedDateTime.now()
     Game(
       gameId = GameId(id),
       gameName = gameName,
@@ -17,7 +18,8 @@ object Games {
       players = List(creator),
       round = None,
       started = false,
-      startTime = ZonedDateTime.now()
+      startTime = now,
+      expiry = now.plusDays(21).toEpochSecond,
     )
   }
 

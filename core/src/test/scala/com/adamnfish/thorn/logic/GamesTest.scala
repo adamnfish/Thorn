@@ -54,6 +54,15 @@ class GamesTest extends AnyFreeSpec with Matchers with AttemptValues with Option
       notTooEarly shouldEqual true
       notTooLate shouldEqual true
     }
+
+    "expiry time is close enough to '21 days hence' for testing purposes" in {
+      val expiry = ZonedDateTime.now().plusDays(21)
+      val gameExpiry = newGame(gameName, creator).expiry
+      val tooEarly = expiry.minusDays(1).toEpochSecond
+      val tooLate = expiry.plusDays(1).toEpochSecond
+
+      gameExpiry should (be > tooEarly and be < tooLate)
+    }
   }
 
   "ensureNotStarted" - {

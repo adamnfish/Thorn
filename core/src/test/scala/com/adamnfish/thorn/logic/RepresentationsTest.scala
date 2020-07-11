@@ -24,7 +24,8 @@ class RepresentationsTest
     Nil,
     None,
     started = false,
-    startTime = now
+    startTime = now,
+    expiry = now.toEpochSecond,
   )
   val player1 = Player(
     "Sreen name 1", PlayerId("id-1"), PlayerKey("key-1"), PlayerAddress("address-1"), 0, 3, true
@@ -75,6 +76,14 @@ class RepresentationsTest
         gameForDb(
           game.copy(started = s)
         ).started shouldEqual s
+      }
+    }
+
+    "uses game's expiry" in {
+      forAll { (expiry: Long) =>
+        gameForDb(
+          game.copy(expiry = expiry)
+        ).expiry shouldEqual expiry
       }
     }
 
@@ -359,6 +368,15 @@ class RepresentationsTest
       }
     }
 
+    "takes expiry from the provided game" in {
+      forAll { (expiry: Long) =>
+        newPlayerForDb(
+          game.copy(expiry = expiry),
+          player1
+        ).expiry shouldEqual expiry
+      }
+    }
+
     "correctly unpacks round information" - {
       "when round is empty" - {
         "player's bid is empty" in {
@@ -589,11 +607,11 @@ class RepresentationsTest
     val p2id = PlayerId("id-2")
     val player1 = PlayerDB(
       "game-id", p1id.pid, "key-1", "address-1", "Sreen name 1", 0,
-      Nil, 3, true, 0, false
+      Nil, 3, true, 0, false, now.toEpochSecond
     )
     val player2 = PlayerDB(
       "game-id", p2id.pid, "key-2", "address-2", "Sreen name 2", 0,
-      Nil, 3, true, 0, false
+      Nil, 3, true, 0, false, now.toEpochSecond
     )
     val playerDBs = List(player1, player2)
     val gameDb = GameDB(
@@ -606,7 +624,8 @@ class RepresentationsTest
       startTime = now,
       roundState = "none",
       currentPlayer = None,
-      revealedDiscs = Map.empty
+      revealedDiscs = Map.empty,
+      expiry = now.toEpochSecond
     )
 
     "uses gameDB's game ID" in {
@@ -647,6 +666,10 @@ class RepresentationsTest
 
     "uses gameDB's start time" in {
       dbToGame(gameDb, playerDBs).value().startTime shouldEqual gameDb.startTime
+    }
+
+    "uses gameDB's expiry" in {
+      dbToGame(gameDb, playerDBs).value().expiry shouldEqual gameDb.expiry
     }
 
     "generates round correctly" - {

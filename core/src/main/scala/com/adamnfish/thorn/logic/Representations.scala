@@ -21,6 +21,7 @@ object Representations {
       roundState = roundKey(game.round),
       currentPlayer = game.round.map(currentPlayer),
       revealedDiscs = game.round.map(revealedDiscs).getOrElse(Map.empty),
+      expiry = game.expiry
     )
   }
 
@@ -37,6 +38,7 @@ object Representations {
       hasThorn = player.hasThorn,
       bid = game.round.flatMap(playerRoundBid(player.playerId)).getOrElse(0),
       passed = game.round.flatMap(playerRoundPassed(player.playerId)).getOrElse(false),
+      expiry = game.expiry
     )
   }
 
@@ -170,6 +172,7 @@ object Representations {
         round = round,
         started = gameDB.started,
         startTime = gameDB.startTime,
+        expiry = gameDB.expiry,
       )
     }
   }

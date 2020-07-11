@@ -20,6 +20,7 @@ case class GameDB(
   roundState: String,
   currentPlayer: Option[String], // player id
   revealedDiscs: Map[String, Int],
+  expiry: Long,
 )
 
 // only updatable by the player themselves
@@ -35,4 +36,5 @@ case class PlayerDB(
   hasThorn: Boolean,
   bid: Int,
   passed: Boolean,
+  expiry: Long,
 )

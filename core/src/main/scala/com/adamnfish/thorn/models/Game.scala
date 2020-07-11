@@ -14,7 +14,8 @@ case class Game(
   players: List[Player],
   round: Option[Round],
   started: Boolean,
-  startTime: ZonedDateTime
+  startTime: ZonedDateTime,
+  expiry: Long,
 )
 
 case class Player(

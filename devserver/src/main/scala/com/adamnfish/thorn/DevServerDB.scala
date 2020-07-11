@@ -10,7 +10,8 @@ import org.scanamo.generic.auto._
 object DevServerDB {
   def createGamesTable(client: AmazonDynamoDBAsync): Unit = {
     LocalDynamoDB.createTable(client)("games")(
-      "gameId" -> S
+      "gameCode" -> S,
+      "gameId" -> S,
     )
   }
 

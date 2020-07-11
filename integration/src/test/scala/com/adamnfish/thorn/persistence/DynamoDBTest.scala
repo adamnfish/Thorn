@@ -18,13 +18,15 @@ class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
   LocalDynamoDB.createTable(client)("players")("gameId" -> S, "playerId" -> S)
   val db = new DynamoDB(client)
 
+  val startTime = ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC"))
+  val expiry = startTime.plusDays(1).toEpochSecond
+
   "games table" - {
     val gameId = "game-id"
     val gameCode = Games.gameCode(GameId(gameId))
     val gameDb = GameDB(
       gameCode, gameId, "game-name", "player-1", List("player-1", "player-2"), true,
-      ZonedDateTime.of(2020, 4, 24, 19, 52, 0, 0, ZoneId.of("UTC")),
-      "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2)
+      startTime, "flip", Some("player-1"), Map("player-1" -> 1, "player-2" -> 2), expiry
     )
 
     "round trips correctly by game ID" in {
@@ -44,11 +46,11 @@ class DynamoDBTest extends AnyFreeSpec with AttemptValues with OptionValues {
     "round trips correctly" in {
       val playerDb1 = PlayerDB(
         "game-id", "player-1", "key-1", "player-1-address", "Player 1",
-        2, List("thorn", "rose"), 3, hasThorn = true, 1, true
+        2, List("thorn", "rose"), 3, hasThorn = true, 1, true, expiry
       )
       val playerDb2 = PlayerDB(
         "game-id", "player-2", "key-2", "player-2-address", "Player 2",
-        0, List("rose"), 3, hasThorn = true, 0, false
+        0, List("rose"), 3, hasThorn = true, 0, false, expiry
       )
 
       db.writePlayer(playerDb1).isSuccessfulAttempt()

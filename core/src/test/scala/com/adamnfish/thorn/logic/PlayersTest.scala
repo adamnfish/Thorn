@@ -41,17 +41,19 @@ class PlayersTest extends AnyFreeSpec with Matchers with OptionValues with Attem
   }
 
   "ensureAllPlayersPresent" - {
+    val now = ZonedDateTime.now()
+    val expiry = now.plusDays(1).toEpochSecond
     val player1 = PlayerDB(
-      "gid", "pid1", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, 0, false
+      "gid", "pid1", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, 0, false, expiry
     )
     val player2 = PlayerDB(
-      "gid", "pid2", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, 0, false
+      "gid", "pid2", "pk", "pa", "sn", 0, Nil, 3, hasThorn = true, 0, false, expiry
     )
     val gameDB = GameDB(
       "gcode", "gid", "name",
       player1.playerId,
       playerIds = List(),
-      false, ZonedDateTime.now(), "none", None, Map.empty
+      false, now, "none", None, Map.empty, expiry
     )
 
     "succeeds if all players are present" in {
@@ -130,7 +132,7 @@ class PlayersTest extends AnyFreeSpec with Matchers with OptionValues with Attem
       }
     }
 
-    "removes Roses more often than a Thorns when there are more of them" in {
+    "removes Roses more often than a Thorn when there are more of them" in {
       val result = runMultiple(100) { _ =>
         val testPlayer = player.copy(
           roseCount = 6,
