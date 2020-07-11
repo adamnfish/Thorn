@@ -29,8 +29,6 @@ object Thorn {
           flip(request, context)
         case request: NewRound =>
           newRound(request, context)
-        case request: Reconnect =>
-          reconnect(request, context)
         case request: Ping =>
           ping(request, context)
         case request: Wake =>
@@ -226,32 +224,12 @@ object Thorn {
     } yield response
   }
 
-  def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
-    for {
-      _ <- validate(request)
-      // fetch player / game data
-      gameDbOpt <- context.db.getGame(request.gameId)
-      gameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
-      playerDbs <- context.db.getPlayers(request.gameId)
-      game <- Representations.dbToGame(gameDb, playerDbs)
-      // check player
-      _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
-      // game data for response
-      gameStatus <- Representations.gameStatus(game, request.playerId)
-    } yield Responses.justRespond(gameStatus)
-  }
-
-  def wake(request: Wake, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Status]] = {
-    Attempt.Right {
-      Responses.ok()
-    }
-  }
-
   /**
-   * Essentially, the job here is to update the player's address.
+   * The 'reconnection' logic just updates the player's address whenever a ping is received.
    * More sophisticated connect / disconnect / reconnect behaviour would be great at some point.
+   * (e.g. handling disconnect events and proactively removing the player's address)
    */
-  def reconnect(request: Reconnect, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
+  def ping(request: Ping, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     for {
       _ <- validate(request)
       // fetch player / game data
@@ -263,10 +241,16 @@ object Thorn {
       _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
       message <- Representations.gameStatus(game, request.playerId)
       // logic
-      newGame <- Games.updatePlayerAddress(request.playerId, context.playerAddress, game)
+      updatedGame <- Games.updatePlayerAddress(request.playerId, context.playerAddress, game)
       // create and save updated player for DB
-      newPlayerDb <- Representations.playerForDb(newGame, request.playerId)
-      _ <- context.db.writePlayer(newPlayerDb)
+      updatedPlayerDb <- Representations.playerForDb(updatedGame, request.playerId)
+      _ <- context.db.writePlayer(updatedPlayerDb)
     } yield Responses.justRespond(message)
+  }
+
+  def wake(request: Wake, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Status]] = {
+    Attempt.Right {
+      Responses.ok()
+    }
   }
 }

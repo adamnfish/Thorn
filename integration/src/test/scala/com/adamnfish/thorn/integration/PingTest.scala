@@ -1,57 +1,68 @@
 package com.adamnfish.thorn.integration
 
-import com.adamnfish.thorn.models.PlayerKey
-import com.adamnfish.thorn.{AttemptValues, Fixtures, TestHelpers, ThornIntegration}
+import com.adamnfish.thorn.{AttemptValues, Fixtures, ThornIntegration}
+import com.adamnfish.thorn.models._
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 
 
-class PingTest extends AnyFreeSpec with AttemptValues with OptionValues
-  with ThornIntegration with TestHelpers {
+class PingTest extends AnyFreeSpec with AttemptValues with OptionValues with ThornIntegration {
 
-  "for a newly created game" - {
+  "for a valid request" - {
     "is successful" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
-        Fixtures.ping(creatorWelcome, context(Fixtures.creatorAddress)).isSuccessfulAttempt()
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+
+        Fixtures.ping(creatorWelcome, context(PlayerAddress("new address"))).isSuccessfulAttempt()
       }
     }
 
-    "returns a correct response status message" in {
+    "returns a game status to the player" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val message = Fixtures.ping(creatorWelcome, context(Fixtures.creatorAddress)).value().response.value
-        message.self should have(
-          "screenName" as "creator name",
-          "playerId" as creatorWelcome.playerId.pid,
-          "score" as 0,
-          "placedDiscs" as None,
-          "roseCount" as 3,
-          "hasThorn" as true,
-        )
-        message.game should have(
-          "gameId" as creatorWelcome.gameId.gid,
-          "gameName" as "game name",
-          "creatorId" as creatorWelcome.playerId.pid,
-        )
-        message.game.round shouldEqual None
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+
+        val gameStatus = Fixtures.ping(creatorWelcome, context(PlayerAddress("new address"))).value().response.value
+        gameStatus.self.playerId shouldEqual creatorWelcome.playerId
       }
     }
 
-    "does not send messages to anyone else" in {
+    "doesn't send any other messages" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
-        val messages = Fixtures.ping(creatorWelcome, context(Fixtures.creatorAddress)).value().messages
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+
+        val messages = Fixtures.ping(creatorWelcome, context(PlayerAddress("new address"))).value().messages
         messages shouldBe empty
       }
     }
 
-    "fails if the player key is incorrect" in {
+    "persists the change to the database" in {
+      withTestContext { (context, db) =>
+        val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+        Fixtures.ping(creatorWelcome, context(PlayerAddress("new address"))).isSuccessfulAttempt()
+
+        val players = db.getPlayers(creatorWelcome.gameId).value()
+        val updatedCreator = players.find(_.playerId == creatorWelcome.playerId.pid).value
+        updatedCreator.playerAddress shouldEqual "new address"
+      }
+    }
+
+    "fails if an incorrect player key is provided" in {
       withTestContext { (context, _) =>
         val creatorWelcome = Fixtures.createGame(context).value().response.value
+        val joinGameWelcome = Fixtures.joinGame(creatorWelcome, context).value().response.value
+        Fixtures.startGame(creatorWelcome, List(creatorWelcome, joinGameWelcome), context).isSuccessfulAttempt()
+
         Fixtures.ping(
           creatorWelcome.copy(playerKey = PlayerKey("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
-          context(Fixtures.creatorAddress)
+          context(PlayerAddress("new address"))
         ).isFailedAttempt()
       }
     }

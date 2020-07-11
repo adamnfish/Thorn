@@ -415,46 +415,6 @@ class ValidationTest extends AnyFreeSpec with Matchers with ScalaCheckDrivenProp
     }
   }
 
-  "validate Reconnect" - {
-    val reconnect = Reconnect(
-      GameId(randomUUID().toString),
-      PlayerId(randomUUID().toString),
-      PlayerKey(randomUUID().toString),
-    )
-
-    "accepts a valid start game request" in {
-      validate(reconnect).isSuccessfulAttempt()
-    }
-
-    "rejects a non-UUID game ID" in {
-      validate(
-        reconnect.copy(gameId = GameId("not a UUID"))
-      ).isFailedAttempt()
-    }
-
-    "rejects a non-UUID player ID" in {
-      validate(
-        reconnect.copy(playerId = PlayerId("not a UUID"))
-      ).isFailedAttempt()
-    }
-
-    "rejects a non-UUID player key" in {
-      validate(
-        reconnect.copy(playerKey = PlayerKey("not a UUID"))
-      ).isFailedAttempt()
-    }
-
-    "returns all failures if multiple conditions fail" in {
-      validate(
-        Reconnect(
-          GameId("not a UUID"),
-          PlayerId("not a UUID"),
-          PlayerKey("not a UUID"),
-        )
-      ).leftValue().failures.length shouldEqual 3
-    }
-  }
-
   "validate Ping" - {
     val ping = Ping(
       GameId(randomUUID().toString),

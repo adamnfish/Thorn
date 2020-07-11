@@ -118,32 +118,32 @@ update msg model =
             case model.ui of
                 DisplayGameScreen _ welcome ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 LobbyScreen _ welcome _ ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 PlaceDiscScreen _ _ welcome _ ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 DiscOrBidScreen _ _ welcome _ ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 BidOrPassScreen _ _ welcome _ ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 FlipScreen _ _ welcome _ ->
                     ( newModel
-                    , sendReconnect welcome
+                    , sendPing welcome
                     )
 
                 HomeScreen ->
@@ -938,11 +938,6 @@ sendFlip flip =
 sendNewRound : NewRound -> Cmd msg
 sendNewRound newRound =
     sendMessage <| newRoundEncoder newRound
-
-
-sendReconnect : Reconnect -> Cmd msg
-sendReconnect reconnect =
-    sendMessage <| reconnectEncoder reconnect
 
 
 sendPing : Ping -> Cmd msg

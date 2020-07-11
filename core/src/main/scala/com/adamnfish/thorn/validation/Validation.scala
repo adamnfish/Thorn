@@ -68,12 +68,6 @@ object Validation {
       validate(newRound.playerKey.key, "player key", isUUID)
   }
 
-  def validate(reconnect: Reconnect)(implicit ec: ExecutionContext): Attempt[Unit] = {
-    validate(reconnect.gameId.gid, "game id", isUUID) |!|
-      validate(reconnect.playerId.pid, "player id", isUUID) |!|
-      validate(reconnect.playerKey.key, "player key", isUUID)
-  }
-
   def validate(ping: Ping)(implicit ec: ExecutionContext): Attempt[Unit] = {
     validate(ping.gameId.gid, "game id", isUUID) |!|
       validate(ping.playerId.pid, "player id", isUUID) |!|

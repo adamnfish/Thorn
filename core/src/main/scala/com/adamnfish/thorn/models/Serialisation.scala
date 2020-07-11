@@ -112,7 +112,6 @@ object Serialisation {
   private implicit val bidDecoder: Decoder[Bid] = deriveDecoder[Bid]
   private implicit val passDecoder: Decoder[Pass] = deriveDecoder[Pass]
   private implicit val flipDecoder: Decoder[Flip] = deriveDecoder[Flip]
-  private implicit val reconnectDecoder: Decoder[Reconnect] = deriveDecoder[Reconnect]
   private implicit val pingDecoder: Decoder[Ping] = deriveDecoder[Ping]
   private implicit val wakeDecoder: Decoder[Wake] = deriveDecoder[Wake]
 
@@ -126,7 +125,6 @@ object Serialisation {
       case "bid" => c.as[Bid]
       case "pass" => c.as[Pass]
       case "flip" => c.as[Flip]
-      case "reconnect" => c.as[Reconnect]
       case "ping" => c.as[Ping]
       case "wake" => c.as[Wake]
       case unexpected =>

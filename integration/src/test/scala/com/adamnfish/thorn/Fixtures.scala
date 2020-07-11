@@ -2,8 +2,7 @@ package com.adamnfish.thorn
 
 import com.adamnfish.thorn.attempt.Attempt
 import com.adamnfish.thorn.logic.Games
-import com.adamnfish.thorn.Thorn
-import com.adamnfish.thorn.models.{Bid, Context, CreateGame, Disc, Flip, GameStatus, JoinGame, NewRound, Pass, Ping, PlaceDisc, PlayerAddress, PlayerId, Reconnect, Response, StartGame, Welcome}
+import com.adamnfish.thorn.models.{Bid, Context, CreateGame, Disc, Flip, GameStatus, JoinGame, NewRound, Pass, Ping, PlaceDisc, PlayerAddress, PlayerId, Response, StartGame, Welcome}
 
 import scala.concurrent.ExecutionContext
 
@@ -91,15 +90,6 @@ object Fixtures {
   def ping(welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
     Thorn.ping(
       Ping(
-        welcome.gameId, welcome.playerId, welcome.playerKey
-      ),
-      context
-    )
-  }
-
-  def reconnect(welcome: Welcome, context: Context)(implicit ec: ExecutionContext): Attempt[Response[GameStatus]] = {
-    Thorn.reconnect(
-      Reconnect(
         welcome.gameId, welcome.playerId, welcome.playerKey
       ),
       context

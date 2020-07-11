@@ -249,13 +249,6 @@ type alias NewRound =
     }
 
 
-type alias Reconnect =
-    { gameId : GameId
-    , playerId : PlayerId
-    , playerKey : PlayerKey
-    }
-
-
 type alias Ping =
     { gameId : GameId
     , playerId : PlayerId
@@ -608,16 +601,6 @@ newRoundEncoder newRound =
         , ( "playerId", encodePlayerId newRound.playerId )
         , ( "playerKey", encodePlayerKey newRound.playerKey )
         , ( "operation", Json.Encode.string "new-round" )
-        ]
-
-
-reconnectEncoder : Reconnect -> Json.Encode.Value
-reconnectEncoder reconnect =
-    Json.Encode.object <|
-        [ ( "gameId", encodeGameId reconnect.gameId )
-        , ( "playerId", encodePlayerId reconnect.playerId )
-        , ( "playerKey", encodePlayerKey reconnect.playerKey )
-        , ( "operation", Json.Encode.string "reconnect" )
         ]
 
 

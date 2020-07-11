@@ -108,11 +108,6 @@ case class NewRound(
   playerId: PlayerId,
   playerKey: PlayerKey,
 ) extends Request
-case class Reconnect(
-  gameId: GameId,
-  playerId: PlayerId,
-  playerKey: PlayerKey,
-) extends Request
 case class Ping(
   gameId: GameId,
   playerId: PlayerId,
