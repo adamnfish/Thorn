@@ -18,7 +18,7 @@ import List.Extra
 import Maybe.Extra
 import Model exposing (..)
 import Utils exposing (reorderToBy, swapDown, swapUp)
-import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourCta, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, formatColor, length4, size1, size2, size3, size4, size5, size6, spacer, textColourDark, textColourFeature, textColourGrey, textColourLight, textInputStyles)
+import Views.Styles exposing (buttonStyles, centerBlock, colourAlt, colourAltSecondary, colourBlack, colourBlack2, colourCta, colourError, colourHighlight, colourHighlight2, colourPrimary, colourSecondary, colourSecondary2, colourSecondaryHighlight, colourSecondaryLight, colourWhite, each0, featureButtonStyles, fontSizeSmall, formatColor, length4, size1, size2, size3, size4, size5, size6, size7, spacer, textColourDark, textColourFeature, textColourGrey, textColourLight, textInputStyles)
 
 
 type alias Page =
@@ -299,28 +299,33 @@ home model =
     in
     centerBlock <|
         column
-            [ width fill
-            , padding size4
-            , spacing size4
-            ]
-            [ Input.button featureButtonStyles
-                { onPress = Just NavigateCreateGame
-                , label = text "Create game"
-                }
-            , Input.button featureButtonStyles
-                { onPress = Just NavigateJoinGame
-                , label = text "Join game"
-                }
-            , if List.isEmpty availableGames then
-                Element.none
-
-              else
+            [ width fill ]
+            [ spacer 2
+            , ctaCard <|
                 column
                     [ width fill
+                    , padding size6
+                    , spacing size7
                     ]
-                    [ spacer 2
-                    , text "Rejoin existing game"
-                    , column [] availableGames
+                    [ Input.button featureButtonStyles
+                        { onPress = Just NavigateCreateGame
+                        , label = text "Create game"
+                        }
+                    , Input.button featureButtonStyles
+                        { onPress = Just NavigateJoinGame
+                        , label = text "Join game"
+                        }
+                    , if List.isEmpty availableGames then
+                        Element.none
+
+                      else
+                        column
+                            [ width fill
+                            ]
+                            [ spacer 2
+                            , text "Rejoin existing game"
+                            , column [] availableGames
+                            ]
                     ]
             ]
 
@@ -566,7 +571,7 @@ placeDisc model gameStatus maybeDisc =
                             Just
                                 { confirm = SubmitPlaceDisc disc
                                 , cancel = InputRemovePlaceDisc
-                                , description = text ""
+                                , description = discDisplay disc
                                 }
                     }
 
@@ -612,7 +617,7 @@ discOrBid model gameStatus maybeSelection =
                             Just
                                 { confirm = SubmitPlaceDisc disc
                                 , cancel = InputRemovePlaceDisc
-                                , description = text ""
+                                , description = discDisplay disc
                                 }
                     }
 
@@ -622,7 +627,7 @@ discOrBid model gameStatus maybeSelection =
                             Just
                                 { confirm = SubmitBid bid
                                 , cancel = InputRemoveBid
-                                , description = text ""
+                                , description = text <| "Bid " ++ String.fromInt bid
                                 }
                     }
 
@@ -1251,6 +1256,19 @@ unknownDiscDisplay =
                 )
 
 
+ctaCard : Element Msg -> Element Msg
+ctaCard contents =
+    el
+        [ width fill
+        , padding size4
+        , Background.color colourWhite
+        , Border.widthEach
+            { each0 | left = size4 }
+        , Border.color colourCta
+        ]
+        contents
+
+
 emptyControls : Controls
 emptyControls =
     { message = Nothing
@@ -1262,130 +1280,128 @@ emptyControls =
 
 controlsEl : Controls -> Element Msg
 controlsEl controls =
-    column
-        [ width fill
-        , padding size4
-        , spacing size4
-        , Background.color colourWhite
-        , Border.widthEach
-            { each0 | left = size4 }
-        , Border.color colourCta
-        ]
-        [ case controls.message of
-            Just message ->
-                paragraph
-                    [ Font.alignLeft
-                    , width fill
-                    ]
-                    [ text message ]
-
-            Nothing ->
-                Element.none
-        , column
+    ctaCard <|
+        column
             [ width fill
-            , spacing size3
+            , spacing size4
             ]
-          <|
-            List.map
-                (\( msg, label ) ->
-                    Input.button featureButtonStyles
-                        { onPress = Just msg
-                        , label = label
-                        }
-                )
-                controls.features
-        , case controls.bids of
-            Just ( min, max ) ->
-                row
-                    [ width fill
-                    , spacing size2
-                    ]
-                <|
-                    List.map
-                        (\bid ->
-                            Input.button
-                                (List.append
-                                    buttonStyles
-                                    [ width fill ]
-                                )
-                                { onPress = Just <| InputBid bid
-                                , label = text <| String.fromInt bid
-                                }
-                        )
-                    <|
-                        List.range min max
+            [ case controls.message of
+                Just message ->
+                    paragraph
+                        [ Font.alignLeft
+                        , width fill
+                        ]
+                        [ text message ]
 
-            Nothing ->
-                Element.none
-        , case controls.confirm of
-            Just confirmControl ->
-                column
-                    [ width fill
-                    , spacing size3
-                    ]
-                    [ confirmControl.description
-                    , row
+                Nothing ->
+                    Element.none
+            , column
+                [ width fill
+                , spacing size4
+                ]
+              <|
+                List.map
+                    (\( msg, label ) ->
+                        Input.button featureButtonStyles
+                            { onPress = Just msg
+                            , label = label
+                            }
+                    )
+                    controls.features
+            , case controls.bids of
+                Just ( min, max ) ->
+                    row
+                        [ width fill
+                        , spacing size4
+                        ]
+                    <|
+                        List.map
+                            (\bid ->
+                                Input.button
+                                    (List.append
+                                        buttonStyles
+                                        [ width fill ]
+                                    )
+                                    { onPress = Just <| InputBid bid
+                                    , label = text <| String.fromInt bid
+                                    }
+                            )
+                        <|
+                            List.range min max
+
+                Nothing ->
+                    Element.none
+            , case controls.confirm of
+                Just confirmControl ->
+                    column
                         [ width fill
                         , spacing size3
                         ]
-                        [ Input.button
-                            (List.append
-                                buttonStyles
-                                [ width <| fillPortion 2 ]
-                            )
-                            { onPress = Just confirmControl.cancel
-                            , label =
-                                row
-                                    [ width fill
-                                    , spacing size4
-                                    , padding size4
-                                    ]
-                                    [ el
-                                        [ centerX ]
-                                      <|
-                                        text "Clear"
-                                    , el
-                                        [ centerX ]
-                                      <|
-                                        Element.html
-                                            (Icon.times
-                                                |> Icon.present
-                                                |> Icon.view
-                                            )
-                                    ]
-                            }
-                        , Input.button
-                            (List.append
-                                buttonStyles
-                                [ width <| fillPortion 3 ]
-                            )
-                            { onPress = Just confirmControl.confirm
-                            , label =
-                                row
-                                    [ width fill
-                                    , spacing size4
-                                    , padding size4
-                                    ]
-                                    [ el
-                                        [ centerX ]
-                                      <|
-                                        text "Confirm"
-                                    , el
-                                        [ centerX ]
-                                      <|
-                                        Element.html
-                                            (Icon.check
-                                                |> Icon.present
-                                                |> Icon.view
-                                            )
-                                    ]
-                            }
+                        [ el
+                            [ centerX ]
+                            confirmControl.description
+                        , row
+                            [ width fill
+                            , spacing size3
+                            ]
+                            [ Input.button
+                                (List.append
+                                    buttonStyles
+                                    [ width <| fillPortion 2 ]
+                                )
+                                { onPress = Just confirmControl.cancel
+                                , label =
+                                    row
+                                        [ width fill
+                                        , spacing size4
+                                        , padding size4
+                                        ]
+                                        [ el
+                                            [ centerX ]
+                                          <|
+                                            text "Clear"
+                                        , el
+                                            [ centerX ]
+                                          <|
+                                            Element.html
+                                                (Icon.times
+                                                    |> Icon.present
+                                                    |> Icon.view
+                                                )
+                                        ]
+                                }
+                            , Input.button
+                                (List.append
+                                    buttonStyles
+                                    [ width <| fillPortion 3 ]
+                                )
+                                { onPress = Just confirmControl.confirm
+                                , label =
+                                    row
+                                        [ width fill
+                                        , spacing size4
+                                        , padding size4
+                                        ]
+                                        [ el
+                                            [ centerX ]
+                                          <|
+                                            text "Confirm"
+                                        , el
+                                            [ centerX ]
+                                          <|
+                                            Element.html
+                                                (Icon.check
+                                                    |> Icon.present
+                                                    |> Icon.view
+                                                )
+                                        ]
+                                }
+                            ]
                         ]
-                    ]
 
-            Nothing ->
-                Element.none
-        ]
+                Nothing ->
+                    Element.none
+            ]
 
 
 uiHook : String -> Attribute Msg

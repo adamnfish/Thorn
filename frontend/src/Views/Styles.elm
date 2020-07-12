@@ -41,6 +41,11 @@ size6 =
     16
 
 
+size7 : Int
+size7 =
+    32
+
+
 length0 : Length
 length0 =
     px size0
@@ -74,6 +79,11 @@ length5 =
 length6 : Length
 length6 =
     px size6
+
+
+length7 : Length
+length7 =
+    px size7
 
 
 formatColor : Color -> String
