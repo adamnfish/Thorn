@@ -1,0 +1,273 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Thorn API and infrastructure
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Application config
+        Parameters:
+          - DomainName
+          - Stage
+          - TLSCert
+      - Label:
+          default: API
+        Parameters:
+          - DistBucket
+          - GamesTableName
+          - PlayersTableName
+      - Label:
+          default: Static site
+        Parameters:
+          - WebrootBucket
+          - WebrootAccessIdentityID
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: Domain for the application (hosted zone must exist and be registered)
+    Default: adamnfish.io
+  Stage:
+    Type: String
+    Description: Environment name
+    Default: prod
+  TLSCert:
+    Type: String
+    Description: ARN of TLS certificate in US-EAST-1 (must work for `thorn.${DomainName}` and `thorn-api.${DomainName}`)
+  DistBucket:
+    Type: String
+    Description: S3 Bucket that will contain the backend artifacts
+  GamesTableName:
+    Type: String
+    Description: Games DynamoDB table name
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Can be characters and underscore only. No numbers or special characters allowed.'
+  PlayersTableName:
+    Type: String
+    Description: Players DynamoDB table name
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Can be characters and underscore only. No numbers or special characters allowed.'
+  WebrootBucket:
+    Type: String
+    Description: Name of the S3 bucket that stores application static assets
+  WebrootAccessIdentityID:
+    Type: String
+    Description: ID of CloudFront origin access identity for webroot bucket access (check output of storage stack)
+
+Resources:
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Thorn API
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "\\$default"
+      Tags:
+        app: thorn
+        stage: !Ref Stage
+
+  ApiGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: !Ref Stage
+      Description: !Sub "${Stage} stage"
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref WebSocketApi
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: connect
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref ConnectInteg
+
+  ConnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ThornApiBackend.Arn}/invocations"
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: disconnect
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref DisconnectInteg
+
+  DisconnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ThornApiBackend.Arn}/invocations"
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      OperationName: default
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref DefaultInteg
+
+  DefaultInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      Description: Send Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ThornApiBackend.Arn}/invocations"
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ConnectRoute
+      - DisconnectRoute
+      - DefaultRoute
+    Properties:
+      ApiId: !Ref WebSocketApi
+
+  ThornApiBackend:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri:
+        Bucket: !Ref DistBucket
+        Key: !Sub "thorn/${Stage}/thorn-lambda.jar"
+      Handler: "com.adamnfish.thorn.Lambda::handleRequest"
+      Timeout: 20
+      MemorySize: 1024
+      Runtime: java8
+      Environment:
+        Variables:
+          GAMES_TABLE: !Ref GamesTableName
+          PLAYERS_TABLE: !Ref PlayersTableName
+          ORIGIN_LOCATION: !Sub "thorn.${DomainName}"
+          API_ORIGIN_LOCATION: !Sub "${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GamesTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlayersTableName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*"
+      Tags:
+        app: thorn
+        stage: !Ref Stage
+
+  BackendInvocationPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - WebSocketApi
+      - ThornApiBackend
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ThornApiBackend
+      Principal: apigateway.amazonaws.com
+
+#  BackendDomainName:
+#    Type: AWS::ApiGatewayV2::DomainName
+#    Properties:
+#      DomainName: !Sub "thorn-api.${DomainName}"
+#      DomainNameConfigurations:
+#        CertificateArn: !Ref TLSCert
+#        CertificateName: ???
+#        EndpointType: ???
+
+  CDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Sub thorn.${DomainName}
+        Origins:
+          - Id: thorn-static
+            DomainName: !Sub ${WebrootBucket}.s3.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${WebrootAccessIdentityID}
+        DefaultCacheBehavior:
+          AllowedMethods: [HEAD, GET]
+          CachedMethods: [HEAD, GET]
+          MinTTL: 3600
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+          TargetOriginId: thorn-static
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 5
+            ErrorCode: 404
+        PriceClass: PriceClass_100
+        Enabled: true
+        ViewerCertificate:
+          AcmCertificateArn: !Ref TLSCert
+          MinimumProtocolVersion: TLSv1
+          SslSupportMethod: sni-only
+        HttpVersion: http2
+      Tags:
+        - Key: app
+          Value: thorn
+        - Key: stage
+          Value: !Ref Stage
+
+  DNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Sub ${DomainName}.
+      RecordSets:
+        - Name: !Sub thorn.${DomainName}.
+          Type: A
+          AliasTarget:
+            # Zone ID is a magic string for CloudFront
+            HostedZoneId: Z2FDTNDATAQYW2
+            DNSName: !GetAtt CDN.DomainName
+#        - Name: !Sub thorn-api.${DomainName}.
+#          Type: A
+#          AliasTarget:
+#            # Zone ID is a magic string for CloudFront
+#            HostedZoneId: Z2FDTNDATAQYW2
+#            DNSName: !GetAtt BackendDomainName.DistributionDomainName
+
+Outputs:
+  GamesTable:
+    Description: "Games table"
+    Value: !Ref GamesTableName
+
+  PlayersTable:
+    Description: "Players table"
+    Value: !Ref PlayersTableName
+
+  BackendLambdaArn:
+    Description: "backend lambda ARN"
+    Value: !GetAtt ThornApiBackend.Arn
+
+  WebSocketURI:
+    Description: "The WSS Protocol URI to connect to"
+    Value: !Sub "wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"

@@ -7,8 +7,9 @@ case class FailedAttempt(failures: List[Failure]) {
     List(
       Some(failure.message),
       failure.context.map(c => s"context: $c"),
-      failure.exception.map(e => "err: " + e.getStackTrace.mkString("; "))
-    ).flatten.mkString(" ")
+      failure.exception.map(e => "err: " + e.getStackTrace.mkString("\n")),
+      failure.exception.flatMap(e => Option(e.getCause).map(c => "caused by: " + c.getStackTrace.mkString("\n")))
+    ).flatten.mkString(" | ")
   }.mkString(", ")
 }
 object FailedAttempt {

@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion     := "2.13.2"
+ThisBuild / scalaVersion     := "2.13.3"
 ThisBuild / version          := "0.1.0-SNAPSHOT"
 ThisBuild / organization     := "com.adamnfish"
 ThisBuild / organizationName := "adamnfish"
@@ -41,14 +41,22 @@ lazy val core = (project in file("core"))
   )
 
 lazy val lambda = (project in file("lambda"))
+  .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "core",
+    name := "lambda",
     libraryDependencies ++=
       Seq(
         "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
         "com.amazonaws" % "aws-lambda-java-core" % "1.2.0",
         "com.amazonaws" % "aws-lambda-java-events" % "2.2.7",
+        "com.amazonaws" % "aws-java-sdk-apigatewaymanagementapi" % awsJavaSdkVersion,
       ) ++ commonDeps,
+    // assembly
+    assemblyJarName in assembly := "thorn-lambda.jar",
+    // native-packager
+    topLevelDirectory in Universal := None,
+    packageName in Universal := "thorn-lambda",
+    mappings in (Compile, packageDoc) := Seq(),
   )
   .dependsOn(core)
 

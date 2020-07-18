@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Persistent storage for Thorn application
+
+Parameters:
+  Stage:
+    Type: String
+    Default: prod
+
+Resources:
+  WebrootAccessIdentityID:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Thorn webroot CDN access
+
+  WebrootBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "thorn-www-${Stage}"
+      Tags:
+        - Key: "app"
+          Value: "thorn"
+        - Key: "stage"
+          Value: !Ref Stage
+
+  WebrootBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebrootBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${WebrootBucket}/*"
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${WebrootAccessIdentityID}"
+
+  GamesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "thorn_games_${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: True
+      TimeToLiveSpecification:
+        AttributeName: "expiry"
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: "gameCode"
+          AttributeType: "S"
+        - AttributeName: "gameId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "gameCode"
+          KeyType: "HASH"
+        - AttributeName: "gameId"
+          KeyType: "RANGE"
+      Tags:
+        - Key: "app"
+          Value: "thorn"
+        - Key: "stage"
+          Value: !Ref Stage
+        - Key: "table"
+          Value: "games"
+
+  PlayersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "thorn_players_${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: True
+      TimeToLiveSpecification:
+        AttributeName: "expiry"
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: "gameId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "gameId"
+          KeyType: "HASH"
+      Tags:
+        - Key: "app"
+          Value: "thorn"
+        - Key: "stage"
+          Value: !Ref Stage
+        - Key: "table"
+          Value: "games"
+
+
+Outputs:
+  WebrootAccessIdentityID:
+    Description: "Webroot access identity ID"
+    Value: !Ref WebrootAccessIdentityID
+
+  GamesTableName:
+    Description: "Games table"
+    Value: !Ref GamesTable
+
+  PlayersTableName:
+    Description: "Players table"
+    Value: !Ref PlayersTable
