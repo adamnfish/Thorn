@@ -29,7 +29,7 @@ Integration test suite for the server's game logic.
 #### lambda
 
 Provides the core functionality as a handler suitable for execution as
-am AWS Lambda Function.
+an AWS Lambda Function.
 
 #### project
 
