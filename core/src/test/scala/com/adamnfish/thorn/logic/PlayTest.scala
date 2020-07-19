@@ -766,7 +766,7 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
           ).value()
           val round = result.round.value
           result.round.value shouldBe a[Bidding]
-          round.asInstanceOf[Bidding].passed should contain allOf(creator.playerId, player3.playerId)
+          round.asInstanceOf[Bidding].passed should (contain (creator.playerId) and contain (player3.playerId))
         }
 
         "advances the round to 'flipping' if this is the last player to pass" in {
