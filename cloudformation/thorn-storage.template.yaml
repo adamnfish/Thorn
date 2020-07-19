@@ -40,7 +40,7 @@ Resources:
   GamesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "thorn_games_${Stage}"
+      TableName: !Sub "thorn-games-${Stage}"
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: True
@@ -68,7 +68,7 @@ Resources:
   PlayersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "thorn_players_${Stage}"
+      TableName: !Sub "thorn-players-${Stage}"
       BillingMode: PAY_PER_REQUEST
       SSESpecification:
         SSEEnabled: True
@@ -78,9 +78,13 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "gameId"
           AttributeType: "S"
+        - AttributeName: "playerId"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "gameId"
           KeyType: "HASH"
+        - AttributeName: "playerId"
+          KeyType: "RANGE"
       Tags:
         - Key: "app"
           Value: "thorn"

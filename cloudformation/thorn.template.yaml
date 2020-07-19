@@ -43,15 +43,15 @@ Parameters:
     Description: Games DynamoDB table name
     MinLength: 3
     MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Can be characters and underscore only. No numbers or special characters allowed.'
+    AllowedPattern: ^[A-Za-z_-]+$
+    ConstraintDescription: 'Can be characters and underscore/hyphen only. No numbers or special characters allowed.'
   PlayersTableName:
     Type: String
     Description: Players DynamoDB table name
     MinLength: 3
     MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Can be characters and underscore only. No numbers or special characters allowed.'
+    AllowedPattern: ^[A-Za-z_-]+$
+    ConstraintDescription: 'Can be characters and underscore/hyphen only. No numbers or special characters allowed.'
   WebrootBucket:
     Type: String
     Description: Name of the S3 bucket that stores application static assets
@@ -63,7 +63,7 @@ Resources:
   WebSocketApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: Thorn API
+      Name: Thorn backend api
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "\\$default"
       Tags:
@@ -75,8 +75,9 @@ Resources:
     Properties:
       StageName: !Ref Stage
       Description: !Sub "${Stage} stage"
-      DeploymentId: !Ref Deployment
+#      DeploymentId: !Ref Deployment
       ApiId: !Ref WebSocketApi
+      AutoDeploy: true
 
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -141,14 +142,14 @@ Resources:
       IntegrationUri:
         !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ThornApiBackend.Arn}/invocations"
 
-  Deployment:
-    Type: AWS::ApiGatewayV2::Deployment
-    DependsOn:
-      - ConnectRoute
-      - DisconnectRoute
-      - DefaultRoute
-    Properties:
-      ApiId: !Ref WebSocketApi
+#  Deployment:
+#    Type: AWS::ApiGatewayV2::Deployment
+#    DependsOn:
+#      - ConnectRoute
+#      - DisconnectRoute
+#      - DefaultRoute
+#    Properties:
+#      ApiId: !Ref WebSocketApi
 
   ThornApiBackend:
     Type: AWS::Serverless::Function
@@ -166,6 +167,7 @@ Resources:
           PLAYERS_TABLE: !Ref PlayersTableName
           ORIGIN_LOCATION: !Sub "thorn.${DomainName}"
           API_ORIGIN_LOCATION: !Sub "${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+          REGION: !Ref AWS::Region
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref GamesTableName

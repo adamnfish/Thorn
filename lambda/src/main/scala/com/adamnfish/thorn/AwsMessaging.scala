@@ -5,12 +5,13 @@ import com.adamnfish.thorn.attempt.{Attempt, FailedAttempt, Failure}
 import com.adamnfish.thorn.models.{Message, PlayerAddress, Serialisation}
 import com.amazonaws.services.apigatewaymanagementapi.AmazonApiGatewayManagementApiAsync
 import com.amazonaws.services.apigatewaymanagementapi.model.PostToConnectionRequest
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 
-class AwsMessaging(client: AmazonApiGatewayManagementApiAsync) extends Messaging {
+class AwsMessaging(client: AmazonApiGatewayManagementApiAsync, logger: LambdaLogger) extends Messaging {
   override def sendMessage(playerAddress: PlayerAddress, message: Message)(implicit ec: ExecutionContext): Attempt[Unit] = {
     send(playerAddress, Serialisation.encodeMessage(message))
   }
@@ -20,6 +21,7 @@ class AwsMessaging(client: AmazonApiGatewayManagementApiAsync) extends Messaging
   }
 
   private def send(playerAddress: PlayerAddress, message: String)(implicit ec: ExecutionContext): Attempt[Unit] = {
+    logger.log(s"Message (${playerAddress.address}): $message")
     val request = new PostToConnectionRequest()
       .withConnectionId(playerAddress.address)
       .withData(ByteBuffer.wrap(message.getBytes("UTF-8")))
