@@ -35,27 +35,27 @@ class Lambda {
       identity
     )
   }
+  val apiGatewayMessagingClient = {
+    val maybeApiGatewayClient = for {
+      apiGatewayEndpoint <- Properties.envOrNone("API_ORIGIN_LOCATION")
+        .toRight("API Gateway endpoint name not configured")
+      region <- Properties.envOrNone("REGION")
+        .toRight("region not configured")
+    } yield {
+      val endpointConfig = new EndpointConfiguration(apiGatewayEndpoint, region)
+      AmazonApiGatewayManagementApiAsyncClientBuilder.standard()
+        .withEndpointConfiguration(endpointConfig)
+        .build()
+    }
+    maybeApiGatewayClient.fold(
+      { errMsg =>
+        throw new RuntimeException(errMsg)
+      },
+      identity
+    )
+  }
 
   def handleRequest(event: APIGatewayV2ProxyRequestEvent, awsContext: AwsContext): APIGatewayV2ProxyResponseEvent = {
-    val apiGatewayMessagingClient = {
-      val maybeApiGatewayClient = for {
-        apiGatewayEndpoint <- Properties.envOrNone("API_ORIGIN_LOCATION")
-          .toRight("API Gateway endpoint name not configured")
-        region <- Properties.envOrNone("REGION")
-          .toRight("region not configured")
-      } yield {
-        val endpointConfig = new EndpointConfiguration(apiGatewayEndpoint, region)
-        AmazonApiGatewayManagementApiAsyncClientBuilder.standard()
-          .withEndpointConfiguration(endpointConfig)
-          .build()
-      }
-      maybeApiGatewayClient.fold(
-        { errMsg =>
-          throw new RuntimeException(errMsg)
-        },
-        identity
-      )
-    }
     val awsMessaging = new AwsMessaging(apiGatewayMessagingClient, awsContext.getLogger)
     // Debugging for now
     awsContext.getLogger.log(s"request body: ${event.getBody}")
