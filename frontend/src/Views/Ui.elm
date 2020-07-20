@@ -484,21 +484,31 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
             case maybeGameStatus of
                 Just gameStatus ->
                     if isCreator gameStatus.game gameStatus.self then
-                        if List.length playerOrder >= 3 then
+                        if List.length playerOrder >= 2 then
                             { emptyControls
                                 | features = [ ( SubmitStartGame, text "Start game" ) ]
+                                , message =
+                                    if List.length playerOrder == 2 then
+                                        Just "Thorn works best with at least 3 players"
+
+                                    else
+                                        Nothing
                             }
 
                         else
                             { emptyControls
-                                | message = Just "There must be at least 3 players to start the game"
+                                | message = Just "Thorn needs at least 2 players"
                             }
 
                     else
-                        emptyControls
+                        { emptyControls
+                            | message = Just "Waiting for game to start"
+                        }
 
                 Nothing ->
-                    emptyControls
+                    { emptyControls
+                        | message = Just "Waiting for game to start"
+                    }
     in
     centerBlock <|
         column
