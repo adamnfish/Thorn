@@ -680,7 +680,7 @@ bidOrPass model gameStatus maybeSelection =
                             Just
                                 { confirm = SubmitPass
                                 , cancel = InputRemovePass
-                                , description = text "pass"
+                                , description = text "Pass"
                                 }
                     }
 
@@ -748,71 +748,87 @@ flip model gameStatus maybeStack =
 currentGame : Model -> GameStatusMessage -> Element Msg
 currentGame model gameStatus =
     let
-        roundInfo =
+        controls =
             case gameStatus.game.round of
                 Just (InitialDiscs initialDiscs) ->
-                    statusMessage "Waiting for other players"
+                    { emptyControls
+                        | message = Just "Waiting for other players"
+                    }
 
                 Just (Placing placing) ->
-                    statusMessage "Waiting for other players"
+                    let
+                        actorName =
+                            activePlayerName gameStatus placing.activePlayer
+                    in
+                    { emptyControls
+                        | message = Just <| "Waiting for " ++ actorName
+                    }
 
                 Just (Bidding bidding) ->
-                    statusMessage "Waiting for other players"
+                    let
+                        actorName =
+                            activePlayerName gameStatus bidding.activePlayer
+                    in
+                    { emptyControls
+                        | message = Just <| "Waiting for " ++ actorName
+                    }
 
                 Just (Flipping flipping) ->
-                    statusMessage "Another player is flipping"
+                    let
+                        actorName =
+                            activePlayerName gameStatus flipping.activePlayer
+                    in
+                    { emptyControls
+                        | message = Just <| actorName ++ " is trying to win the round"
+                    }
 
                 Just (Finished finished) ->
-                    let
-                        maybeWinner =
-                            gameWinner gameStatus
+                    case gameWinner gameStatus of
+                        Just winner ->
+                            if winner.playerId == gameStatus.self.playerId then
+                                { emptyControls
+                                    | message = Just "You have won the game"
+                                }
 
-                        winnerInfo =
-                            case maybeWinner of
-                                Just winner ->
-                                    if winner.playerId == gameStatus.self.playerId then
-                                        statusMessage "You have won the game, congratulations!"
+                            else
+                                { emptyControls
+                                    | message =
+                                        Just <|
+                                            winner.screenName
+                                                ++ " has won the game"
+                                }
 
-                                    else
-                                        statusMessage <| winner.screenName ++ " has won!"
-
-                                Nothing ->
-                                    Element.none
-
-                        newRoundButton =
-                            if isCreator gameStatus.game gameStatus.self && Maybe.Extra.isNothing maybeWinner then
-                                Input.button buttonStyles
-                                    { onPress = Just SubmitNewRound
-                                    , label = text "Next round"
+                        Nothing ->
+                            let
+                                actorName =
+                                    activePlayerName gameStatus finished.activePlayer
+                            in
+                            if finished.successful then
+                                if finished.activePlayer == gameStatus.self.playerId then
+                                    { emptyControls
+                                        | message = Just "You have won the round"
                                     }
 
-                            else
-                                Element.none
-
-                        finishedMessage =
-                            if Maybe.Extra.isNothing maybeWinner then
-                                if finished.successful then
-                                    if finished.activePlayer == gameStatus.self.playerId then
-                                        statusMessage "You have won the round"
-
-                                    else
-                                        statusMessage "Another player has won the round"
-
-                                else if finished.activePlayer == gameStatus.self.playerId then
-                                    statusMessage "You have hit a skull and failed to win the round"
-
                                 else
-                                    statusMessage "Another player failed to win the round"
+                                    { emptyControls
+                                        | message = Just <| actorName ++ " has won the round"
+                                    }
+
+                            else if finished.activePlayer == gameStatus.self.playerId then
+                                { emptyControls
+                                    | message = Just "You have hit a skull and failed to win the round"
+                                }
 
                             else
-                                Element.none
-                    in
-                    column
-                        [ width fill ]
-                        [ winnerInfo, finishedMessage, newRoundButton ]
+                                { emptyControls
+                                    | message =
+                                        Just <| actorName ++ " failed to win the round"
+                                }
 
                 Nothing ->
-                    Element.none
+                    { emptyControls
+                        | message = Just "Waiting for the round to start"
+                    }
     in
     centerBlock <|
         column
@@ -820,7 +836,8 @@ currentGame model gameStatus =
             [ selfSecretInformation gameStatus
             , spacer 3
             , playersList gameStatus False
-            , roundInfo
+            , spacer 3
+            , controlsEl controls
             ]
 
 
@@ -1300,24 +1317,29 @@ controlsEl controls =
                     paragraph
                         [ Font.alignLeft
                         , width fill
+                        , paddingXY 0 size3
                         ]
                         [ text message ]
 
                 Nothing ->
                     Element.none
-            , column
-                [ width fill
-                , spacing size4
-                ]
-              <|
-                List.map
-                    (\( msg, label ) ->
-                        Input.button featureButtonStyles
-                            { onPress = Just msg
-                            , label = label
-                            }
-                    )
-                    controls.features
+            , if List.isEmpty controls.features then
+                Element.none
+
+              else
+                column
+                    [ width fill
+                    , spacing size4
+                    ]
+                <|
+                    List.map
+                        (\( msg, label ) ->
+                            Input.button featureButtonStyles
+                                { onPress = Just msg
+                                , label = label
+                                }
+                        )
+                        controls.features
             , case controls.bids of
                 Just ( min, max ) ->
                     row
@@ -1348,7 +1370,9 @@ controlsEl controls =
                         , spacing size3
                         ]
                         [ el
-                            [ centerX ]
+                            [ centerX
+                            , paddingXY 0 size3
+                            ]
                             confirmControl.description
                         , row
                             [ width fill
@@ -1412,6 +1436,17 @@ controlsEl controls =
                 Nothing ->
                     Element.none
             ]
+
+
+activePlayerName : GameStatusMessage -> PlayerId -> String
+activePlayerName gameStatus playerId =
+    Maybe.withDefault "another player" <|
+        Maybe.map
+            (\player -> player.screenName)
+        <|
+            List.Extra.find
+                (\player -> player.playerId == playerId)
+                gameStatus.game.players
 
 
 uiHook : String -> Attribute Msg
