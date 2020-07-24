@@ -399,8 +399,8 @@ update msg model =
                         }
                     )
 
-                BidOrPassScreen _ gameStatus welcomeMessage _ ->
-                    ( { model | ui = BidOrPassScreen (BidOrPassBid bid) gameStatus welcomeMessage AwaitingMessage }
+                BidOrPassScreen _ gameStatus welcomeMessage loadingStatus ->
+                    ( { model | ui = BidOrPassScreen (BidOrPassBid bid) gameStatus welcomeMessage loadingStatus }
                     , sendBid
                         { gameId = welcomeMessage.gameId
                         , playerId = welcomeMessage.playerId
@@ -421,7 +421,7 @@ update msg model =
         InputPass ->
             case model.ui of
                 BidOrPassScreen _ gameStatus welcomeMessage _ ->
-                    ( { model | ui = BidOrPassScreen BidOrPassPass gameStatus welcomeMessage AwaitingMessage }
+                    ( { model | ui = BidOrPassScreen BidOrPassPass gameStatus welcomeMessage NotLoading }
                     , Cmd.none
                     )
 

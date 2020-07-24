@@ -109,7 +109,7 @@ view model =
                 PlaceDiscScreen maybeDisc gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , status = "Place disc"
-                    , body = placeDisc model gameStatus maybeDisc
+                    , body = placeDisc model gameStatus loadingStatus maybeDisc
                     , loading = loadingStatus
                     , ui = "place-disc"
                     }
@@ -117,7 +117,7 @@ view model =
                 DiscOrBidScreen maybeSelection gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , status = "Place disc or bid"
-                    , body = discOrBid model gameStatus maybeSelection
+                    , body = discOrBid model gameStatus loadingStatus maybeSelection
                     , loading = loadingStatus
                     , ui = "disc-or-bid"
                     }
@@ -125,7 +125,7 @@ view model =
                 BidOrPassScreen maybeInt gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , status = "Bid or pass"
-                    , body = bidOrPass model gameStatus maybeInt
+                    , body = bidOrPass model gameStatus loadingStatus maybeInt
                     , loading = loadingStatus
                     , ui = "bid-or-pass"
                     }
@@ -133,7 +133,7 @@ view model =
                 FlipScreen maybeStack gameStatus _ loadingStatus ->
                     { title = gameStatus.game.gameName ++ " | Thorn"
                     , status = "Choose disc to flip"
-                    , body = flip model gameStatus maybeStack
+                    , body = flip model gameStatus loadingStatus maybeStack
                     , loading = loadingStatus
                     , ui = "flip"
                     }
@@ -332,6 +332,19 @@ home model =
 
 createGame : Model -> String -> String -> LoadingStatus -> Element Msg
 createGame model gameName screenName loadingStatus =
+    let
+        controls =
+            if loadingStatus == NotLoading then
+                { emptyControls
+                    | features =
+                        [ ( SubmitCreateGame gameName screenName, text "Create game" ) ]
+                }
+
+            else
+                { emptyControls
+                    | message = Just "Loading..."
+                }
+    in
     centerBlock <|
         column
             [ width fill
@@ -351,15 +364,25 @@ createGame model gameName screenName loadingStatus =
                 , label = Input.labelAbove [] <| text "Screen name"
                 }
             , spacer 2
-            , Input.button featureButtonStyles
-                { onPress = Just <| SubmitCreateGame gameName screenName
-                , label = text "Create game"
-                }
+            , controlsEl controls
             ]
 
 
 joinGame : Model -> String -> String -> LoadingStatus -> Element Msg
 joinGame model gameCode screenName loadingStatus =
+    let
+        controls =
+            if loadingStatus == NotLoading then
+                { emptyControls
+                    | features =
+                        [ ( SubmitJoinGame gameCode screenName, text "Join game" ) ]
+                }
+
+            else
+                { emptyControls
+                    | message = Just "Loading..."
+                }
+    in
     centerBlock <|
         column
             [ width fill
@@ -379,10 +402,7 @@ joinGame model gameCode screenName loadingStatus =
                 , label = Input.labelAbove [] <| text "Screen name"
                 }
             , spacer 2
-            , Input.button featureButtonStyles
-                { onPress = Just <| SubmitJoinGame gameCode screenName
-                , label = text "Join game"
-                }
+            , controlsEl controls
             ]
 
 
@@ -485,15 +505,21 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
                 Just gameStatus ->
                     if isCreator gameStatus.game gameStatus.self then
                         if List.length playerOrder >= 2 then
-                            { emptyControls
-                                | features = [ ( SubmitStartGame, text "Start game" ) ]
-                                , message =
-                                    if List.length playerOrder == 2 then
-                                        Just "Thorn works best with at least 3 players"
+                            if loadingStatus == NotLoading then
+                                { emptyControls
+                                    | features = [ ( SubmitStartGame, text "Start game" ) ]
+                                    , message =
+                                        if List.length playerOrder == 2 then
+                                            Just "Thorn works best with at least 3 players"
 
-                                    else
-                                        Nothing
-                            }
+                                        else
+                                            Nothing
+                                }
+
+                            else
+                                { emptyControls
+                                    | message = Just "Loading..."
+                                }
 
                         else
                             { emptyControls
@@ -556,8 +582,8 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
             ]
 
 
-placeDisc : Model -> GameStatusMessage -> Maybe Disc -> Element Msg
-placeDisc model gameStatus maybeDisc =
+placeDisc : Model -> GameStatusMessage -> LoadingStatus -> Maybe Disc -> Element Msg
+placeDisc model gameStatus loadingStatus maybeDisc =
     let
         roseButton =
             if gameStatus.self.roseCount > placedRoseCount gameStatus then
@@ -576,14 +602,20 @@ placeDisc model gameStatus maybeDisc =
         controls =
             case maybeDisc of
                 Just disc ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitPlaceDisc disc
-                                , cancel = InputRemovePlaceDisc
-                                , description = discDisplay disc
-                                }
-                    }
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitPlaceDisc disc
+                                    , cancel = InputRemovePlaceDisc
+                                    , description = discDisplay disc
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 Nothing ->
                     { emptyControls
@@ -602,8 +634,8 @@ placeDisc model gameStatus maybeDisc =
             ]
 
 
-discOrBid : Model -> GameStatusMessage -> DiscOrBid -> Element Msg
-discOrBid model gameStatus maybeSelection =
+discOrBid : Model -> GameStatusMessage -> LoadingStatus -> DiscOrBid -> Element Msg
+discOrBid model gameStatus loadingStatus maybeSelection =
     let
         roseButton =
             if gameStatus.self.roseCount > placedRoseCount gameStatus then
@@ -622,24 +654,36 @@ discOrBid model gameStatus maybeSelection =
         controls =
             case maybeSelection of
                 DiscOrBidDisc disc ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitPlaceDisc disc
-                                , cancel = InputRemovePlaceDisc
-                                , description = discDisplay disc
-                                }
-                    }
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitPlaceDisc disc
+                                    , cancel = InputRemovePlaceDisc
+                                    , description = discDisplay disc
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 DiscOrBidBid bid ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitBid bid
-                                , cancel = InputRemoveBid
-                                , description = text <| "Bid " ++ String.fromInt bid
-                                }
-                    }
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitBid bid
+                                    , cancel = InputRemoveBid
+                                    , description = text <| "Bid " ++ String.fromInt bid
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 DiscOrBidNoSelection ->
                     { emptyControls
@@ -659,30 +703,42 @@ discOrBid model gameStatus maybeSelection =
             ]
 
 
-bidOrPass : Model -> GameStatusMessage -> BidOrPass -> Element Msg
-bidOrPass model gameStatus maybeSelection =
+bidOrPass : Model -> GameStatusMessage -> LoadingStatus -> BidOrPass -> Element Msg
+bidOrPass model gameStatus loadingStatus maybeSelection =
     let
         controls =
             case maybeSelection of
                 BidOrPassBid bid ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitBid bid
-                                , cancel = InputRemoveBid
-                                , description = text <| "bid " ++ String.fromInt bid
-                                }
-                    }
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitBid bid
+                                    , cancel = InputRemoveBid
+                                    , description = text <| "bid " ++ String.fromInt bid
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 BidOrPassPass ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitPass
-                                , cancel = InputRemovePass
-                                , description = text "Pass"
-                                }
-                    }
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitPass
+                                    , cancel = InputRemovePass
+                                    , description = text "Pass"
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 BidOrPassNoSelection ->
                     { emptyControls
@@ -701,8 +757,8 @@ bidOrPass model gameStatus maybeSelection =
             ]
 
 
-flip : Model -> GameStatusMessage -> Maybe PlayerId -> Element Msg
-flip model gameStatus maybeStack =
+flip : Model -> GameStatusMessage -> LoadingStatus -> Maybe PlayerId -> Element Msg
+flip model gameStatus loadingStatus maybeStack =
     let
         allOwnFlipped =
             allFlipped gameStatus gameStatus.self.playerId
@@ -710,14 +766,24 @@ flip model gameStatus maybeStack =
         controls =
             case maybeStack of
                 Just stackId ->
-                    { emptyControls
-                        | confirm =
-                            Just
-                                { confirm = SubmitFlip stackId
-                                , cancel = InputRemoveFlip
-                                , description = text "flip"
-                                }
-                    }
+                    let
+                        targetName =
+                            lookupPlayerName gameStatus stackId
+                    in
+                    if loadingStatus == NotLoading then
+                        { emptyControls
+                            | confirm =
+                                Just
+                                    { confirm = SubmitFlip stackId
+                                    , cancel = InputRemoveFlip
+                                    , description = text <| "Flip " ++ targetName
+                                    }
+                        }
+
+                    else
+                        { emptyControls
+                            | message = Just "Loading..."
+                        }
 
                 Nothing ->
                     if allOwnFlipped then
@@ -758,7 +824,7 @@ currentGame model gameStatus =
                 Just (Placing placing) ->
                     let
                         actorName =
-                            activePlayerName gameStatus placing.activePlayer
+                            lookupPlayerName gameStatus placing.activePlayer
                     in
                     { emptyControls
                         | message = Just <| "Waiting for " ++ actorName
@@ -767,7 +833,7 @@ currentGame model gameStatus =
                 Just (Bidding bidding) ->
                     let
                         actorName =
-                            activePlayerName gameStatus bidding.activePlayer
+                            lookupPlayerName gameStatus bidding.activePlayer
                     in
                     { emptyControls
                         | message = Just <| "Waiting for " ++ actorName
@@ -776,7 +842,7 @@ currentGame model gameStatus =
                 Just (Flipping flipping) ->
                     let
                         actorName =
-                            activePlayerName gameStatus flipping.activePlayer
+                            lookupPlayerName gameStatus flipping.activePlayer
                     in
                     { emptyControls
                         | message = Just <| actorName ++ " is trying to win the round"
@@ -801,28 +867,38 @@ currentGame model gameStatus =
                         Nothing ->
                             let
                                 actorName =
-                                    activePlayerName gameStatus finished.activePlayer
+                                    lookupPlayerName gameStatus finished.activePlayer
+
+                                newRound =
+                                    if isCreator gameStatus.game gameStatus.self then
+                                        [ ( SubmitNewRound, text "Next round" ) ]
+
+                                    else
+                                        []
                             in
                             if finished.successful then
                                 if finished.activePlayer == gameStatus.self.playerId then
                                     { emptyControls
                                         | message = Just "You have won the round"
+                                        , features = newRound
                                     }
 
                                 else
                                     { emptyControls
                                         | message = Just <| actorName ++ " has won the round"
+                                        , features = newRound
                                     }
 
                             else if finished.activePlayer == gameStatus.self.playerId then
                                 { emptyControls
                                     | message = Just "You have hit a skull and failed to win the round"
+                                    , features = newRound
                                 }
 
                             else
                                 { emptyControls
-                                    | message =
-                                        Just <| actorName ++ " failed to win the round"
+                                    | message = Just <| actorName ++ " failed to win the round"
+                                    , features = newRound
                                 }
 
                 Nothing ->
@@ -1438,8 +1514,8 @@ controlsEl controls =
             ]
 
 
-activePlayerName : GameStatusMessage -> PlayerId -> String
-activePlayerName gameStatus playerId =
+lookupPlayerName : GameStatusMessage -> PlayerId -> String
+lookupPlayerName gameStatus playerId =
     Maybe.withDefault "another player" <|
         Maybe.map
             (\player -> player.screenName)
