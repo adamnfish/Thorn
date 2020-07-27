@@ -77,14 +77,6 @@ all =
                         , gameId = Gid "gid"
                         }
                         |> expectOperationField "new-round"
-            , test "reconnect" <|
-                \_ ->
-                    reconnectEncoder
-                        { playerId = Pid "pid"
-                        , playerKey = Pkey "key"
-                        , gameId = Gid "gid"
-                        }
-                        |> expectOperationField "reconnect"
             , test "ping" <|
                 \_ ->
                     pingEncoder
