@@ -15,7 +15,7 @@ app.ports.reportError.subscribe(function (errorDetails) {
 
 // Server communication
 
-const socket = new ReconnectingWebSocket('ws://' + window.location.hostname + ':7000/api');
+const socket = new ReconnectingWebSocket(apiUri(location.hostname));
 
 socket.addEventListener('open', function (event) {
   console.log('Websocket connection opened', event.data);
@@ -42,6 +42,16 @@ app.ports.sendMessage.subscribe(function (messageData) {
   console.log('>> Sending message ', messageData);
   socket.send(JSON.stringify(messageData));
 });
+
+
+function apiUri(hostname) {
+    if (/(localhost|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/.test(hostname)) {
+        return "ws://" + hostname + ":7000/api";
+    } else {
+        const match = hostname.match(/(\w+?)\.(.*)/);
+        return "wss://" + match[1] + "-api." + match[2] + "/"
+    }
+}
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

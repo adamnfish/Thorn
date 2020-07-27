@@ -10,7 +10,8 @@ Metadata:
         Parameters:
           - DomainName
           - Stage
-          - TLSCert
+          - WebrootTLSCert
+          - ApiTLSCert
       - Label:
           default: API
         Parameters:
@@ -32,9 +33,12 @@ Parameters:
     Type: String
     Description: Environment name
     Default: prod
-  TLSCert:
+  WebrootTLSCert:
     Type: String
-    Description: ARN of TLS certificate in US-EAST-1 (must work for `thorn.${DomainName}` and `thorn-api.${DomainName}`)
+    Description: ARN of TLS certificate in US-EAST-1 (must work for `thorn.${DomainName}`)
+  ApiTLSCert:
+    Type: String
+    Description: ARN of TLS certificate in the deployment region (must work for `thorn-api.${DomainName}`)
   DistBucket:
     Type: String
     Description: S3 Bucket that will contain the backend artifacts
@@ -44,20 +48,21 @@ Parameters:
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_-]+$
-    ConstraintDescription: 'Can be characters and underscore/hyphen only. No numbers or special characters allowed.'
+    ConstraintDescription: Can be characters and underscore/hyphen only. No numbers or special characters allowed.
   PlayersTableName:
     Type: String
     Description: Players DynamoDB table name
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_-]+$
-    ConstraintDescription: 'Can be characters and underscore/hyphen only. No numbers or special characters allowed.'
+    ConstraintDescription: Can be characters and underscore/hyphen only. No numbers or special characters allowed.
   WebrootBucket:
     Type: String
     Description: Name of the S3 bucket that stores application static assets
   WebrootAccessIdentityID:
     Type: String
     Description: ID of CloudFront origin access identity for webroot bucket access (check output of storage stack)
+
 
 Resources:
   WebSocketApi:
@@ -193,14 +198,22 @@ Resources:
       FunctionName: !Ref ThornApiBackend
       Principal: apigateway.amazonaws.com
 
-#  BackendDomainName:
-#    Type: AWS::ApiGatewayV2::DomainName
-#    Properties:
+  BackendDomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Sub "thorn-api.${DomainName}"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ApiTLSCert
+          CertificateName: !Sub "thorn-api.${DomainName}"
+          # EndpointType: REGIONAL
+
+  BackendApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
 #      DomainName: !Sub "thorn-api.${DomainName}"
-#      DomainNameConfigurations:
-#        CertificateArn: !Ref TLSCert
-#        CertificateName: ???
-#        EndpointType: ???
+      DomainName: !Ref BackendDomainName
+      ApiId: !Ref WebSocketApi
+      Stage: !Ref ApiGatewayStage
 
   CDN:
     Type: AWS::CloudFront::Distribution
@@ -229,7 +242,7 @@ Resources:
         PriceClass: PriceClass_100
         Enabled: true
         ViewerCertificate:
-          AcmCertificateArn: !Ref TLSCert
+          AcmCertificateArn: !Ref WebrootTLSCert
           MinimumProtocolVersion: TLSv1
           SslSupportMethod: sni-only
         HttpVersion: http2
@@ -250,12 +263,11 @@ Resources:
             # Zone ID is a magic string for CloudFront
             HostedZoneId: Z2FDTNDATAQYW2
             DNSName: !GetAtt CDN.DomainName
-#        - Name: !Sub thorn-api.${DomainName}.
-#          Type: A
-#          AliasTarget:
-#            # Zone ID is a magic string for CloudFront
-#            HostedZoneId: Z2FDTNDATAQYW2
-#            DNSName: !GetAtt BackendDomainName.DistributionDomainName
+        - Name: !Sub thorn-api.${DomainName}.
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt BackendDomainName.RegionalHostedZoneId
+            DNSName: !GetAtt BackendDomainName.RegionalDomainName
 
 Outputs:
   GamesTable:
@@ -271,5 +283,5 @@ Outputs:
     Value: !GetAtt ThornApiBackend.Arn
 
   WebSocketURI:
-    Description: "The WSS Protocol URI to connect to"
+    Description: "The URI for connecting to the API directly"
     Value: !Sub "wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
