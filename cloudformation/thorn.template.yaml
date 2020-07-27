@@ -285,3 +285,26 @@ Outputs:
   WebSocketURI:
     Description: "The URI for connecting to the API directly"
     Value: !Sub "wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+
+  # Deployment parameters
+  # These will be looked up by the CI deploy script
+
+  BackendLambdaName:
+    Description: "Backend Lambda fn's name"
+    Value: !Ref ThornApiBackend
+
+  DistributionId:
+    Description: "Distribution ID for the static www CloudFront Distribution"
+    Value: !Ref CDN
+
+  WebrootBucketName:
+    Description: "Name of the S3 bucket that holds the static site assets"
+    Value: !Ref WebrootBucket
+
+  DistBucketName:
+    Description: "Name of the S3 bucket that holds API artifacts"
+    Value: !Ref DistBucket
+
+  StageName:
+    Description: "Stage of this deployment"
+    Value: !Ref Stage
