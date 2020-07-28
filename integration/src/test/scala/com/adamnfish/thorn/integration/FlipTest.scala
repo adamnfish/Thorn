@@ -10,7 +10,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
   with ThornIntegration with TestHelpers with Journeys {
 
   "at the start of the flipping round" - {
-    "is successful when flipping their first discs" in {
+    "is successful when flipping their discss" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
         Fixtures.flip(
@@ -33,7 +33,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
-    "includes the newly revealed disc in the game summary message" in {
+    "includes the newly revealed discs in the game summary message" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
         val messages = Fixtures.flip(
@@ -44,7 +44,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         val round = messages.head._2.game.round.value
         round shouldBe a[FlippingSummary]
         round.asInstanceOf[FlippingSummary].revealed shouldEqual Map(
-          testGame.creator.playerId -> List(Rose),
+          testGame.creator.playerId -> List(Rose, Rose),
           testGame.player1.playerId -> Nil,
           testGame.player2.playerId -> Nil,
         )
@@ -63,48 +63,9 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
-    "is successful when flipping all their own discs" in {
-      withTestContext { (context, _) =>
-        val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-      }
-    }
-
-    "persists a flip to the database" in {
+    "persists own flipped discs to the database" in {
       withTestContext { (context, db) =>
         val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-
-        val gameDb = db.getGame(testGame.gameId).value().value
-        gameDb.revealedDiscs shouldEqual Map(
-          testGame.creator.playerId.pid -> 1,
-          testGame.player1.playerId.pid -> 0,
-          testGame.player2.playerId.pid -> 0,
-        )
-      }
-    }
-
-    "persists multiple flips to the database" in {
-      withTestContext { (context, db) =>
-        val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -120,7 +81,30 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       }
     }
 
-    "fails to flip another player's disc" in {
+    "persists multiple flips to the database" in {
+      withTestContext { (context, db) =>
+        val testGame = goToRoseFlippingRound(context)
+        Fixtures.flip(
+          stackId = testGame.creator.playerId,
+          testGame.creator,
+          context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+        Fixtures.flip(
+          stackId = testGame.player1.playerId,
+          testGame.creator,
+          context(Fixtures.creatorAddress)
+        ).isSuccessfulAttempt()
+
+        val gameDb = db.getGame(testGame.gameId).value().value
+        gameDb.revealedDiscs shouldEqual Map(
+          testGame.creator.playerId.pid -> 2,
+          testGame.player1.playerId.pid -> 1,
+          testGame.player2.playerId.pid -> 0,
+        )
+      }
+    }
+
+    "fails to flip another player's disc before their own" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
         Fixtures.flip(
@@ -148,11 +132,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "successfully" in {
         withTestContext { (context, _) =>
           val testGame = goToRoseFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -170,11 +150,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "and the revealed state is persisted" in {
         withTestContext { (context, db) =>
           val testGame = goToRoseFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -200,11 +176,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         "is successful" in {
           withTestContext { (context, _) =>
             val testGame = goToRoseFlippingRound(context)
-            Fixtures.flip(
-              stackId = testGame.creator.playerId,
-              testGame.creator,
-              context(Fixtures.creatorAddress)
-            ).isSuccessfulAttempt()
+            // flip all own discs
             Fixtures.flip(
               stackId = testGame.creator.playerId,
               testGame.creator,
@@ -237,11 +209,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         "persists the round to end to the database" in {
           withTestContext { (context, db) =>
             val testGame = goToRoseFlippingRound(context)
-            Fixtures.flip(
-              stackId = testGame.creator.playerId,
-              testGame.creator,
-              context(Fixtures.creatorAddress)
-            ).isSuccessfulAttempt()
+            // flip all own discs
             Fixtures.flip(
               stackId = testGame.creator.playerId,
               testGame.creator,
@@ -274,11 +242,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         "updates the player's score in the returned message" in {
           withTestContext { (context, _) =>
             val testGame = goToRoseFlippingRound(context)
-            Fixtures.flip(
-              stackId = testGame.creator.playerId,
-              testGame.creator,
-              context(Fixtures.creatorAddress)
-            ).isSuccessfulAttempt()
+            // flip all own discs
             Fixtures.flip(
               stackId = testGame.creator.playerId,
               testGame.creator,
@@ -313,11 +277,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
         "persists the player's score change to the database" in {
           withTestContext { (context, db) =>
             val testGame = goToRoseFlippingRound(context)
-            Fixtures.flip(
-              stackId = testGame.creator.playerId,
-              testGame.creator,
-              context(Fixtures.creatorAddress)
-            ).isSuccessfulAttempt()
+            // flip all own discs
             Fixtures.flip(
               stackId = testGame.creator.playerId,
               testGame.creator,
@@ -354,16 +314,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "successfully" in {
         withTestContext { (context, _) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -382,16 +333,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "the returned message is a correct finished round" in {
         withTestContext { (context, _) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -426,16 +368,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "the returned message shows the player has had a disc removed from their pool" in {
         withTestContext { (context, _) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -456,16 +389,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "the player's self summary shows the player has had a disc removed from their pool" in {
         withTestContext { (context, _) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -490,16 +414,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "finished state is persisted to the database" in {
         withTestContext { (context, db) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -526,16 +441,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
       "player's disc removal is persisted to the database" in {
         withTestContext { (context, db) =>
           val testGame = goToThornFlippingRound(context)
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
-          Fixtures.flip(
-            stackId = testGame.creator.playerId,
-            testGame.creator,
-            context(Fixtures.creatorAddress)
-          ).isSuccessfulAttempt()
+          // flip all own discs
           Fixtures.flip(
             stackId = testGame.creator.playerId,
             testGame.creator,
@@ -563,11 +469,7 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
     "fails to flip beyond their placed discs" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -585,16 +487,13 @@ class FlipTest extends AnyFreeSpec with AttemptValues with OptionValues
     "cannot keep flipping another player's discs beyond what they have placed" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
           context(Fixtures.creatorAddress)
         ).isSuccessfulAttempt()
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip other discs
         Fixtures.flip(
           stackId = testGame.player1.playerId,
           testGame.creator,

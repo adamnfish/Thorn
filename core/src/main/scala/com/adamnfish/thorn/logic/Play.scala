@@ -426,9 +426,14 @@ object Play {
             }
           } else {
             val newRevealed: Map[PlayerId, List[Disc]] = flipping.revealed.updatedWith(stack) { maybeDiscs =>
-              val currentlyRevealed = maybeDiscs.getOrElse(Nil)
-              val nextDisc = flipping.discs.getOrElse(stack, Nil).drop(currentlyRevealed.size).head
-              Some(currentlyRevealed :+ nextDisc)
+              if (playerId == stack) {
+                // when flipping own discs, flip all at once
+                Some(flipping.discs.getOrElse(stack, Nil))
+              } else {
+                val currentlyRevealed = maybeDiscs.getOrElse(Nil)
+                val nextDisc = flipping.discs.getOrElse(stack, Nil).drop(currentlyRevealed.size).head
+                Some(currentlyRevealed :+ nextDisc)
+              }
             }
             val revealedCount = newRevealed.values.flatten.size
 

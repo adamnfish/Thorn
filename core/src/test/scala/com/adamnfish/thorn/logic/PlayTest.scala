@@ -1232,6 +1232,22 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
               )
             ).isFailedAttempt()
           }
+
+          "flips their entire stack at once" in {
+            val updatedGame = flipDisc(creator.playerId, stack = creator.playerId,
+              game.copy(
+                players = List(creator, player1, player2),
+                round = Some(testRound.copy(
+                  revealed = Map(
+                    creator.playerId -> Nil
+                  )
+                )),
+              )
+            ).value()
+            updatedGame.round.value shouldBe a[Flipping]
+            val updatedRound = updatedGame.round.value.asInstanceOf[Flipping]
+            updatedRound.revealed.get(creator.playerId).value shouldEqual List(Rose, Rose)
+          }
         }
 
         "cannot flip discs beyond what has been placed" - {

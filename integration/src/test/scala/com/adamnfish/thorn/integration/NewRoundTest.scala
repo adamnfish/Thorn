@@ -12,11 +12,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "is successful" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -48,11 +44,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "sends status messages with the new game round info (including correct first player)" in {
       withTestContext { (context, _) =>
         val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -89,11 +81,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "persists the game and player changes" in {
       withTestContext { (context, db) =>
         val testGame = goToRoseFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -142,16 +130,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "is successful" in {
       withTestContext { (context, _) =>
         val testGame = goToThornFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -173,16 +152,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "sends status messages out with the new round information (including correct first player)" in {
       withTestContext { (context, _) =>
         val testGame = goToThornFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,
@@ -208,16 +178,7 @@ class NewRoundTest extends AnyFreeSpec with AttemptValues with OptionValues with
     "persists the game and player updates" in {
       withTestContext { (context, db) =>
         val testGame = goToThornFlippingRound(context)
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
-        Fixtures.flip(
-          stackId = testGame.creator.playerId,
-          testGame.creator,
-          context(Fixtures.creatorAddress)
-        ).isSuccessfulAttempt()
+        // flip all own discs
         Fixtures.flip(
           stackId = testGame.creator.playerId,
           testGame.creator,

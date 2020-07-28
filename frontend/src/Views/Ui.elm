@@ -794,8 +794,8 @@ flip model gameStatus loadingStatus maybeStack =
                     else
                         { emptyControls
                             | features =
-                                [ ( InputFlip gameStatus.self.playerId
-                                  , text "Flip own disc"
+                                [ ( SubmitFlip gameStatus.self.playerId
+                                  , text "Flip own discs"
                                   )
                                 ]
                         }
