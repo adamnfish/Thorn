@@ -1236,7 +1236,7 @@ playerPublicInformation gameStatus showStackSelector player =
                 { each0 | left = size4 }
             , Border.color <|
                 if active then
-                    colourHighlight
+                    colourCta
 
                 else
                     colourBlack
@@ -1310,7 +1310,7 @@ discDisplay disc =
                     Element.html
                         (Icon.biohazard
                             |> Icon.present
-                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourBlack2 ]
+                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourWhite ]
                             |> Icon.view
                         )
 
@@ -1318,7 +1318,7 @@ discDisplay disc =
                     Element.html
                         (Icon.spa
                             |> Icon.present
-                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourHighlight ]
+                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourWhite ]
                             |> Icon.view
                         )
     in
@@ -1326,11 +1326,7 @@ discDisplay disc =
         [ width <| px 40
         , height <| px 40
         , Border.rounded 20
-        , Background.color colourAlt
-        , Border.solid
-        , Border.color textColourFeature
-        , Font.color textColourDark
-        , centerY
+        , Background.color colourHighlight
         ]
     <|
         el [ centerY, centerX ] <|
@@ -1343,18 +1339,14 @@ unknownDiscDisplay =
         [ width <| px 40
         , height <| px 40
         , Border.rounded 20
-        , Background.color colourAlt
-        , Border.solid
-        , Border.color textColourFeature
-        , Font.color textColourDark
-        , centerY
+        , Background.color colourHighlight
         ]
     <|
         el [ centerY, centerX ] <|
             Element.html
                 (Icon.question
                     |> Icon.present
-                    |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourFeature ]
+                    |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourHighlight2 ]
                     |> Icon.view
                 )
 
