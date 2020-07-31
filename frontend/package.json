@@ -1,5 +1,5 @@
 {
-  "name": "Thorn UI",
+  "name": "thorn-ui",
   "version": "0.0.1",
   "description": "Web UI for playing Thorn online.",
   "main": "index.js",
