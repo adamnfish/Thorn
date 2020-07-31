@@ -563,6 +563,13 @@ update msg model =
                     , Cmd.none
                     )
 
+        ToggleSecrets ->
+            ( { model
+                | hideSecrets = not model.hideSecrets
+              }
+            , Cmd.none
+            )
+
 
 welcomeMessageUpdate : Model -> WelcomeMessage -> ( Model, Cmd Msg )
 welcomeMessageUpdate model welcomeMessage =

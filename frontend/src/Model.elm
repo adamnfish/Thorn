@@ -44,6 +44,7 @@ type Msg
     | InputRemoveFlip
     | SubmitFlip PlayerId
     | SubmitNewRound
+    | ToggleSecrets
 
 
 type alias Model =
@@ -53,6 +54,7 @@ type alias Model =
     , errors : List UIError
     , now : Time.Posix
     , viewport : Maybe Viewport
+    , hideSecrets : Bool
     }
 
 

@@ -626,7 +626,7 @@ placeDisc model gameStatus loadingStatus maybeDisc =
     centerBlock <|
         column
             [ width fill ]
-            [ selfSecretInformation gameStatus
+            [ selfSecretInformation model gameStatus
             , spacer 3
             , playersList gameStatus False
             , spacer 2
@@ -695,7 +695,7 @@ discOrBid model gameStatus loadingStatus maybeSelection =
     centerBlock <|
         column
             [ width fill ]
-            [ selfSecretInformation gameStatus
+            [ selfSecretInformation model gameStatus
             , spacer 3
             , playersList gameStatus False
             , spacer 2
@@ -749,7 +749,7 @@ bidOrPass model gameStatus loadingStatus maybeSelection =
     centerBlock <|
         column
             [ width fill ]
-            [ selfSecretInformation gameStatus
+            [ selfSecretInformation model gameStatus
             , spacer 3
             , playersList gameStatus False
             , spacer 2
@@ -803,7 +803,7 @@ flip model gameStatus loadingStatus maybeStack =
     centerBlock <|
         column
             [ width fill ]
-            [ selfSecretInformation gameStatus
+            [ selfSecretInformation model gameStatus
             , spacer 3
             , playersList gameStatus allOwnFlipped
             , spacer 2
@@ -909,7 +909,7 @@ currentGame model gameStatus =
     centerBlock <|
         column
             [ width fill ]
-            [ selfSecretInformation gameStatus
+            [ selfSecretInformation model gameStatus
             , spacer 3
             , playersList gameStatus False
             , spacer 3
@@ -917,8 +917,8 @@ currentGame model gameStatus =
             ]
 
 
-selfSecretInformation : GameStatusMessage -> Element Msg
-selfSecretInformation gameStatus =
+selfSecretInformation : Model -> GameStatusMessage -> Element Msg
+selfSecretInformation model gameStatus =
     let
         placed =
             Maybe.withDefault [] gameStatus.self.placedDiscs
@@ -939,6 +939,13 @@ selfSecretInformation gameStatus =
 
         poolEls =
             List.reverse <| thornPoolEl :: rosePoolEls
+
+        icon =
+            if model.hideSecrets then
+                Icon.eye
+
+            else
+                Icon.eyeSlash
     in
     el
         [ width fill
@@ -949,31 +956,35 @@ selfSecretInformation gameStatus =
             [ width fill
             , Border.widthEach
                 { each0 | left = size4 }
-            , Border.color colourAlt
+            , Border.color colourBlack
             ]
         <|
             column
                 [ width fill ]
-                [ row
-                    [ width fill
-                    , spacing size4
-                    , padding size4
-                    ]
-                    [ row
-                        [ spacing size4
+                [ if not model.hideSecrets then
+                    row
+                        [ width fill
+                        , spacing size4
+                        , padding size4
                         ]
-                        poolEls
-                    , row
-                        [ spacing size4
-                        , paddingEach { each0 | left = size4 }
-                        , Border.solid
-                        , Border.color textColourGrey
-                        , Border.widthEach { each0 | left = 1 }
-                        , alignRight
+                        [ row
+                            [ spacing size4
+                            ]
+                            poolEls
+                        , row
+                            [ spacing size4
+                            , paddingEach { each0 | left = size4 }
+                            , Border.solid
+                            , Border.color textColourGrey
+                            , Border.widthEach { each0 | left = 1 }
+                            , alignRight
+                            ]
+                          <|
+                            List.map discDisplay placed
                         ]
-                      <|
-                        List.map discDisplay placed
-                    ]
+
+                  else
+                    Element.none
                 , row
                     [ width fill
                     , padding size4
@@ -982,14 +993,18 @@ selfSecretInformation gameStatus =
                     [ text "Keep this secret"
                     , el
                         [ alignRight
-                        , paddingXY size5 0
                         ]
                       <|
-                        Element.html
-                            (Icon.eye
-                                |> Icon.present
-                                |> Icon.view
-                            )
+                        Input.button
+                            ((width <| px 40) :: buttonStyles)
+                            { onPress = Just <| ToggleSecrets
+                            , label =
+                                Element.html
+                                    (icon
+                                        |> Icon.present
+                                        |> Icon.view
+                                    )
+                            }
                     ]
                 ]
 

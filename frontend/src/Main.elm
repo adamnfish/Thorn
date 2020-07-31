@@ -23,6 +23,7 @@ init =
             , errors = []
             , now = Time.millisToPosix 0
             , viewport = Nothing
+            , hideSecrets = False
             }
     in
     ( initial
