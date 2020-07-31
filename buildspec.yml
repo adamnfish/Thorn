@@ -21,9 +21,9 @@ phases:
 
       # Install software for frontend build
       - npm install -g create-elm-app@4.2.24 --unsafe-perm=true --allow-root
-      - pushd frontend
+      - cd frontend
       - npm install
-      - popd
+      - cd ..
 
       - echo "[STATUS] pre build step finished"
 
@@ -34,10 +34,10 @@ phases:
       # test and package API
       - sbt/bin/sbt -no-colors test "project lambda" assembly
       # frontend
-      - pushd frontend
+      - cd frontend
       - elm-app test
       - elm-app build
-      - popd
+      - cd ..
 
       - echo "[STATUS] Build step finished"
 
@@ -51,10 +51,10 @@ phases:
       - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $DIST_BUCKET --s3-key $DIST_KEY
 
       - echo Uploading static site to $WWW_BUCKET_NAME
-      - pushd frontend/build
+      - cd frontend/build
       - aws s3 sync . s3://$WWW_BUCKET_NAME
+      - cd ../..
       - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
-      - popd
 
       - echo "[STATUS] Deploy step finished"
 
