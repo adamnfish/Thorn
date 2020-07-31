@@ -1,5 +1,8 @@
 version: 0.2
 
+env:
+  shell: bash
+
 phases:
   install:
     runtime-versions:
@@ -10,7 +13,6 @@ phases:
     commands:
       - echo "[Status] pre build started at `date`"
       - echo Current directory is `pwd`
-      - ls
 
       # Install software for API build
       - echo Installing sbt
