@@ -1195,19 +1195,35 @@ playerPublicInformation gameStatus showStackSelector player =
         hasDiscsUnflipped =
             not <| allFlipped gameStatus player.playerId
 
+        icon =
+            if player.score > 0 then
+                Element.html
+                    (Icon.crown
+                        |> Icon.present
+                        |> Icon.styled [ Html.Attributes.style "color" <| formatColor colourWhite ]
+                        |> Icon.view
+                    )
+
+            else
+                el
+                    [ centerX ]
+                <|
+                    Element.html
+                        (Icon.userCircle
+                            |> Icon.present
+                            |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourLight ]
+                            |> Icon.view
+                        )
+
         info =
             row
                 [ width fill
                 , spacing size4
                 , height <| px 35
                 ]
-                [ Element.html
-                    (Icon.userCircle
-                        |> Icon.present
-                        |> Icon.styled [ Html.Attributes.style "color" <| formatColor textColourLight ]
-                        |> Icon.view
-                    )
-                , el [] <| text ""
+                [ el
+                    [ width <| px 25 ]
+                    icon
                 , el
                     [ Font.color textColourLight ]
                   <|
