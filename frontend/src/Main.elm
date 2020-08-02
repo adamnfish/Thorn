@@ -22,7 +22,18 @@ init =
             , ui = HomeScreen
             , errors = []
             , now = Time.millisToPosix 0
-            , viewport = Nothing
+            , viewport =
+                { scene =
+                    { width = 0
+                    , height = 0
+                    }
+                , viewport =
+                    { x = 0
+                    , y = 0
+                    , width = 360
+                    , height = 640
+                    }
+                }
             , hideSecrets = False
             }
     in

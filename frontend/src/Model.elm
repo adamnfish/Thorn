@@ -53,7 +53,7 @@ type alias Model =
     , ui : UI
     , errors : List UIError
     , now : Time.Posix
-    , viewport : Maybe Viewport
+    , viewport : Viewport
     , hideSecrets : Bool
     }
 

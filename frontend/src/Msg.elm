@@ -41,7 +41,7 @@ update msg model =
 
         Resized viewport ->
             ( { model
-                | viewport = Just viewport
+                | viewport = viewport
               }
             , Cmd.none
             )
