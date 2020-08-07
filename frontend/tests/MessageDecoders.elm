@@ -14,7 +14,7 @@ all =
                 \_ ->
                     let
                         welcomeMessageStr =
-                            """{"playerKey":"78125aa1-6f24-4744-a6cf-be21f3613d38","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","gameId":"9750edfd-a87e-4e2f-bef9-a76d989f18b4"}"""
+                            """{"playerKey":"78125aa1-6f24-4744-a6cf-be21f3613d38","playerId":"6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3","gameId":"9750edfd-a87e-4e2f-bef9-a76d989f18b4","gameName":"Test game","screenName":"Player name"}"""
 
                         result =
                             Json.Decode.decodeString messageDecoder welcomeMessageStr
@@ -25,6 +25,8 @@ all =
                                 { playerKey = Pkey "78125aa1-6f24-4744-a6cf-be21f3613d38"
                                 , playerId = Pid "6c4906a5-c44d-4a8e-9aeb-9dc548ac41e3"
                                 , gameId = Gid "9750edfd-a87e-4e2f-bef9-a76d989f18b4"
+                                , gameName = "Test game"
+                                , screenName = "Player name"
                                 }
 
                         Ok message ->

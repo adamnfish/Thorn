@@ -58,7 +58,7 @@ object Thorn {
       gameDb = Representations.gameForDb(game)
       // TODO: check clashing gameCode doesn't already exist
       creatorDb = Representations.newPlayerForDb(game, creator)
-      welcome = Welcome(creator.playerKey, creator.playerId, game.gameId)
+      welcome = Welcome(creator.playerKey, creator.playerId, game.gameId, game.gameName, creator.screenName)
       response <- Responses.messageAndStatuses(welcome, game)
       _ <- context.db.writeGame(gameDb)
       _ <- context.db.writePlayer(creatorDb)
@@ -85,7 +85,7 @@ object Thorn {
       _ <- Games.ensureNotAlreadyPlaying(game, context.playerAddress)
       _ <- Games.ensureNoDuplicateScreenName(game, request.screenName)
       player = Players.newPlayer(request.screenName, context.playerAddress)
-      welcome = Welcome(player.playerKey, player.playerId, game.gameId)
+      welcome = Welcome(player.playerKey, player.playerId, game.gameId, game.gameName, player.screenName)
       newGame = Games.addPlayer(player, game)
       response <- Responses.messageAndStatuses(welcome, newGame)
       // create and save new DB representations

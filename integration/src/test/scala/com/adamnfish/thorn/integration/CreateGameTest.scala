@@ -32,7 +32,11 @@ class CreateGameTest extends AnyFreeSpec with AttemptValues with OptionValues
     "returns a correct welcome message" in {
       withTestContext { (context, _) =>
         val response = Fixtures.createGame(context).value()
-        response.response.nonEmpty shouldEqual true
+
+        response.response.value should have(
+          "screenName" as Fixtures.createGameRequest.screenName,
+          "gameName" as Fixtures.createGameRequest.gameName,
+        )
       }
     }
 

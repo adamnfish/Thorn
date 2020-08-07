@@ -126,6 +126,8 @@ case class Welcome(
   playerKey: PlayerKey,
   playerId: PlayerId,
   gameId: GameId,
+  gameName: String,
+  screenName: String,
 ) extends Message
 case class GameStatus(
   self: SelfSummary,

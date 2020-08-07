@@ -46,7 +46,11 @@ class JoinGameTest extends AnyFreeSpec with AttemptValues with OptionValues
         val creatorWelcome = Fixtures.createGame(context).value().response.value
         val response = Fixtures.joinGame(creatorWelcome, context).value()
 
-        response.response.nonEmpty shouldEqual true
+        response.response.value should have(
+          "screenName" as "player 1",
+          "gameName" as Fixtures.createGameRequest.gameName,
+          "gameId" as creatorWelcome.gameId.gid,
+        )
       }
     }
 

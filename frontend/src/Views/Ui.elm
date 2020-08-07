@@ -52,27 +52,20 @@ view model =
                     , ui = "join-game"
                     }
 
-                LobbyScreen playerOrder welcomeMessage loadingStatus ->
-                    let
-                        maybeGameStatus =
-                            case Dict.get (getGid welcomeMessage.gameId) model.library of
-                                Just (Playing gameStatus _) ->
-                                    Just gameStatus
-
-                                Just (NotPlaying gameStatus) ->
-                                    Just gameStatus
-
-                                Just (Waiting _ _) ->
-                                    Nothing
-
-                                Nothing ->
-                                    Nothing
-                    in
+                LobbyScreen playerOrder welcomeMessage maybeGameStatus loadingStatus ->
                     { title = "Waiting | Thorn"
                     , status = "Waiting for game to start"
                     , body = lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus
                     , loading = loadingStatus
                     , ui = "lobby"
+                    }
+
+                RejoinScreen welcomeMessage loadingStatus ->
+                    { title = "Rejoining | Thorn"
+                    , status = "Rejoining game"
+                    , body = rejoining model welcomeMessage loadingStatus
+                    , loading = loadingStatus
+                    , ui = "rejoining"
                     }
 
                 DisplayGameScreen gameStatus _ ->
@@ -258,21 +251,15 @@ home model =
     let
         availableGames =
             List.map
-                (\gameInProgress ->
-                    case gameInProgress of
-                        Playing gameStatus welcomeMessage ->
-                            row []
-                                [ Input.button buttonStyles
-                                    { onPress = Just <| NavigateGame gameStatus welcomeMessage
-                                    , label = text <| gameStatus.self.screenName ++ " in " ++ gameStatus.game.gameName
-                                    }
-                                ]
-
-                        _ ->
-                            Element.none
+                (\welcomeMessage ->
+                    row []
+                        [ Input.button buttonStyles
+                            { onPress = Just <| NavigateGame welcomeMessage
+                            , label = text <| welcomeMessage.screenName ++ " in " ++ welcomeMessage.gameName
+                            }
+                        ]
                 )
-            <|
-                Dict.values model.library
+                model.library
     in
     centerBlock <|
         column
@@ -557,6 +544,26 @@ lobby model playerOrder loadingStatus welcomeMessage maybeGameStatus =
             , spacer 2
             , controlsEl controls
             ]
+
+
+rejoining : Model -> WelcomeMessage -> LoadingStatus -> Element Msg
+rejoining model welcomeMessage loadingStatus =
+    let
+        controls =
+            case loadingStatus of
+                AwaitingMessage ->
+                    { emptyControls
+                        | message = Just <| "Rejoining " ++ welcomeMessage.gameName
+                    }
+
+                NotLoading ->
+                    { emptyControls
+                        | features =
+                            [ ( NavigateGame welcomeMessage, text "Retry" ) ]
+                    }
+    in
+    centerBlock <|
+        controlsEl controls
 
 
 placeDisc : Model -> GameStatusMessage -> LoadingStatus -> Maybe Disc -> Element Msg

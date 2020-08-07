@@ -17,7 +17,7 @@ init =
     let
         initial : Model
         initial =
-            { library = Dict.empty
+            { library = []
             , connected = False
             , ui = HomeScreen
             , errors = []

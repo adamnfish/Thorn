@@ -18,7 +18,7 @@ type Msg
     | SocketConnect
     | SocketDisconnect
     | NavigateHome
-    | NavigateGame GameStatusMessage WelcomeMessage
+    | NavigateGame WelcomeMessage
       -- create game
     | NavigateCreateGame
     | InputCreateGame String String LoadingStatus
@@ -48,7 +48,7 @@ type Msg
 
 
 type alias Model =
-    { library : Dict String GameInProgress
+    { library : List WelcomeMessage
     , connected : Bool
     , ui : UI
     , errors : List UIError
@@ -62,7 +62,8 @@ type UI
     = HomeScreen
     | CreateGameScreen String String LoadingStatus
     | JoinGameScreen String String LoadingStatus
-    | LobbyScreen (List Player) WelcomeMessage LoadingStatus
+    | LobbyScreen (List Player) WelcomeMessage (Maybe GameStatusMessage) LoadingStatus
+    | RejoinScreen WelcomeMessage LoadingStatus
     | PlaceDiscScreen (Maybe Disc) GameStatusMessage WelcomeMessage LoadingStatus
     | DiscOrBidScreen DiscOrBid GameStatusMessage WelcomeMessage LoadingStatus
     | BidOrPassScreen BidOrPass GameStatusMessage WelcomeMessage LoadingStatus
@@ -278,6 +279,8 @@ type alias WelcomeMessage =
     { playerKey : PlayerKey
     , playerId : PlayerId
     , gameId : GameId
+    , gameName : String
+    , screenName : String
     }
 
 
@@ -311,6 +314,18 @@ getPid (Pid playerId) =
 gameCode : GameId -> String
 gameCode (Gid gameId) =
     String.left 4 gameId
+
+
+
+-- Convertors
+
+
+pingFromWelcome : WelcomeMessage -> Ping
+pingFromWelcome welcomeMessage =
+    { gameId = welcomeMessage.gameId
+    , playerId = welcomeMessage.playerId
+    , playerKey = welcomeMessage.playerKey
+    }
 
 
 
@@ -362,6 +377,8 @@ welcomeMessageDecoder =
         |> required "playerKey" playerKeyDecoder
         |> required "playerId" playerIdDecoder
         |> required "gameId" gameIdDecoder
+        |> required "gameName" Json.Decode.string
+        |> required "screenName" Json.Decode.string
 
 
 gameStatusMessageDecoder : Json.Decode.Decoder GameStatusMessage

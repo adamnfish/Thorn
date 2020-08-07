@@ -1,7 +1,6 @@
 module Msg exposing (..)
 
 import Browser.Dom
-import Dict exposing (Dict)
 import GameLogic exposing (isCreator, selfIsActive)
 import Json.Decode
 import List.Extra
@@ -81,9 +80,16 @@ update msg model =
                             , Cmd.none
                             )
 
-                        LobbyScreen playerOrder welcomeMessage AwaitingMessage ->
+                        LobbyScreen playerOrder welcomeMessage maybeGameStatus AwaitingMessage ->
                             ( { updatedModel
-                                | ui = LobbyScreen playerOrder welcomeMessage NotLoading
+                                | ui = LobbyScreen playerOrder welcomeMessage maybeGameStatus NotLoading
+                              }
+                            , Cmd.none
+                            )
+
+                        RejoinScreen welcomeMessage AwaitingMessage ->
+                            ( { updatedModel
+                                | ui = RejoinScreen welcomeMessage NotLoading
                               }
                             , Cmd.none
                             )
@@ -118,32 +124,37 @@ update msg model =
             case model.ui of
                 DisplayGameScreen _ welcome ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
                     )
 
-                LobbyScreen _ welcome _ ->
+                LobbyScreen _ welcome _ _ ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
+                    )
+
+                RejoinScreen welcome _ ->
+                    ( newModel
+                    , sendPing <| pingFromWelcome welcome
                     )
 
                 PlaceDiscScreen _ _ welcome _ ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
                     )
 
                 DiscOrBidScreen _ _ welcome _ ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
                     )
 
                 BidOrPassScreen _ _ welcome _ ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
                     )
 
                 FlipScreen _ _ welcome _ ->
                     ( newModel
-                    , sendPing welcome
+                    , sendPing <| pingFromWelcome welcome
                     )
 
                 HomeScreen ->
@@ -165,13 +176,9 @@ update msg model =
             , Cmd.none
             )
 
-        NavigateGame gameStatus welcomeMessage ->
-            ( { model | ui = uiForGameState gameStatus welcomeMessage }
-            , sendPing
-                { gameId = welcomeMessage.gameId
-                , playerId = welcomeMessage.playerId
-                , playerKey = welcomeMessage.playerKey
-                }
+        NavigateGame welcomeMessage ->
+            ( { model | ui = RejoinScreen welcomeMessage AwaitingMessage }
+            , sendPing <| pingFromWelcome welcomeMessage
             )
 
         NavigateCreateGame ->
@@ -224,13 +231,13 @@ update msg model =
 
         InputReorderPlayers playerOrder ->
             case model.ui of
-                LobbyScreen currentOrder loadingStatus welcomeMessage ->
+                LobbyScreen currentOrder loadingStatus maybeGameStatus welcomeMessage ->
                     let
                         -- deal with edge case of new players arriving after ordering
                         newOrder =
                             includeAllPlayers playerOrder currentOrder
                     in
-                    ( { model | ui = LobbyScreen newOrder loadingStatus welcomeMessage }
+                    ( { model | ui = LobbyScreen newOrder loadingStatus maybeGameStatus welcomeMessage }
                     , Cmd.none
                     )
 
@@ -245,8 +252,8 @@ update msg model =
 
         SubmitStartGame ->
             case model.ui of
-                LobbyScreen playerOrder welcomeMessage _ ->
-                    ( { model | ui = LobbyScreen playerOrder welcomeMessage AwaitingMessage }
+                LobbyScreen playerOrder welcomeMessage maybeGameStatus _ ->
+                    ( { model | ui = LobbyScreen playerOrder welcomeMessage maybeGameStatus AwaitingMessage }
                     , sendStartGame
                         { gameId = welcomeMessage.gameId
                         , playerId = welcomeMessage.playerId
@@ -575,27 +582,16 @@ welcomeMessageUpdate : Model -> WelcomeMessage -> ( Model, Cmd Msg )
 welcomeMessageUpdate model welcomeMessage =
     let
         newLibrary =
-            Dict.update (getGid welcomeMessage.gameId)
-                (\maybeGameStatus ->
-                    case maybeGameStatus of
-                        Nothing ->
-                            Just <| Waiting welcomeMessage []
-
-                        Just (Playing gameStatus _) ->
-                            Just <| Playing gameStatus welcomeMessage
-
-                        Just (Waiting _ playerOrder) ->
-                            Just <| Waiting welcomeMessage playerOrder
-
-                        Just (NotPlaying gameStatus) ->
-                            Just <| Playing gameStatus welcomeMessage
-                )
+            if List.member welcomeMessage model.library then
                 model.library
+
+            else
+                welcomeMessage :: model.library
     in
     case model.ui of
         CreateGameScreen _ _ _ ->
             ( { model
-                | ui = LobbyScreen [] welcomeMessage NotLoading
+                | ui = LobbyScreen [] welcomeMessage Nothing NotLoading
                 , library = newLibrary
               }
             , Cmd.none
@@ -603,7 +599,7 @@ welcomeMessageUpdate model welcomeMessage =
 
         JoinGameScreen _ _ _ ->
             ( { model
-                | ui = LobbyScreen [] welcomeMessage NotLoading
+                | ui = LobbyScreen [] welcomeMessage Nothing NotLoading
                 , library = newLibrary
               }
             , Cmd.none
@@ -623,53 +619,28 @@ gameStatusMessageUpdate model gameStatusMessage =
     let
         nowActive =
             selfIsActive gameStatusMessage
-
-        newLibrary =
-            Dict.update (getGid gameStatusMessage.game.gameId)
-                (\maybeGameStatus ->
-                    case maybeGameStatus of
-                        Nothing ->
-                            Just <| NotPlaying gameStatusMessage
-
-                        Just (Playing _ welcomeMessage) ->
-                            Just <| Playing gameStatusMessage welcomeMessage
-
-                        Just (Waiting welcomeMessage _) ->
-                            Just <| Playing gameStatusMessage welcomeMessage
-
-                        Just (NotPlaying _) ->
-                            Just <| NotPlaying gameStatusMessage
-                )
-                model.library
     in
     case model.ui of
         HomeScreen ->
-            ( { model
-                | library = newLibrary
-              }
+            ( model
             , Cmd.none
             )
 
         CreateGameScreen _ _ _ ->
-            ( { model
-                | library = newLibrary
-              }
+            ( model
             , Cmd.none
             )
 
         JoinGameScreen _ _ _ ->
-            ( { model
-                | library = newLibrary
-              }
+            ( model
             , Cmd.none
             )
 
-        LobbyScreen playerOrder welcomeMessage loadingStatus ->
+        LobbyScreen playerOrder welcomeMessage _ loadingStatus ->
             if welcomeMessage.gameId == gameStatusMessage.game.gameId then
                 if gameStatusMessage.game.started then
                     ( { model
                         | ui = uiForGameState gameStatusMessage welcomeMessage
-                        , library = newLibrary
                       }
                     , Cmd.none
                     )
@@ -680,14 +651,38 @@ gameStatusMessageUpdate model gameStatusMessage =
                             includeAllPlayers playerOrder gameStatusMessage.game.players
                     in
                     ( { model
-                        | ui = LobbyScreen newPlayerOrder welcomeMessage loadingStatus
-                        , library = newLibrary
+                        | ui = LobbyScreen newPlayerOrder welcomeMessage (Just gameStatusMessage) loadingStatus
                       }
                     , Cmd.none
                     )
 
             else
-                ( { model | library = newLibrary }
+                ( model
+                , Cmd.none
+                )
+
+        RejoinScreen welcomeMessage loadingStatus ->
+            if welcomeMessage.gameId == gameStatusMessage.game.gameId then
+                if gameStatusMessage.game.started then
+                    ( { model
+                        | ui = uiForGameState gameStatusMessage welcomeMessage
+                      }
+                    , Cmd.none
+                    )
+
+                else
+                    let
+                        newPlayerOrder =
+                            includeAllPlayers gameStatusMessage.game.players gameStatusMessage.game.players
+                    in
+                    ( { model
+                        | ui = LobbyScreen newPlayerOrder welcomeMessage Nothing loadingStatus
+                      }
+                    , Cmd.none
+                    )
+
+            else
+                ( model
                 , Cmd.none
                 )
 
@@ -699,15 +694,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                             -- server state matches client, update data and keep same screen
                             ( { model
                                 | ui = PlaceDiscScreen maybeDisc gameStatusMessage welcomeMessage loadingStatus
-                                , library = newLibrary
                               }
                             , Cmd.none
                             )
 
                         _ ->
                             ( { model
-                                | library = newLibrary
-                                , ui = uiForGameState gameStatusMessage welcomeMessage
+                                | ui = uiForGameState gameStatusMessage welcomeMessage
                               }
                             , reportError "PlaceDiscScreen jumped to another in-game state unexpectedly"
                             )
@@ -716,14 +709,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                     -- server says not active so let's just display the game
                     ( { model
                         | ui = uiForGameState gameStatusMessage welcomeMessage
-                        , library = newLibrary
                       }
                     , Cmd.none
                     )
 
             else
                 -- background game update
-                ( { model | library = newLibrary }
+                ( model
                 , Cmd.none
                 )
 
@@ -735,15 +727,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                             -- server state matches client, update data and keep same screen
                             ( { model
                                 | ui = DiscOrBidScreen maybeDiscOrBid gameStatusMessage welcomeMessage loadingStatus
-                                , library = newLibrary
                               }
                             , Cmd.none
                             )
 
                         _ ->
                             ( { model
-                                | library = newLibrary
-                                , ui = uiForGameState gameStatusMessage welcomeMessage
+                                | ui = uiForGameState gameStatusMessage welcomeMessage
                               }
                             , reportError "DiscOrBidScreen jumped to another in-game state unexpectedly"
                             )
@@ -752,14 +742,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                     -- server says not active so let's just display the game
                     ( { model
                         | ui = uiForGameState gameStatusMessage welcomeMessage
-                        , library = newLibrary
                       }
                     , Cmd.none
                     )
 
             else
                 -- background game update
-                ( { model | library = newLibrary }
+                ( model
                 , Cmd.none
                 )
 
@@ -771,15 +760,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                             -- server state matches client, update data and keep same screen
                             ( { model
                                 | ui = BidOrPassScreen maybeBid gameStatusMessage welcomeMessage loadingStatus
-                                , library = newLibrary
                               }
                             , Cmd.none
                             )
 
                         _ ->
                             ( { model
-                                | library = newLibrary
-                                , ui = uiForGameState gameStatusMessage welcomeMessage
+                                | ui = uiForGameState gameStatusMessage welcomeMessage
                               }
                             , reportError "BidScreen jumped to another in-game state unexpectedly"
                             )
@@ -788,14 +775,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                     -- server says not active so let's just display the game
                     ( { model
                         | ui = uiForGameState gameStatusMessage welcomeMessage
-                        , library = newLibrary
                       }
                     , Cmd.none
                     )
 
             else
                 -- background game update
-                ( { model | library = newLibrary }
+                ( model
                 , Cmd.none
                 )
 
@@ -807,15 +793,13 @@ gameStatusMessageUpdate model gameStatusMessage =
                             -- server state matches client, update data and keep same screen
                             ( { model
                                 | ui = FlipScreen Nothing gameStatusMessage welcomeMessage NotLoading
-                                , library = newLibrary
                               }
                             , Cmd.none
                             )
 
                         _ ->
                             ( { model
-                                | library = newLibrary
-                                , ui = uiForGameState gameStatusMessage welcomeMessage
+                                | ui = uiForGameState gameStatusMessage welcomeMessage
                               }
                             , reportError "FlipScreen jumped to another in-game state unexpectedly"
                             )
@@ -824,21 +808,19 @@ gameStatusMessageUpdate model gameStatusMessage =
                     -- server says not active so let's just display the game
                     ( { model
                         | ui = uiForGameState gameStatusMessage welcomeMessage
-                        , library = newLibrary
                       }
                     , Cmd.none
                     )
 
             else
                 -- background game update
-                ( { model | library = newLibrary }
+                ( model
                 , Cmd.none
                 )
 
         DisplayGameScreen _ welcomeMessage ->
             ( { model
-                | library = newLibrary
-                , ui = uiForGameState gameStatusMessage welcomeMessage
+                | ui = uiForGameState gameStatusMessage welcomeMessage
               }
             , Cmd.none
             )
@@ -879,7 +861,7 @@ uiForGameState gameStatusMessage welcomeMessage =
             DisplayGameScreen gameStatusMessage welcomeMessage
 
         Nothing ->
-            LobbyScreen gameStatusMessage.game.players welcomeMessage NotLoading
+            LobbyScreen gameStatusMessage.game.players welcomeMessage (Just gameStatusMessage) NotLoading
 
 
 displayFailure : Model -> Failure -> Model
