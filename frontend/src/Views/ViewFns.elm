@@ -249,9 +249,12 @@ selfPublicInformation viewport gameStatus =
             <|
                 List.repeat playerDisplay.unrevealedDiscCount Element.none
 
+        revealedCount =
+            List.length playerDisplay.revealedDiscs
+
         revealedDiscEls =
             List.indexedMap
-                (\i -> discDisplay viewport <| LargeDisc i)
+                (\i -> discDisplay viewport <| LargeDisc (revealedCount - i - 1))
                 playerDisplay.revealedDiscs
     in
     el
@@ -282,11 +285,14 @@ selfPublicInformation viewport gameStatus =
                 [ inFront <|
                     row
                         [ width fill ]
-                        [ row [] unrevealedDiscEls
-                        , row
-                            [ alignRight ]
-                            revealedDiscEls
+                        [ row
+                            []
+                            unrevealedDiscEls
                         ]
+                , inFront <|
+                    row
+                        [ alignRight ]
+                        revealedDiscEls
                 , height <| px 100
                 , width fill
                 ]
@@ -504,7 +510,7 @@ discDisplay viewport discDisplaySize disc =
          , Border.rounded borderRadius
          , Background.color colourHighlight
          , Font.size fontSize
-         , moveLeft adjustment
+         , moveRight adjustment
          ]
             ++ borderAttrs
         )
