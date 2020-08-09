@@ -13,6 +13,10 @@ type Msg
     | Tick Time.Posix
     | OnResize
     | Resized Viewport
+    | UpdateLibrary Json.Encode.Value
+    | PersistGame WelcomeMessage
+    | DeletePersistedGame WelcomeMessage
+    | RequestPersistedGames
       -- Connection status and server messages
     | ServerMessage Json.Encode.Value
     | SocketConnect
@@ -45,6 +49,10 @@ type Msg
     | SubmitFlip PlayerId
     | SubmitNewRound
     | ToggleSecrets
+
+
+type alias Flags =
+    { savedGames : Json.Encode.Value }
 
 
 type alias Model =
@@ -637,4 +645,15 @@ wakeEncoder : () -> Json.Encode.Value
 wakeEncoder _ =
     Json.Encode.object <|
         [ ( "operation", Json.Encode.string "wake" )
+        ]
+
+
+welcomeMessageEncoder : WelcomeMessage -> Json.Encode.Value
+welcomeMessageEncoder welcomeMessage =
+    Json.Encode.object <|
+        [ ( "playerKey", encodePlayerKey welcomeMessage.playerKey )
+        , ( "playerId", encodePlayerId welcomeMessage.playerId )
+        , ( "gameId", encodeGameId welcomeMessage.gameId )
+        , ( "gameName", Json.Encode.string welcomeMessage.gameName )
+        , ( "screenName", Json.Encode.string welcomeMessage.screenName )
         ]

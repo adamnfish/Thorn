@@ -2,10 +2,10 @@ module Msg exposing (..)
 
 import Browser.Dom
 import GameLogic exposing (isCreator, selfIsActive)
-import Json.Decode
+import Json.Decode exposing (errorToString)
 import List.Extra
 import Model exposing (..)
-import Ports exposing (reportError, sendMessage)
+import Ports exposing (deletePersistedGame, persistNewGame, reportError, requestPersistedGames, sendMessage)
 import Task
 import Time
 import Utils exposing (flip)
@@ -43,6 +43,47 @@ update msg model =
                 | viewport = viewport
               }
             , Cmd.none
+            )
+
+        UpdateLibrary json ->
+            let
+                ( newLibrary, parseLibraryCmd ) =
+                    parsePersistedGames json
+            in
+            ( { model | library = newLibrary }
+            , parseLibraryCmd
+            )
+
+        PersistGame welcomeMessage ->
+            let
+                json =
+                    welcomeMessageEncoder welcomeMessage
+            in
+            ( model
+            , persistNewGame json
+            )
+
+        DeletePersistedGame welcomeMessage ->
+            let
+                json =
+                    welcomeMessageEncoder welcomeMessage
+
+                filteredLibrary =
+                    List.Extra.filterNot
+                        (\game ->
+                            game.gameId == welcomeMessage.gameId && game.playerKey == welcomeMessage.playerKey
+                        )
+                        model.library
+            in
+            ( { model
+                | library = filteredLibrary
+              }
+            , deletePersistedGame json
+            )
+
+        RequestPersistedGames ->
+            ( model
+            , requestPersistedGames ()
             )
 
         ServerMessage json ->
@@ -587,6 +628,10 @@ welcomeMessageUpdate model welcomeMessage =
 
             else
                 welcomeMessage :: model.library
+
+        persistGame =
+            persistNewGame
+                (welcomeMessageEncoder welcomeMessage)
     in
     case model.ui of
         CreateGameScreen _ _ _ ->
@@ -594,7 +639,7 @@ welcomeMessageUpdate model welcomeMessage =
                 | ui = LobbyScreen [] welcomeMessage Nothing NotLoading
                 , library = newLibrary
               }
-            , Cmd.none
+            , persistGame
             )
 
         JoinGameScreen _ _ _ ->
@@ -602,7 +647,7 @@ welcomeMessageUpdate model welcomeMessage =
                 | ui = LobbyScreen [] welcomeMessage Nothing NotLoading
                 , library = newLibrary
               }
-            , Cmd.none
+            , persistGame
             )
 
         _ ->
@@ -610,7 +655,7 @@ welcomeMessageUpdate model welcomeMessage =
             ( { model
                 | library = newLibrary
               }
-            , Cmd.none
+            , persistGame
             )
 
 
@@ -676,7 +721,7 @@ gameStatusMessageUpdate model gameStatusMessage =
                             includeAllPlayers gameStatusMessage.game.players gameStatusMessage.game.players
                     in
                     ( { model
-                        | ui = LobbyScreen newPlayerOrder welcomeMessage Nothing loadingStatus
+                        | ui = LobbyScreen newPlayerOrder welcomeMessage (Just gameStatusMessage) NotLoading
                       }
                     , Cmd.none
                     )
@@ -862,6 +907,23 @@ uiForGameState gameStatusMessage welcomeMessage =
 
         Nothing ->
             LobbyScreen gameStatusMessage.game.players welcomeMessage (Just gameStatusMessage) NotLoading
+
+
+parsePersistedGames : Json.Decode.Value -> ( List WelcomeMessage, Cmd msg )
+parsePersistedGames json =
+    let
+        persistedGamesResult =
+            Json.Decode.decodeValue (Json.Decode.list welcomeMessageDecoder) json
+    in
+    case persistedGamesResult of
+        Ok persistedGames ->
+            ( persistedGames, Cmd.none )
+
+        Err decodeError ->
+            ( []
+            , reportError <|
+                errorToString decodeError
+            )
 
 
 displayFailure : Model -> Failure -> Model

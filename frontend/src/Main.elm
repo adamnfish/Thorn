@@ -3,21 +3,24 @@ module Main exposing (..)
 import Browser
 import Browser.Dom
 import Browser.Events
-import Dict
+import Json.Decode exposing (errorToString)
 import Model as Msg exposing (..)
-import Msg exposing (sendWake, update)
-import Ports exposing (receiveMessage, socketConnect, socketDisconnect)
+import Msg exposing (parsePersistedGames, sendWake, update)
+import Ports exposing (receiveMessage, reportError, socketConnect, socketDisconnect)
 import Task
 import Time
 import Views.Ui exposing (view)
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
+        ( initialLibrary, parseLibraryCmd ) =
+            parsePersistedGames flags.savedGames
+
         initial : Model
         initial =
-            { library = []
+            { library = initialLibrary
             , connected = False
             , ui = HomeScreen
             , errors = []
@@ -42,6 +45,7 @@ init =
         [ Task.perform Msg.Tick Time.now
         , sendWake ()
         , Task.perform Resized Browser.Dom.getViewport
+        , parseLibraryCmd
         ]
     )
 
@@ -61,11 +65,11 @@ subscriptions _ =
 ---- PROGRAM ----
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.document
         { view = view
-        , init = \_ -> init
+        , init = init
         , update = update
         , subscriptions = subscriptions
         }

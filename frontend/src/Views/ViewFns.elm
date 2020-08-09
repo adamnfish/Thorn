@@ -277,7 +277,7 @@ selfPublicInformation viewport gameStatus =
                 , text playerDisplay.displayName
                 ]
             , row
-                []
+                [ spacing size4 ]
               <|
                 List.repeat playerDisplay.unplacedDiscCount <|
                     unknownDiscDisplay viewport SmallDisc

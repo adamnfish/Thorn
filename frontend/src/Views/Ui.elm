@@ -257,6 +257,10 @@ home model =
                             { onPress = Just <| NavigateGame welcomeMessage
                             , label = text <| welcomeMessage.screenName ++ " in " ++ welcomeMessage.gameName
                             }
+                        , Input.button buttonStyles
+                            { onPress = Just <| DeletePersistedGame welcomeMessage
+                            , label = text "x"
+                            }
                         ]
                 )
                 model.library
