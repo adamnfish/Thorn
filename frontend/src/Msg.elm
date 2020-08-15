@@ -239,6 +239,7 @@ update msg model =
         SubmitCreateGame gameName screenName ->
             ( { model
                 | ui = CreateGameScreen gameName screenName AwaitingMessage
+                , hideSecrets = False
               }
             , sendCreateGame
                 { gameName = gameName
@@ -263,6 +264,7 @@ update msg model =
         SubmitJoinGame gameCode screenName ->
             ( { model
                 | ui = JoinGameScreen gameCode screenName AwaitingMessage
+                , hideSecrets = False
               }
             , sendJoinGame
                 { gameCode = gameCode
