@@ -887,7 +887,7 @@ currentGame model gameStatus =
 
                             else if finished.activePlayer == gameStatus.self.playerId then
                                 { emptyControls
-                                    | message = Just "You have hit a skull and failed to win the round"
+                                    | message = Just "You have hit a Thorn and failed to win the round"
                                     , features = newRound
                                 }
 
