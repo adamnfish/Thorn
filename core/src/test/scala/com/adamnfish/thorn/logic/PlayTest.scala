@@ -1608,4 +1608,31 @@ class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionV
       }
     }
   }
+
+  "normaliseGameCode" - {
+    "leaves a valid game code as-is" in {
+      val joinGame = JoinGame("abcdef", "Name")
+      normaliseGameCode(joinGame) shouldEqual joinGame
+    }
+
+    "swaps an Oh for a zero" in {
+      val joinGame = JoinGame("abcdefO", "Name")
+      normaliseGameCode(joinGame).gameCode shouldEqual "abcdef0"
+    }
+
+    "swaps multiple Ohs for zeros" in {
+      val joinGame = JoinGame("abcOdefO", "Name")
+      normaliseGameCode(joinGame).gameCode shouldEqual "abc0def0"
+    }
+
+    "swaps an oh for a zero" in {
+      val joinGame = JoinGame("abcdefo", "Name")
+      normaliseGameCode(joinGame).gameCode shouldEqual "abcdef0"
+    }
+
+    "swaps multiple ohs for zeros" in {
+      val joinGame = JoinGame("abcodefo", "Name")
+      normaliseGameCode(joinGame).gameCode shouldEqual "abc0def0"
+    }
+  }
 }

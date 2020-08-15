@@ -545,4 +545,18 @@ object Play {
     }
     maybeLastPlayerStanding.orElse(maybeScoreWinner)
   }
+
+  /**
+   * Usability improvements:
+   *
+   * Corrects mistaken chars in the submission.
+   */
+  def normaliseGameCode(joinGame: JoinGame): JoinGame = {
+    joinGame.copy(
+      gameCode = joinGame.gameCode
+        // Zeros look like 'ohs'
+        .replace('O', '0')
+        .replace('o', '0')
+    )
+  }
 }

@@ -65,7 +65,8 @@ object Thorn {
     } yield response
   }
 
-  def joinGame(request: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
+  def joinGame(rawRequest: JoinGame, context: Context)(implicit ec: ExecutionContext): Attempt[Response[Welcome]] = {
+    val request = Play.normaliseGameCode(rawRequest)
     for {
       _ <- validate(request)
       // fetch game data
