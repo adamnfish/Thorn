@@ -66,7 +66,7 @@ object Serialisation {
   private implicit val playerAddressDecoder: Decoder[PlayerAddress] = Decoder.decodeString.emap[PlayerAddress](str => Right(PlayerAddress(str)))
   private implicit val gameIdDecoder: Decoder[GameId] = Decoder.decodeString.emap[GameId](str => Right(GameId(str)))
 
-  implicit val fooKeyEncoder: KeyEncoder[PlayerId] = new KeyEncoder[PlayerId] {
+  implicit val playerIdKeyEncoder: KeyEncoder[PlayerId] = new KeyEncoder[PlayerId] {
     override def apply(playerId: PlayerId): String = playerId.pid
   }
 

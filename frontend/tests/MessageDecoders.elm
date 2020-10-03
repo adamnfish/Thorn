@@ -101,7 +101,7 @@ all =
                                 ]
 
                         Ok message ->
-                            fail ("Expected Welcome message, got " ++ Debug.toString message)
+                            fail ("Expected Failure message, got " ++ Debug.toString message)
 
                         Err err ->
                             fail <| Json.Decode.errorToString err

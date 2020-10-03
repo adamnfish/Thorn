@@ -56,8 +56,8 @@ object DevServer {
     val rng = new Random(seed)
     val colourCode = rng.shuffle(colours).head
     val idSummary =
-        if (fullId) id
-        else id.take(8)
+      if (fullId) id
+      else id.take(8)
     s"$colourCode$idSummary${AnsiColor.RESET}"
   }
 

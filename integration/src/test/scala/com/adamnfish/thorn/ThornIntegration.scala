@@ -5,7 +5,7 @@ import java.util.UUID.randomUUID
 import com.adamnfish.thorn.attempt.{Attempt, FailedAttempt}
 import com.adamnfish.thorn.models.{Context, Message, PlayerAddress}
 import com.adamnfish.thorn.persistence.{Database, DynamoDB}
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
+
 import org.scanamo.LocalDynamoDB
 
 import scala.concurrent.ExecutionContext

@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 
-class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues with TestHelpers{
+class PlayTest extends AnyFreeSpec with Matchers with AttemptValues with OptionValues with TestHelpers {
   val creator = Players.newPlayer("creator", PlayerAddress("creator-address"))
   val player1 = Players.newPlayer("player1", PlayerAddress("player-1-address"))
   val player2 = Players.newPlayer("player1", PlayerAddress("player-1-address"))

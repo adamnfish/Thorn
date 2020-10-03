@@ -103,6 +103,7 @@ object Thorn {
       rawGameDb <- Games.requireGame(gameDbOpt, request.gameId.gid)
       playerDbs <- context.db.getPlayers(request.gameId)
       // game logic
+      // TODO: ensure request.playerOrder contains same IDs as playerDbs
       gameDb = Games.addOrderedPlayerIds(rawGameDb, request.playerOrder)
       game <- Representations.dbToGame(gameDb, playerDbs)
       _ <- Games.ensurePlayerKey(game, request.playerId, request.playerKey)
