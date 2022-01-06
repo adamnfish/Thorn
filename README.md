@@ -3,7 +3,12 @@ Thorn
 
 Web-based party game.
 
-Work on Thorn is ongoing, it is not yet playable.
+Work on Thorn has stopped because in testing it just wasn't quite fun
+enough! This project ended up serving as a technical prototype for my
+ongoing implementation of online poker,
+[pokerdot](https://github.com/adamnfish/pokerdot).
+
+Thorn is borderling playable, but I'd recommend finding fun elsewhere.
 
 ## Development
 
